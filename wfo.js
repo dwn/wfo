@@ -143,6 +143,7 @@ let isDraggingOffGrid = false;
 let lastDragX = 0;
 let cardToDelete = null;
 let cardToCopy = null;
+let isProcessingDrop = false;
 function setupDragAndDrop(setNumber) {
   const gridEl = document.getElementById('gridContainer');
   gridEl.removeEventListener('dragstart', handleDragStart);
@@ -390,7 +391,10 @@ function setupDragAndDrop(setNumber) {
   async function handleDrop(e) {
     e.preventDefault();
     e.stopPropagation();
-    if (!draggedCard) return;
+    if (!draggedCard || isProcessingDrop) return;
+    isProcessingDrop = true;
+    
+    try {
     let targetCard = null;
     let closestDistance = Infinity;
     const allCards = gridEl.querySelectorAll('.card-wrapper');
@@ -412,8 +416,17 @@ function setupDragAndDrop(setNumber) {
     const targetCol = parseInt(targetCard?.style.gridColumn) || 1;
     const originalDraggedRow = parseInt(draggedCard.style.gridRow) || 1;
     const originalDraggedCol = parseInt(draggedCard.style.gridColumn) || 1;
+    
+    console.log(`Drop operation:`, {
+      draggedCard: draggedCard.getAttribute('data-order'),
+      targetCard: targetCard?.getAttribute('data-order'),
+      draggedPosition: `${originalDraggedRow}-${originalDraggedCol}`,
+      targetPosition: `${targetRow}-${targetCol}`,
+      isTargetEmpty: !targetCard || targetCard.classList.contains('empty-slot')
+    });
     if (targetRow === originalDraggedRow && targetCol === originalDraggedCol) {
       targetCard?.classList.remove('drag-over');
+      isProcessingDrop = false;
       return;
     }
     const currentSet = currentSetNumber;
@@ -453,6 +466,11 @@ function setupDragAndDrop(setNumber) {
       ]);
     }
     targetCard.classList.remove('drag-over');
+    } catch (error) {
+      console.error('Error in handleDrop:', error);
+    } finally {
+      isProcessingDrop = false;
+    }
   }
   gridEl.addEventListener('dragstart', handleDragStart);
   gridEl.addEventListener('dragend', handleDragEnd);
