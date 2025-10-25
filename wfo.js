@@ -523,6 +523,12 @@ async function showIndividualCard(setNumber, order, cardData) {
       const cardColor = getCardColor(cardData);
       const textColor = calculateSvgTextColor(cardColor, false);
       const useNaturalColors = cardData.options && cardData.options.svgColor === true;
+      console.log(`Individual card ${setNumber}.${order} SVG settings:`, {
+        backgroundColor: cardColor,
+        svgColor: cardData.options?.svgColor,
+        useNaturalColors: useNaturalColors,
+        textColor: textColor
+      });
       const cleanedSvg = stripSvgColors(svgContent, useNaturalColors);
       const svgContainer = document.createElement('div');
       svgContainer.className = 'svg-container';
@@ -763,6 +769,12 @@ async function displaySet(setNumber) {
             const cardColor = getCardColor(cardData);
             const textColor = calculateSvgTextColor(cardColor, false);
             const useNaturalColors = cardData.options && cardData.options.svgColor === true;
+            console.log(`Card ${setNumber}.${order} SVG settings:`, {
+              backgroundColor: cardColor,
+              svgColor: cardData.options?.svgColor,
+              useNaturalColors: useNaturalColors,
+              textColor: textColor
+            });
             const cleanedSvg = stripSvgColors(svgContent, useNaturalColors);
             const uniqueId = `svg-${setNumber}-${order}`;
             svgContainer.id = uniqueId;
