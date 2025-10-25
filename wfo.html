@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Lysia</title>
+  <link rel="stylesheet" href="wfo.css">
+</head>
+<body>
+  <!-- Navigation areas for previous/next set -->
+  <div id="prevSetArea" class="nav-area nav-left" title="Previous Set"></div>
+  <div id="nextSetArea" class="nav-area nav-right" title="Next Set"></div>
+  
+  <!-- Trash can for deleting cards -->
+  <div id="trashCan" class="trash-can" title="Drag cards here to delete">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  
+  <!-- Copy button for duplicating cards -->
+  <div id="copyButton" class="copy-button" title="Drag cards here to copy">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="delete-modal" style="display: none;">
+    <div class="delete-modal-content">
+      <h3>Delete Card?</h3>
+      <div class="delete-modal-buttons">
+        <button id="confirmDelete" class="btn btn-danger">Delete</button>
+        <button id="cancelDelete" class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Card Editor Modal -->
+  <div id="cardEditorModal" class="card-editor-modal" style="display: none;">
+    <div class="card-editor-content">
+      <div class="card-editor-body">
+        <div class="editor-grid">
+          <!-- Left Column: Editor Controls -->
+          <div class="editor-controls">
+            <!-- Card Settings Accordion -->
+            <div class="editor-section accordion collapsed">
+              <div class="accordion-header" onclick="toggleAccordion(this)">
+                <h4>Card Settings</h4>
+                <span class="accordion-icon">▶</span>
+              </div>
+              <div class="accordion-content">
+                <!-- Card Info -->
+                <div class="accordion-subsection">
+                  <h5>Card Info</h5>
+                  <div class="form-grid">
+                    <div class="form-group">
+                      <label for="editorOrder">Order</label>
+                      <select id="editorOrder">
+                        <option value="">Undefined</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="editorPosition">Position</label>
+                      <div id="editorPositionDisplay" class="position-display">Not set</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Visual Options -->
+                <div class="accordion-subsection">
+                  <h5>Visual Options</h5>
+                  <div class="form-grid">
+                    <div class="form-group">
+                      <label for="editorSize">Size <span id="editorSizeValue">8</span></label>
+                      <input type="range" id="editorSize" min="2" max="40" value="5">
+                    </div>
+                    <div class="form-group">
+                      <label for="editorBackground">Background</label>
+                      <select id="editorBackground">
+                        <option value="transparent">Transparent</option>
+                        <option value="#BC0000">Crimson (#BC0000) - 736nm</option>
+                        <option value="#FF0000">Red (#FF0000) - 695nm</option>
+                        <option value="#FF0000">Scarlet (#FF0000) - 656nm</option>
+                        <option value="#FF7B00">Orange (#FF7B00) - 619nm</option>
+                        <option value="#FFF200">Yellow (#FFF200) - 584nm</option>
+                        <option value="#A6FF00">Lime (#A6FF00) - 551nm</option>
+                        <option value="#36FF00">Green (#36FF00) - 520nm</option>
+                        <option value="#00FFF5">Cyan (#00FFF5) - 491nm</option>
+                        <option value="#008EFF">Sky (#008EFF) - 464nm</option>
+                        <option value="#1100FF">Blue (#1100FF) - 438nm</option>
+                        <option value="#7900E6">Purple (#7900E6) - 413nm</option>
+                        <option value="#79008D">Violet (#79008D) - 390nm</option>
+                        <option value="#000000">Black (#000000) - 368nm</option>
+                        <option value="#808080">Gray (#808080)</option>
+                        <option value="#FFFFFF">White (#FFFFFF)</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>
+                        <input type="checkbox" id="editorItalics" checked> Italics
+                      </label>
+                    </div>
+                    <div class="form-group">
+                      <label>
+                        <input type="checkbox" id="editorSvgColor"> SVG Color
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- SVG Background -->
+                <div class="accordion-subsection">
+                  <h5>SVG Background</h5>
+                  <div class="form-group">
+                    <label for="editorSvg">SVG URL or Code</label>
+                    <textarea id="editorSvg" placeholder="https://example.com/image.svg or paste SVG code directly" rows="3"></textarea>
+                  </div>
+                  <div id="editorSvgPreview" class="svg-preview" style="display: none;">
+                    <div id="editorSvgPreviewContent"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Rule Input -->
+            <div class="editor-section">
+              <h4>Rule</h4>
+              <div class="form-group">
+                <textarea id="editorRule" class="code-editor" placeholder="Enter rule code..." rows="4"></textarea>
+              </div>
+            </div>
+            
+            <!-- Input Data -->
+            <div class="editor-section">
+              <h4>Input</h4>
+              <div class="form-group">
+                <textarea id="editorInput" class="code-editor" placeholder="Enter input data..." rows="6"></textarea>
+              </div>
+            </div>
+            
+            <!-- Output Display -->
+            <div class="editor-section">
+              <h4>Output</h4>
+              <div class="form-group">
+                <div id="editorOutput" class="code-editor output-display" readonly></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Right Column: Canvas Preview -->
+          <div class="editor-preview">
+            <div class="preview-header">
+              <h4>Preview</h4>
+              <div class="preview-controls">
+                <label>
+                  <input type="checkbox" id="animatePreview"> Animate
+                </label>
+              </div>
+            </div>
+            <div class="preview-container">
+              <canvas id="editorCanvas" width="600" height="848"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card-editor-footer">
+        <button id="saveCard" class="btn btn-primary">Save Card</button>
+        <button id="cancelEdit" class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="status" style="display: none;">
+    <div class="spinner"></div>
+  </div>
+  
+  <!-- Individual Card View -->
+  <div id="individualCardView" class="individual-card-view">
+    <div class="individual-card" id="individualCard">
+      <!-- Individual card content will be inserted here -->
+    </div>
+  </div>
+  
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="wfo.js"></script>
+</body>
+</html>
