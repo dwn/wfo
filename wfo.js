@@ -526,9 +526,24 @@ async function showIndividualCard(setNumber, order, cardData) {
       const cleanedSvg = stripSvgColors(svgContent, useNaturalColors);
       const svgContainer = document.createElement('div');
       svgContainer.className = 'svg-container';
+      const uniqueId = `svg-${setNumber}-${order}`;
+      svgContainer.id = uniqueId;
       svgContainer.innerHTML = `
         <style>
-          .svg-container ${createSvgStyle(false, '1', textColor, useNaturalColors)}
+          #${uniqueId} svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+            object-position: center;
+            opacity: 0.5;
+            ${useNaturalColors ? '' : `color: ${textColor};`}
+          }
+          ${useNaturalColors ? '' : `#${uniqueId} svg * {
+            fill: currentColor;
+            stroke: currentColor;
+            stroke-width: 0;
+          }`}
         </style>
         ${cleanedSvg}
       `;
@@ -749,9 +764,24 @@ async function displaySet(setNumber) {
             const textColor = calculateSvgTextColor(cardColor, false);
             const useNaturalColors = cardData.options && cardData.options.svgColor === true;
             const cleanedSvg = stripSvgColors(svgContent, useNaturalColors);
+            const uniqueId = `svg-${setNumber}-${order}`;
+            svgContainer.id = uniqueId;
             svgContainer.innerHTML = `
               <style>
-                .svg-container ${createSvgStyle(false, '1', textColor, useNaturalColors)}
+                #${uniqueId} svg {
+                  width: 100%;
+                  height: 100%;
+                  display: block;
+                  object-fit: contain;
+                  object-position: center;
+                  opacity: 0.5;
+                  ${useNaturalColors ? '' : `color: ${textColor};`}
+                }
+                ${useNaturalColors ? '' : `#${uniqueId} svg * {
+                  fill: currentColor;
+                  stroke: currentColor;
+                  stroke-width: 0;
+                }`}
               </style>
               ${cleanedSvg}
             `;
