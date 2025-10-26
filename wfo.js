@@ -19,10 +19,17 @@ function parseCardFilename(filename) {
   }
   return null;
 }
-function generateGradientFromColor(hexColor) {
+function generateGradientFromColor(hexColor, secondColor = null) {
   if (hexColor === 'transparent') {
     return 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)';
   }
+  
+  if (secondColor && secondColor !== '' && secondColor !== 'transparent') {
+    // Horizontal gradient from first color to second color
+    return `linear-gradient(90deg, ${hexColor} 0%, ${secondColor} 100%)`;
+  }
+  
+  // Original diagonal gradient with lighter/darker variations
   const rgb = hexToRgb(hexColor);
   const lighter = `rgb(${Math.min(255, rgb.r + 40)}, ${Math.min(255, rgb.g + 40)}, ${Math.min(255, rgb.b + 40)})`;
   const darker = `rgb(${Math.max(0, rgb.r - 40)}, ${Math.max(0, rgb.g - 40)}, ${Math.max(0, rgb.b - 40)})`;
@@ -41,6 +48,11 @@ function getCardColor(cardData) {
     return cardData.options.backgroundColor;
   }
   return '#808080';
+}
+function getCardColors(cardData) {
+  const primaryColor = getCardColor(cardData);
+  const secondColor = cardData?.options?.backgroundColor2 || null;
+  return { primaryColor, secondColor };
 }
 function stripSvgColors(svgContent, keepNaturalColors = false) {
   if (keepNaturalColors) {
@@ -521,8 +533,8 @@ async function showIndividualCard(setNumber, order, cardData) {
   canvas.width = 600;
   canvas.height = 848;
   individualCard.appendChild(canvas);
-  const bgColor = getCardColor(cardData);
-  canvas.style.background = generateGradientFromColor(bgColor);
+  const { primaryColor, secondColor } = getCardColors(cardData);
+  canvas.style.background = generateGradientFromColor(primaryColor, secondColor);
   drawCardPreview(canvas, cardData);
   if (cardData.options && cardData.options.svgBackground) {
     const svgValue = cardData.options.svgBackground;
@@ -538,11 +550,11 @@ async function showIndividualCard(setNumber, order, cardData) {
       svgContent = svgValue;
     }
     if (svgContent) {
-      const cardColor = getCardColor(cardData);
-      const textColor = calculateSvgTextColor(cardColor, false);
+      const { primaryColor } = getCardColors(cardData);
+      const textColor = calculateSvgTextColor(primaryColor, false);
       const useNaturalColors = cardData.options && cardData.options.svgColor === true;
       console.log(`Individual card ${setNumber}.${order} SVG settings:`, {
-        backgroundColor: cardColor,
+        backgroundColor: primaryColor,
         svgColor: cardData.options?.svgColor,
         useNaturalColors: useNaturalColors,
         textColor: textColor
@@ -784,11 +796,11 @@ async function displaySet(setNumber) {
             svgContent = svgValue;
           }
           if (svgContent) {
-            const cardColor = getCardColor(cardData);
-            const textColor = calculateSvgTextColor(cardColor, false);
+            const { primaryColor } = getCardColors(cardData);
+            const textColor = calculateSvgTextColor(primaryColor, false);
             const useNaturalColors = cardData.options && cardData.options.svgColor === true;
             console.log(`Card ${setNumber}.${order} SVG settings:`, {
-              backgroundColor: cardColor,
+              backgroundColor: primaryColor,
               svgColor: cardData.options?.svgColor,
               useNaturalColors: useNaturalColors,
               textColor: textColor
@@ -822,8 +834,8 @@ async function displaySet(setNumber) {
         canvas.width = 600;
         canvas.height = 848;
         cardWrapper.appendChild(canvas);
-        const bgColor = getCardColor(cardData);
-        canvas.style.background = generateGradientFromColor(bgColor);
+        const { primaryColor, secondColor } = getCardColors(cardData);
+        canvas.style.background = generateGradientFromColor(primaryColor, secondColor);
         drawCardPreview(canvas, cardData);
       }
       } else {
@@ -861,6 +873,7 @@ function openCardEditor(setNumber, order, cardData) {
   document.getElementById('editorSize').value = cardData.options?.size || 5;
   document.getElementById('editorSizeValue').textContent = cardData.options?.size || 5;
   document.getElementById('editorBackground').value = cardData.options?.backgroundColor || 'transparent';
+  document.getElementById('editorBackground2').value = cardData.options?.backgroundColor2 || '';
   document.getElementById('editorItalics').checked = cardData.options?.italics !== false;
   document.getElementById('editorSvgColor').checked = cardData.options?.svgColor === true;
   document.getElementById('editorSvg').value = cardData.options?.svgBackground || '';
@@ -884,12 +897,9 @@ function updateEditorPreview() {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const bgColor = document.getElementById('editorBackground').value;
-  if (bgColor === 'transparent') {
-    ctx.fillStyle = '#f0f0f0';
-  } else {
-    ctx.fillStyle = bgColor;
-  }
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const bgColor2 = document.getElementById('editorBackground2').value;
+  const gradient = generateGradientFromColor(bgColor, bgColor2);
+  canvas.style.background = gradient;
   ctx.fillStyle = '#666';
   ctx.font = '16px Arial';
   ctx.textAlign = 'center';
@@ -902,6 +912,7 @@ async function saveCard() {
     const newOrder = document.getElementById('editorOrder').value;
     const size = parseInt(document.getElementById('editorSize').value);
     const backgroundColor = document.getElementById('editorBackground').value;
+    const backgroundColor2 = document.getElementById('editorBackground2').value;
     const italics = document.getElementById('editorItalics').checked;
     const svgColor = document.getElementById('editorSvgColor').checked;
     const svgBackground = document.getElementById('editorSvg').value;
@@ -913,6 +924,11 @@ async function saveCard() {
     if (!cardDataObj.options) cardDataObj.options = {};
     cardDataObj.options.size = size;
     cardDataObj.options.backgroundColor = backgroundColor;
+    if (backgroundColor2) {
+      cardDataObj.options.backgroundColor2 = backgroundColor2;
+    } else {
+      delete cardDataObj.options.backgroundColor2;
+    }
     cardDataObj.options.italics = italics;
     cardDataObj.options.svgColor = svgColor;
     if (svgBackground) {
@@ -1193,6 +1209,7 @@ document.getElementById('editorSize').addEventListener('input', (e) => {
   updateEditorPreview();
 });
 document.getElementById('editorBackground').addEventListener('change', updateEditorPreview);
+document.getElementById('editorBackground2').addEventListener('change', updateEditorPreview);
 document.getElementById('editorItalics').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvgColor').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvg').addEventListener('input', updateEditorPreview);
@@ -1209,6 +1226,29 @@ document.addEventListener('keydown', (e) => {
       hideDeleteModal();
     } else if (cardEditorModal.style.display === 'flex') {
       closeCardEditor();
+    }
+  }
+  
+  // Arrow keys to switch sets (only when no modals are open and no input is focused)
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    const individualView = document.getElementById('individualCardView');
+    const deleteModal = document.getElementById('deleteModal');
+    const cardEditorModal = document.getElementById('cardEditorModal');
+    const isInputFocused = document.activeElement && (
+      document.activeElement.tagName === 'INPUT' ||
+      document.activeElement.tagName === 'TEXTAREA' ||
+      document.activeElement.tagName === 'SELECT'
+    );
+    
+    if (individualView.style.display !== 'flex' &&
+        deleteModal.style.display !== 'flex' &&
+        cardEditorModal.style.display !== 'flex' &&
+        !isInputFocused) {
+      if (e.key === 'ArrowLeft') {
+        goToPreviousSet();
+      } else if (e.key === 'ArrowRight') {
+        goToNextSet();
+      }
     }
   }
 });
