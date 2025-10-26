@@ -1087,12 +1087,13 @@ async function displaySet(setNumber) {
             svgContainer.offsetHeight;
           }
         }
+        const { primaryColor, secondColor } = getCardColors(cardData);
+        cardWrapper.style.background = generateGradientFromColor(primaryColor, secondColor);
+        
         const canvas = document.createElement('canvas');
         canvas.width = 600;
         canvas.height = 848;
         cardWrapper.appendChild(canvas);
-        const { primaryColor, secondColor } = getCardColors(cardData);
-        canvas.style.background = generateGradientFromColor(primaryColor, secondColor);
         drawCardPreview(canvas, cardData);
       }
       } else {
