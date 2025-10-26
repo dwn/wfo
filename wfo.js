@@ -139,14 +139,230 @@ const COLORS = [
   { name: 'gry', hex: '#808080' },
   { name: 'wht', hex: '#ffffff' }
 ];
+
+// ===== HEX TO GRAPHICS SYSTEM =====
+
+// Drawing constants
+const THICKNESS_MULTIPLIERS = {
+  outline: 12,
+  main: 4,
+  pointOutline: 6,
+  pointRadius: 4,
+  endMarkerRadius: 3
+};
+
+const HEX_PAIR_COLORS = [
+  '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', 
+  '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
+  '#10ac84', '#ee5a24', '#0984e3', '#6c5ce7', '#a29bfe'
+];
+
+// Helper functions
+function triBitsToSigned(v3) { return (v3<=4) ? v3 : (4-v3); }
+const toCanvas = (p, s=8) => ({x: p.xi*s, y: p.yi*s});
+const normAngle = (a) => {
+  const twoPI = Math.PI * 2;
+  while (a <= -Math.PI) a += twoPI;
+  while (a > Math.PI) a -= twoPI;
+  return a;
+};
+const anticlockwiseForShortest = (a0, a1) => {
+  const twoPI = Math.PI * 2;
+  let cw = (a1 - a0) % twoPI;
+  if (cw < 0) cw += twoPI;
+  let ccw = (a0 - a1) % twoPI;
+  if (ccw < 0) ccw += twoPI;
+  return ccw <= cw;
+};
+const angleOnEllipse = (cx, cy, rx, ry, x, y) => Math.atan2((y - cy) / ry, (x - cx) / rx);
+
+// Parse hex bytes from input string
+function parseBytes(str) {
+  const out = []; let buf = '';
+  const isHex = c => /[0-9a-fA-F]/.test(c);
+  for (let i = 0; i < (str ? str.length : 0); i++) {
+    const ch = str[i];
+    if (ch === '|') {
+      const next = str[i + 1];
+      if (next === '|') {
+        out.push({newline: true});
+        i++;
+      } else {
+        out.push({pipe: true});
+      }
+      continue;
+    }
+    if (isHex(ch)) {
+      buf += ch;
+      if (buf.length === 2) {
+        out.push({byte: parseInt(buf, 16), text: buf});
+        buf = '';
+      }
+      continue;
+    } else {
+      if (buf) out.push({text: buf});
+      out.push({text: ch});
+      buf = '';
+    }
+  }
+  if (buf) out.push({text: buf});
+  return out;
+}
+
+// Build drawing operations from parsed bytes  
+function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.floor(600/s), backgroundColor='#808080', letterIndex=0) {
+  let xi = pad.left, yi = pad.top;
+  const ops = []; const visited = [{xi, yi}];
+  let currentLetterHexPairIndex = 0;
+  
+  const preMoveWrap = (xi, yi, dx) => {
+    const maxX = gridX - pad.right;
+    if (dx > 0 && (xi + dx) > maxX) { xi = pad.left; yi += 8; }
+    return { xi, yi };
+  };
+  const snapToLineTop = (yi) => pad.top + 8 * Math.floor((yi - pad.top) / 8);
+  
+  for (const item of coloredItems) {
+    if (item.newline) {
+      yi = pad.top + 8 * (Math.floor((yi - pad.top) / 8) + 1);
+      xi = pad.left;
+      visited.push({xi, yi});
+      continue;
+    }
+    if (item.pipe) {
+      letterIndex++;
+      currentLetterHexPairIndex = 0;
+      continue;
+    }
+    if (item.text && item.byte === undefined) continue;
+    
+    const b = item.byte;
+    const isCurrentLetter = letterIndex === 0;
+    const rgb = hexToRgb(backgroundColor);
+    const luminosity = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+    let textColor = luminosity > 0.5 ? '#000000' : '#ffffff';
+    
+    let stroke;
+    if (isCurrentLetter) {
+      const colorIndex = currentLetterHexPairIndex % HEX_PAIR_COLORS.length;
+      stroke = HEX_PAIR_COLORS[colorIndex];
+      currentLetterHexPairIndex++;
+    } else {
+      stroke = textColor;
+    }
+    
+    const a = (b >> 7) & 1;
+    const xxx = (b >> 4) & 0b111;
+    const bitB = (b >> 3) & 1;
+    const yyy = b & 0b111;
+    const isZero = (xxx === 0 && yyy === 0);
+    const ab = (a << 1) | bitB;
+    const isInvisibleMove = ab === 0b11;
+    
+    if (isCurrentLetter && !isInvisibleMove) {
+      const colorIndex = currentLetterHexPairIndex % HEX_PAIR_COLORS.length;
+      stroke = HEX_PAIR_COLORS[colorIndex];
+      currentLetterHexPairIndex++;
+    }
+    
+    if (isZero) {
+      if (ab === 0b00) { yi = snapToLineTop(yi); }
+      else if (ab === 0b01) { ops.push({type: 'point', xi, yi, color: stroke}); }
+      else if (ab === 0b10) { ops.push({type: 'arc', cx: toCanvas({xi, yi}, s).x, cy: toCanvas({xi, yi}, s).y, rx: s*0.5, ry: s*0.5, start: 0, end: Math.PI*2, acw: false, color: stroke}); }
+      visited.push({xi, yi});
+      continue;
+    }
+    
+    const dx = triBitsToSigned(xxx), dy = triBitsToSigned(yyy);
+    ({xi, yi} = preMoveWrap(xi, yi, Math.max(0, dx)));
+    const from = {xi, yi};
+    const to = {xi: xi + dx, yi: yi + dy};
+    
+    if (ab === 0b11) {
+      xi = to.xi; yi = to.yi;
+      visited.push({xi, yi});
+      continue;
+    }
+    
+    if (ab === 0b00) {
+      ops.push({type: 'line', from, to, color: stroke});
+    } else {
+      const p0 = toCanvas(from, s), p1 = toCanvas(to, s);
+      let cx, cy, rx, ry, a0, a1;
+      if (dx !== 0 && dy !== 0) {
+        rx = Math.abs(dx)*s; ry = Math.abs(dy)*s;
+        if (ab === 0b01) { cx = p0.x; cy = p0.y + dy*s; }
+        else { cx = p0.x + dx*s; cy = p0.y; }
+        a0 = angleOnEllipse(cx, cy, rx, ry, p0.x, p0.y);
+        a1 = angleOnEllipse(cx, cy, rx, ry, p1.x, p1.y);
+        a0 = normAngle(a0); a1 = normAngle(a1);
+        const acw = anticlockwiseForShortest(a0, a1);
+        ops.push({type: 'arc', cx, cy, rx, ry, start: a0, end: a1, acw, color: stroke});
+      }
+    }
+    
+    xi = to.xi; yi = to.yi;
+    visited.push({xi, yi});
+  }
+  
+  return { ops, visited };
+}
+
+// Drawing functions
+function drawOp(ctx, op, s=8, thickness=0.8) {
+  if (op.type === 'line') {
+    const p1 = toCanvas(op.from, s), p2 = toCanvas(op.to, s);
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.strokeStyle = op.color;
+    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
+    ctx.stroke();
+  } else if (op.type === 'arc') {
+    ctx.beginPath();
+    ctx.ellipse(op.cx, op.cy, op.rx, op.ry, 0, op.start, op.end, op.acw);
+    ctx.strokeStyle = op.color;
+    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
+    ctx.stroke();
+  } else if (op.type === 'point') {
+    const c = toCanvas(op, s);
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointRadius, 0, Math.PI * 2);
+    ctx.fillStyle = op.color;
+    ctx.fill();
+  }
+}
+
 function drawCardPreview(canvas, cardData) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (cardData && cardData.input) {
+  
+  if (!cardData || !cardData.input) return;
+  
+  try {
+    // Parse hex input
+    const coloredItems = parseBytes(cardData.input);
+    
+    // Get background color
+    const { primaryColor } = getCardColors(cardData);
+    
+    // Build drawing operations
+    const s = 8;
+    const pad = { left: 1, top: 1, right: 1 };
+    const gridX = Math.floor(canvas.width / s);
+    const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor, 0);
+    
+    // Draw all operations
+    const thickness = s / 10;
+    for (const op of ops) {
+      drawOp(ctx, op, s, thickness);
+    }
+  } catch (error) {
+    // Fallback to text if drawing fails
     ctx.fillStyle = '#ffffff';
     ctx.font = '20px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(`Card ${cardData.input.substring(0, 10)}...`, canvas.width / 2, canvas.height / 2);
+    ctx.fillText(`Error: ${error.message}`, canvas.width / 2, canvas.height / 2);
   }
 }
 let draggedCard = null;
@@ -877,8 +1093,18 @@ function openCardEditor(setNumber, order, cardData) {
   document.getElementById('editorItalics').checked = cardData.options?.italics !== false;
   document.getElementById('editorSvgColor').checked = cardData.options?.svgColor === true;
   document.getElementById('editorSvg').value = cardData.options?.svgBackground || '';
-  document.getElementById('editorRule').value = cardData.rule || '';
-  document.getElementById('editorInput').value = cardData.input || '';
+  
+  // Handle contenteditable divs
+  const ruleEl = document.getElementById('editorRule');
+  const inputEl = document.getElementById('editorInput');
+  ruleEl.textContent = cardData.rule || '';
+  inputEl.textContent = cardData.input || '';
+  
+  // Trigger highlighting after a brief delay to ensure the content is set
+  setTimeout(() => {
+    highlightEditor(ruleEl);
+    highlightEditor(inputEl);
+  }, 50);
   const positionDisplay = document.getElementById('editorPositionDisplay');
   if (cardData.options?.position) {
     positionDisplay.textContent = `Row ${cardData.options.position.row}, Col ${cardData.options.position.col}`;
@@ -892,6 +1118,214 @@ function closeCardEditor() {
   document.getElementById('cardEditorModal').style.display = 'none';
   currentEditingCard = null;
 }
+function animateDrawing(ctx, ops, s, pad) {
+  const STEP_DELAY_MS = 20;
+  const DRAW_MS = STEP_DELAY_MS;
+  const thickness = s / 10;
+  
+  let currentIndex = 0;
+  const animStart = performance.now();
+  const firstVisibleAt = ops.map((_, i) => animStart + i * STEP_DELAY_MS);
+  
+  const drawFrame = (now) => {
+    // Clear canvas
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    
+    // Draw all operations up to current progress
+    for (let i = 0; i < ops.length; i++) {
+      const op = ops[i];
+      const t0 = firstVisibleAt[i];
+      const progress = Math.max(0, Math.min(1, (now - t0) / DRAW_MS));
+      
+      if (progress > 0) {
+        // Draw with progress animation
+        drawOpAnimated(ctx, op, s, thickness, progress);
+      }
+    }
+    
+    // Continue animation if not done
+    const allDone = ops.length === 0 || (now >= firstVisibleAt[ops.length - 1] + DRAW_MS);
+    if (!allDone) {
+      requestAnimationFrame(drawFrame);
+    }
+  };
+  
+  requestAnimationFrame(drawFrame);
+}
+
+function drawOpAnimated(ctx, op, s, thickness, progress) {
+  if (op.type === 'line') {
+    const p1 = toCanvas(op.from, s);
+    const p2 = toCanvas(op.to, s);
+    const intermediate = {
+      x: p1.x + (p2.x - p1.x) * progress,
+      y: p1.y + (p2.y - p1.y) * progress
+    };
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(intermediate.x, intermediate.y);
+    ctx.strokeStyle = op.color;
+    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
+    ctx.stroke();
+  } else if (op.type === 'arc') {
+    ctx.beginPath();
+    if (op.start === 0 && op.end === Math.PI * 2) {
+      const endAngle = progress * Math.PI * 2;
+      ctx.ellipse(op.cx, op.cy, op.rx, op.ry, 0, 0, endAngle, false);
+    } else {
+      let angleDiff = op.acw ? op.start - op.end : op.end - op.start;
+      if (angleDiff <= 0) angleDiff += Math.PI * 2;
+      const progressAngle = angleDiff * progress;
+      const progressEndAngle = op.acw ? op.start - progressAngle : op.start + progressAngle;
+      ctx.ellipse(op.cx, op.cy, op.rx, op.ry, 0, op.start, progressEndAngle, op.acw);
+    }
+    ctx.strokeStyle = op.color;
+    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
+    ctx.stroke();
+  } else if (op.type === 'point') {
+    const c = toCanvas(op, s);
+    const radius = thickness * THICKNESS_MULTIPLIERS.pointRadius * progress;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = op.color;
+    ctx.fill();
+  }
+}
+
+function highlightEditor(element) {
+  if (!element) return;
+  
+  // Get plain text content
+  const raw = element.textContent || element.innerText || '';
+  
+  if (!raw) {
+    element.innerHTML = '';
+    return;
+  }
+  
+  // Get current cursor position to determine which "letter" we're on
+  const selection = window.getSelection();
+  const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+  let cursorPos = 0;
+  if (range) {
+    const preRange = document.createRange();
+    preRange.selectNodeContents(element);
+    preRange.setEnd(range.endContainer, range.endOffset);
+    cursorPos = preRange.toString().length;
+  }
+  
+  // Calculate which letter index we're in (based on | separators)
+  const hasPipes = raw.includes('|');
+  let currentLetterIndex = 0;
+  let currentPos = 0;
+  
+  if (hasPipes) {
+    for (let i = 0; i < raw.length && i < cursorPos; i++) {
+      if (raw[i] === '|') {
+        if (i + 1 < raw.length && raw[i + 1] === '|') {
+          currentLetterIndex++;
+          i++;
+        } else {
+          currentLetterIndex++;
+        }
+      }
+      currentPos++;
+    }
+  }
+  
+  // Escape HTML special characters
+  const esc = (s) => s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const escText = esc(raw);
+  
+  // Basic hex highlighting - colorize hex pairs
+  const HEX_CHAR_RE = /[0-9A-Fa-f]/;
+  let html = '';
+  let i = 0;
+  let letterIndex = 0;
+  let hexPairIndex = 0;
+  let inComment = false;
+  
+  while (i < escText.length) {
+    const ch = escText[i];
+    
+    // Check for comment start
+    if (ch === '/' && i + 1 < escText.length && escText[i + 1] === '/') {
+      inComment = true;
+      html += ch;
+      i++;
+      continue;
+    }
+    
+    // If in comment, just output characters until end of line
+    if (inComment) {
+      html += ch;
+      i++;
+      // Check for newline (comment end)
+      if (ch === '\n' || ch === '\r') {
+        inComment = false;
+      }
+      continue;
+    }
+    
+    if (ch === '|') {
+      const next = escText[i + 1];
+      if (next === '|') {
+        html += '||';
+        i += 2;
+        if (hasPipes) {
+          letterIndex++;
+          hexPairIndex = 0;
+        }
+      } else {
+        html += '|';
+        i++;
+        if (hasPipes) {
+          letterIndex++;
+          hexPairIndex = 0;
+        }
+      }
+    } else if (HEX_CHAR_RE.test(ch) && i + 1 < escText.length && HEX_CHAR_RE.test(escText[i + 1])) {
+      // Found a hex pair
+      const pair = escText.substr(i, 2);
+      const byte = parseInt(pair, 16);
+      const a = (byte >> 7) & 1;
+      const xxx = (byte >> 4) & 0b111;
+      const bitB = (byte >> 3) & 1;
+      const yyy = byte & 0b111;
+      const isZero = (xxx === 0 && yyy === 0);
+      const ab = (a << 1) | bitB;
+      const isInvisibleMove = ab === 0b11;
+      
+      const isCurrentLetter = (letterIndex === currentLetterIndex);
+      const isMoveOnly = ab === 0b00 && isZero;
+      
+      if (isCurrentLetter && !isInvisibleMove && !isMoveOnly) {
+        // Color each hex pair in current letter with different colors
+        const colorIndex = hexPairIndex % HEX_PAIR_COLORS.length;
+        const hexColor = HEX_PAIR_COLORS[colorIndex];
+        html += `<strong style="color: ${hexColor};">${pair}</strong>`;
+      } else if (isInvisibleMove || isMoveOnly) {
+        // Invisible moves and move-only commands get yellow highlight background
+        html += `<span style="background: #ffff00; color: #000;">${pair}</span>`;
+      } else {
+        html += pair;
+      }
+      
+      // Always increment hexPairIndex when in current letter
+      if (isCurrentLetter) {
+        hexPairIndex++;
+      }
+      
+      i += 2;
+    } else {
+      html += ch;
+      i++;
+    }
+  }
+  
+  element.innerHTML = html;
+}
+
 function updateEditorPreview() {
   const canvas = document.getElementById('editorCanvas');
   const ctx = canvas.getContext('2d');
@@ -900,10 +1334,49 @@ function updateEditorPreview() {
   const bgColor2 = document.getElementById('editorBackground2').value;
   const gradient = generateGradientFromColor(bgColor, bgColor2);
   canvas.style.background = gradient;
-  ctx.fillStyle = '#666';
-  ctx.font = '16px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText('Card Preview', canvas.width / 2, canvas.height / 2);
+  
+  // Get the input value to render (for contenteditable divs, use textContent)
+  const inputEl = document.getElementById('editorInput');
+  const input = inputEl ? (inputEl.textContent || inputEl.value || '') : '';
+  
+  if (!input) {
+    // Show placeholder text if no input
+    ctx.fillStyle = '#666';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Card Preview', canvas.width / 2, canvas.height / 2);
+    return;
+  }
+  
+  // Render the hex graphics
+  try {
+    const coloredItems = parseBytes(input);
+    const s = 8;
+    const pad = { left: 1, top: 1, right: 1 };
+    const gridX = Math.floor(canvas.width / s);
+    const { ops, visited } = buildOps(coloredItems, s, pad, gridX, bgColor, 0);
+    
+    // Check if animation is enabled
+    const animateCheckbox = document.getElementById('animatePreview');
+    const shouldAnimate = animateCheckbox && animateCheckbox.checked;
+    
+    if (shouldAnimate) {
+      // Animated drawing
+      animateDrawing(ctx, ops, s, pad);
+    } else {
+      // Instant drawing
+      const thickness = s / 10;
+      for (const op of ops) {
+        drawOp(ctx, op, s, thickness);
+      }
+    }
+  } catch (error) {
+    // Fallback to error text if drawing fails
+    ctx.fillStyle = '#ff0000';
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Error: ${error.message}`, canvas.width / 2, canvas.height / 2);
+  }
 }
 async function saveCard() {
   if (!currentEditingCard) return;
@@ -916,8 +1389,10 @@ async function saveCard() {
     const italics = document.getElementById('editorItalics').checked;
     const svgColor = document.getElementById('editorSvgColor').checked;
     const svgBackground = document.getElementById('editorSvg').value;
-    const rule = document.getElementById('editorRule').value;
-    const input = document.getElementById('editorInput').value;
+    const ruleEl = document.getElementById('editorRule');
+    const inputEl = document.getElementById('editorInput');
+    const rule = ruleEl ? (ruleEl.textContent || ruleEl.value || '') : '';
+    const input = inputEl ? (inputEl.textContent || inputEl.value || '') : '';
     const cardDataObj = currentEditingCard.cardData;
     cardDataObj.rule = rule;
     cardDataObj.input = input;
@@ -1213,8 +1688,18 @@ document.getElementById('editorBackground2').addEventListener('change', updateEd
 document.getElementById('editorItalics').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvgColor').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvg').addEventListener('input', updateEditorPreview);
-document.getElementById('editorRule').addEventListener('input', updateEditorPreview);
-document.getElementById('editorInput').addEventListener('input', updateEditorPreview);
+document.getElementById('editorRule').addEventListener('input', (e) => {
+  highlightEditor(e.target);
+  updateEditorPreview();
+});
+document.getElementById('editorInput').addEventListener('input', (e) => {
+  // Use a small timeout to let the content settle
+  setTimeout(() => {
+    highlightEditor(e.target);
+    updateEditorPreview();
+  }, 10);
+});
+document.getElementById('animatePreview').addEventListener('change', updateEditorPreview);
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const individualView = document.getElementById('individualCardView');

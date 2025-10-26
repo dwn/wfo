@@ -98,3 +98,12 @@ body{background:#1a1a1a;color:#ffffff;font-family:system-ui,-apple-system,sans-s
 .svg-preview-content{background:linear-gradient(135deg,#f8f8f8 0%,#a0a0a0 100%);padding:20px;border-radius:4px;min-height:100px;display:flex;align-items:center;justify-content:center}
 @media (max-width:1200px){.editor-grid{grid-template-columns:1fr;gap:16px}.preview-container{max-height:400px}}
 @media (max-width:768px){.card-editor-content{margin:10px;max-height:95vh}.card-editor-header,.card-editor-body,.card-editor-footer{padding:16px}.form-grid{grid-template-columns:1fr;gap:12px}}
+.highlightable:empty::before {
+  content: attr(placeholder);
+  color: #666;
+  pointer-events: none;
+}
+.highlightable strong {
+  font-weight: bold;
+  color: inherit;
+}
