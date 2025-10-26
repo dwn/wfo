@@ -156,8 +156,8 @@ function triBitsToSigned(v3) { return (v3<=4) ? v3 : (4-v3); }
 const toCanvas = (p, s=8) => ({x: p.xi*s, y: p.yi*s});
 const normAngle = (a) => {
   const twoPI = Math.PI * 2;
-  while (a <= -Math.PI) a += twoPI;
-  while (a > Math.PI) a -= twoPI;
+  while (a < 0) a += twoPI;
+  while (a >= twoPI) a -= twoPI;
   return a;
 };
 const anticlockwiseForShortest = (a0, a1) => {
@@ -327,19 +327,29 @@ function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false) {
   if (op.type === 'line') {
     const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
     const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
+    ctx.save();
     ctx.beginPath();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(p2.x, p2.y);
     ctx.strokeStyle = op.color;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
+    ctx.restore();
   } else if (op.type === 'arc') {
     const transformedCenter = applyItalicsTransform({x: op.cx, y: op.cy}, s, italicsMode);
+    
+    // The angles stay the same, we just transform the center
+    ctx.save();
     ctx.beginPath();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, op.start, op.end, op.acw);
     ctx.strokeStyle = op.color;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
+    ctx.restore();
   } else if (op.type === 'point') {
     const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
     ctx.beginPath();
@@ -389,6 +399,9 @@ function drawCardPreview(canvas, cardData) {
     // Get background color
     const { primaryColor } = getCardColors(cardData);
     
+    // Get italics setting from card data
+    const italicsMode = cardData.options?.italics !== false;
+    
     // Build drawing operations
     const s = 8;
     const pad = { left: 1, top: 1, right: 1 };
@@ -398,7 +411,7 @@ function drawCardPreview(canvas, cardData) {
     // Draw all operations
     const thickness = s / 10;
     for (const op of ops) {
-      drawOp(ctx, op, s, thickness);
+      drawOp(ctx, op, s, thickness, italicsMode);
     }
   } catch (error) {
     // Fallback to text if drawing fails
@@ -1133,15 +1146,23 @@ function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false) {
       x: p1.x + (p2.x - p1.x) * progress,
       y: p1.y + (p2.y - p1.y) * progress
     };
+    ctx.save();
     ctx.beginPath();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(intermediate.x, intermediate.y);
     ctx.strokeStyle = op.color;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
+    ctx.restore();
   } else if (op.type === 'arc') {
     const transformedCenter = applyItalicsTransform({x: op.cx, y: op.cy}, s, italicsMode);
+    
+    ctx.save();
     ctx.beginPath();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     if (op.start === 0 && op.end === Math.PI * 2) {
       const endAngle = progress * Math.PI * 2;
       ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, 0, endAngle, false);
@@ -1155,6 +1176,7 @@ function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false) {
     ctx.strokeStyle = op.color;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
+    ctx.restore();
   } else if (op.type === 'point') {
     const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
     const radius = thickness * THICKNESS_MULTIPLIERS.pointRadius * progress;
