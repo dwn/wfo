@@ -171,6 +171,23 @@ const anticlockwiseForShortest = (a0, a1) => {
 const angleOnEllipse = (cx, cy, rx, ry, x, y) => Math.atan2((y - cy) / ry, (x - cx) / rx);
 const esc = (s) => s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
+// Italics transform function
+function applyItalicsTransform(point, s=8, italicsMode=true) {
+  if (!italicsMode) return point;
+  
+  const textLineHeight = 8 * s;
+  const textLineIndex = Math.floor(point.y / textLineHeight);
+  
+  const skewFactor = -0.15;
+  const yWithinTextLine = point.y - (textLineIndex * textLineHeight);
+  const skewOffset = s + yWithinTextLine * skewFactor;
+  
+  return {
+    x: point.x + skewOffset,
+    y: point.y
+  };
+}
+
 // Parse hex bytes from input string
 function parseBytes(str) {
   const out = []; let buf = '';
@@ -205,7 +222,7 @@ function parseBytes(str) {
 }
 
 // Build drawing operations from parsed bytes  
-function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.floor(600/s), backgroundColor='#808080', letterIndex=0) {
+function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.floor(600/s), backgroundColor='#808080', letterIndex=0, noColorization=false) {
   let xi = pad.left, yi = pad.top;
   const ops = []; const visited = [{xi, yi}];
   let currentLetterHexPairIndex = 0;
@@ -238,7 +255,9 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
     let textColor = luminosity > 0.5 ? '#000000' : '#ffffff';
     
     let stroke;
-    if (isCurrentLetter) {
+    if (noColorization) {
+      stroke = textColor;
+    } else if (isCurrentLetter) {
       const colorIndex = currentLetterHexPairIndex % HEX_PAIR_COLORS.length;
       stroke = HEX_PAIR_COLORS[colorIndex];
       currentLetterHexPairIndex++;
@@ -254,7 +273,7 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
     const ab = (a << 1) | bitB;
     const isInvisibleMove = ab === 0b11;
     
-    if (isCurrentLetter && !isInvisibleMove) {
+    if (!noColorization && isCurrentLetter && !isInvisibleMove) {
       const colorIndex = currentLetterHexPairIndex % HEX_PAIR_COLORS.length;
       stroke = HEX_PAIR_COLORS[colorIndex];
       currentLetterHexPairIndex++;
@@ -304,9 +323,10 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
 }
 
 // Drawing functions
-function drawOp(ctx, op, s=8, thickness=0.8) {
+function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false) {
   if (op.type === 'line') {
-    const p1 = toCanvas(op.from, s), p2 = toCanvas(op.to, s);
+    const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
+    const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(p2.x, p2.y);
@@ -314,13 +334,14 @@ function drawOp(ctx, op, s=8, thickness=0.8) {
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
   } else if (op.type === 'arc') {
+    const transformedCenter = applyItalicsTransform({x: op.cx, y: op.cy}, s, italicsMode);
     ctx.beginPath();
-    ctx.ellipse(op.cx, op.cy, op.rx, op.ry, 0, op.start, op.end, op.acw);
+    ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, op.start, op.end, op.acw);
     ctx.strokeStyle = op.color;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
   } else if (op.type === 'point') {
-    const c = toCanvas(op, s);
+    const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
     ctx.beginPath();
     ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointRadius, 0, Math.PI * 2);
     ctx.fillStyle = op.color;
@@ -335,8 +356,35 @@ function drawCardPreview(canvas, cardData) {
   if (!cardData || !cardData.input) return;
   
   try {
-    // Parse hex input
-    const coloredItems = parseBytes(cardData.input);
+    // Process input through rules to get output
+    let output = cardData.input;
+    
+    // Filter out comment lines
+    output = output.split('\n')
+      .filter(line => !line.trim().startsWith('//'))
+      .join('\n');
+    
+    // Apply replacement rules if they exist
+    if (cardData.rule && cardData.rule.trim()) {
+      const lines = cardData.rule.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));
+      
+      for (const line of lines) {
+        const pairs = line.trim().split(/\s+/);
+        
+        for (const pair of pairs) {
+          const commaIndex = pair.indexOf(',');
+          if (commaIndex > 0 && commaIndex < pair.length - 1) {
+            const source = pair.substring(0, commaIndex);
+            const target = pair.substring(commaIndex + 1);
+            
+            output = output.replace(new RegExp(escapeRegExp(source), 'g'), target);
+          }
+        }
+      }
+    }
+    
+    // Parse hex output (not input)
+    const coloredItems = parseBytes(output);
     
     // Get background color
     const { primaryColor } = getCardColors(cardData);
@@ -345,7 +393,7 @@ function drawCardPreview(canvas, cardData) {
     const s = 8;
     const pad = { left: 1, top: 1, right: 1 };
     const gridX = Math.floor(canvas.width / s);
-    const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor, 0);
+    const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor, 0, true);
     
     // Draw all operations
     const thickness = s / 10;
@@ -1042,7 +1090,7 @@ function closeCardEditor() {
   document.getElementById('cardEditorModal').style.display = 'none';
   currentEditingCard = null;
 }
-function animateDrawing(ctx, ops, s, pad) {
+function animateDrawing(ctx, ops, s, pad, italicsMode=false) {
   const STEP_DELAY_MS = 20;
   const DRAW_MS = STEP_DELAY_MS;
   const thickness = s / 10;
@@ -1054,7 +1102,7 @@ function animateDrawing(ctx, ops, s, pad) {
   const drawFrame = (now) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     
-    drawGridPoints(ctx, s, ctx.canvas.width, ctx.canvas.height, thickness);
+    drawGridPoints(ctx, s, ctx.canvas.width, ctx.canvas.height, thickness, italicsMode);
     
     for (let i = 0; i < ops.length; i++) {
       const op = ops[i];
@@ -1063,7 +1111,7 @@ function animateDrawing(ctx, ops, s, pad) {
       
       if (progress > 0) {
         // Draw with progress animation
-        drawOpAnimated(ctx, op, s, thickness, progress);
+        drawOpAnimated(ctx, op, s, thickness, progress, italicsMode);
       }
     }
     
@@ -1077,10 +1125,10 @@ function animateDrawing(ctx, ops, s, pad) {
   requestAnimationFrame(drawFrame);
 }
 
-function drawOpAnimated(ctx, op, s, thickness, progress) {
+function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false) {
   if (op.type === 'line') {
-    const p1 = toCanvas(op.from, s);
-    const p2 = toCanvas(op.to, s);
+    const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
+    const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
     const intermediate = {
       x: p1.x + (p2.x - p1.x) * progress,
       y: p1.y + (p2.y - p1.y) * progress
@@ -1092,22 +1140,23 @@ function drawOpAnimated(ctx, op, s, thickness, progress) {
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
   } else if (op.type === 'arc') {
+    const transformedCenter = applyItalicsTransform({x: op.cx, y: op.cy}, s, italicsMode);
     ctx.beginPath();
     if (op.start === 0 && op.end === Math.PI * 2) {
       const endAngle = progress * Math.PI * 2;
-      ctx.ellipse(op.cx, op.cy, op.rx, op.ry, 0, 0, endAngle, false);
+      ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, 0, endAngle, false);
     } else {
       let angleDiff = op.acw ? op.start - op.end : op.end - op.start;
       if (angleDiff <= 0) angleDiff += Math.PI * 2;
       const progressAngle = angleDiff * progress;
       const progressEndAngle = op.acw ? op.start - progressAngle : op.start + progressAngle;
-      ctx.ellipse(op.cx, op.cy, op.rx, op.ry, 0, op.start, progressEndAngle, op.acw);
+      ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, op.start, progressEndAngle, op.acw);
     }
     ctx.strokeStyle = op.color;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
   } else if (op.type === 'point') {
-    const c = toCanvas(op, s);
+    const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
     const radius = thickness * THICKNESS_MULTIPLIERS.pointRadius * progress;
     ctx.beginPath();
     ctx.arc(c.x, c.y, radius, 0, Math.PI * 2);
@@ -1249,7 +1298,7 @@ function highlightEditor(element) {
   element.innerHTML = html;
 }
 
-function drawGridPoints(ctx, spacing, width, height, thickness) {
+function drawGridPoints(ctx, spacing, width, height, thickness, italicsMode=false) {
   ctx.save();
   const baseColor = '#666666';
   const r = thickness * 3;
@@ -1264,8 +1313,9 @@ function drawGridPoints(ctx, spacing, width, height, thickness) {
     ctx.globalAlpha = 1;
     
     for (let x = 0; x <= width; x += spacing) {
+      const point = applyItalicsTransform({x, y}, spacing, italicsMode);
       ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.arc(point.x, point.y, r, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -1452,15 +1502,18 @@ function updateEditorPreview() {
     
     const thickness = s / 10;
     
+    const italicsCheckbox = document.getElementById('editorItalics');
+    const italicsMode = italicsCheckbox ? italicsCheckbox.checked : false;
+    
     const animateCheckbox = document.getElementById('animatePreview');
     const shouldAnimate = animateCheckbox && animateCheckbox.checked;
     
     if (shouldAnimate) {
-      animateDrawing(ctx, ops, s, pad);
+      animateDrawing(ctx, ops, s, pad, italicsMode);
     } else {
-      drawGridPoints(ctx, s, canvas.width, canvas.height, thickness);
+      drawGridPoints(ctx, s, canvas.width, canvas.height, thickness, italicsMode);
       for (const op of ops) {
-        drawOp(ctx, op, s, thickness);
+        drawOp(ctx, op, s, thickness, italicsMode);
       }
     }
   } catch (error) {
