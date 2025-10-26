@@ -175,6 +175,7 @@ const anticlockwiseForShortest = (a0, a1) => {
   return ccw <= cw;
 };
 const angleOnEllipse = (cx, cy, rx, ry, x, y) => Math.atan2((y - cy) / ry, (x - cx) / rx);
+const esc = (s) => s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
 // Parse hex bytes from input string
 function parseBytes(str) {
@@ -419,7 +420,6 @@ function setupDragAndDrop(setNumber) {
       e.clientY <= copyRect.bottom
     );
     if (isOverCopy) {
-      console.log('Dragging over copy button');
     }
     const isOutsideGrid = (
       (e.clientX < gridRect.left || e.clientX > gridRect.right || 
@@ -454,38 +454,22 @@ function setupDragAndDrop(setNumber) {
       if (isOutsideGrid && !isDraggingOffGrid) {
         isDraggingOffGrid = true;
         const direction = e.clientX < gridRect.left ? 'prev' : 'next';
-        console.log('Started dragging off grid, direction:', direction);
         const currentIndex = availableSets.indexOf(currentSetNumber);
         const canGoPrev = currentIndex > 0;
         const canGoNext = currentIndex < availableSets.length - 1;
-        console.log('Navigation check:', {
-          currentSetNumber,
-          currentIndex,
-          availableSets,
-          canGoPrev,
-          canGoNext,
-          direction
-        });
         if (direction === 'prev' && canGoPrev) {
-          console.log('Highlighting prev area');
           prevArea.style.background = 'rgba(255, 255, 255, 0.05)';
         } else if (direction === 'next' && canGoNext) {
-          console.log('Highlighting next area');
           nextArea.style.background = 'rgba(255, 255, 255, 0.05)';
         } else if (direction === 'next' && !canGoNext) {
-          console.log('On last set, highlighting right area for new set creation');
           nextArea.style.background = 'rgba(255, 255, 255, 0.05)';
         } else {
-          console.log('Not highlighting any nav area');
         }
         if ((direction === 'prev' && canGoPrev) || (direction === 'next' && (canGoNext || !canGoNext))) {
           dragOffGridTimer = setTimeout(() => {
-            console.log('1 second elapsed, finding target set...');
             const targetSet = findNonFullSet(direction);
-            console.log('Target set:', targetSet);
             if (targetSet !== null) {
               const draggedOrder = parseInt(draggedCard.getAttribute('data-order'));
-              console.log(`Moving card ${currentSetNumber}.${draggedOrder} to set ${targetSet}`);
               moveCardToSet(currentSetNumber, draggedOrder, targetSet);
             } else {
               let newSetNumber;
@@ -495,12 +479,9 @@ function setupDragAndDrop(setNumber) {
                 newSetNumber = direction === 'next' ? Math.max(...availableSets) + 1 : Math.min(...availableSets) - 1;
               }
               if (newSetNumber > 0) {
-                console.log(`Creating new set ${newSetNumber}`);
                 const draggedOrder = parseInt(draggedCard.getAttribute('data-order'));
-                console.log(`Moving card ${currentSetNumber}.${draggedOrder} to new set ${newSetNumber}`);
                 moveCardToSet(currentSetNumber, draggedOrder, newSetNumber);
               } else {
-                console.log('Cannot create set with negative number');
               }
             }
             prevArea.style.background = '';
@@ -508,7 +489,6 @@ function setupDragAndDrop(setNumber) {
           }, 1000);
         }
       } else if (!isOutsideGrid && isDraggingOffGrid) {
-        console.log('Moved back onto grid, canceling timer');
         clearTimeout(dragOffGridTimer);
         isDraggingOffGrid = false;
         prevArea.style.background = '';
@@ -548,15 +528,6 @@ function setupDragAndDrop(setNumber) {
         e.clientY >= copyRect.top &&
         e.clientY <= copyRect.bottom
       );
-      console.log('Drop detection:', {
-        clientX: e.clientX,
-        clientY: e.clientY,
-        copyRect: copyRect,
-        isOverCopy: isOverCopy,
-        isOverTrash: isOverTrash,
-        copyButtonVisible: copyButton.style.display !== 'none',
-        copyButtonClasses: copyButton.className
-      });
       if (isOverTrash && draggedCard) {
         const draggedOrder = parseInt(draggedCard.getAttribute('data-order'));
         cardToDelete = {
@@ -566,17 +537,14 @@ function setupDragAndDrop(setNumber) {
         };
         showDeleteModal();
       } else if (isOverCopy && draggedCard) {
-        console.log('Dropped on copy button, starting copy process');
         const draggedOrder = parseInt(draggedCard.getAttribute('data-order'));
         cardToCopy = {
           set: currentSetNumber,
           order: draggedOrder,
           element: draggedCard
         };
-        console.log('Card to copy set:', cardToCopy);
         copyCard();
       } else {
-        console.log('Not dropped on copy button or trash can');
       }
       if (trashCan) {
         trashCan.classList.remove('drag-over');
@@ -644,14 +612,6 @@ function setupDragAndDrop(setNumber) {
     const targetCol = parseInt(targetCard?.style.gridColumn) || 1;
     const originalDraggedRow = parseInt(draggedCard.style.gridRow) || 1;
     const originalDraggedCol = parseInt(draggedCard.style.gridColumn) || 1;
-    
-    console.log(`Drop operation:`, {
-      draggedCard: draggedCard.getAttribute('data-order'),
-      targetCard: targetCard?.getAttribute('data-order'),
-      draggedPosition: `${originalDraggedRow}-${originalDraggedCol}`,
-      targetPosition: `${targetRow}-${targetCol}`,
-      isTargetEmpty: !targetCard || targetCard.classList.contains('empty-slot')
-    });
     if (targetRow === originalDraggedRow && targetCol === originalDraggedCol) {
       targetCard?.classList.remove('drag-over');
       isProcessingDrop = false;
@@ -769,12 +729,6 @@ async function showIndividualCard(setNumber, order, cardData) {
       const { primaryColor } = getCardColors(cardData);
       const textColor = calculateSvgTextColor(primaryColor, false);
       const useNaturalColors = cardData.options && cardData.options.svgColor === true;
-      console.log(`Individual card ${setNumber}.${order} SVG settings:`, {
-        backgroundColor: primaryColor,
-        svgColor: cardData.options?.svgColor,
-        useNaturalColors: useNaturalColors,
-        textColor: textColor
-      });
       const cleanedSvg = stripSvgColors(svgContent, useNaturalColors);
       const svgContainer = document.createElement('div');
       svgContainer.className = 'svg-container';
@@ -817,7 +771,6 @@ function hideIndividualCard() {
 }
 async function scanAllSets() {
   try {
-    console.log('Scanning all sets...');
     const { data: files, error } = await supabaseClient.storage
       .from('card')
       .list('', { limit: 1000 });
@@ -827,28 +780,24 @@ async function scanAllSets() {
     for (const file of files) {
       const parsed = parseCardFilename(file.name);
       if (parsed) {
-        console.log(`Found card file: ${file.name} -> set ${parsed.set}, order ${parsed.order}`);
         if (!sets.has(parsed.set)) {
           sets.set(parsed.set, []);
         }
         sets.get(parsed.set).push(parsed);
         maxSetFound = Math.max(maxSetFound, parsed.set);
       } else {
-        console.log(`Skipping file (not a card): ${file.name}`);
       }
     }
     availableSets = [];
     for (let setNum = 1; setNum <= maxSetFound; setNum++) {
       const cards = sets.get(setNum) || [];
       const sortedCards = cards.sort((a, b) => a.order - b.order);
-      console.log(`Set ${setNum}: ${cards.length} cards found:`, sortedCards.map(c => `${c.set}.${c.order}`));
       setInfo.set(setNum, {
         cardCount: cards.length,
         cards: sortedCards
       });
       availableSets.push(setNum);
     }
-    console.log('Cached set info:', setInfo);
   } catch (error) {
     console.error('Error scanning sets:', error);
   }
@@ -880,19 +829,16 @@ async function fixCardPositions(setNumber, cardsToFix) {
       if (error) {
         console.error(`Failed to fix position for card ${setNumber}.${order}:`, error);
       } else {
-        console.log(`Fixed position for card ${setNumber}.${order}: ${newPosition.row}-${newPosition.col}`);
         const key = `${setNumber}.${order}`;
         cardData.set(key, data);
       }
     }
     await scanAllSets();
-    console.log('Position fixes completed and sets rescanned');
   } catch (error) {
     console.error('Error fixing card positions:', error);
   }
 }
 async function displaySet(setNumber) {
-  console.log(`displaySet called with setNumber: ${setNumber}`);
   const statusEl = document.getElementById('status');
   let gridEl = document.getElementById('gridContainer');
   if (!gridEl) {
@@ -924,31 +870,23 @@ async function displaySet(setNumber) {
     const cardsWithoutPosition = [];
     const cardsToFix = [];
     loadedCards.forEach(({ order, data }) => {
-      console.log(`Processing card ${setNumber}.${order}:`, data ? 'has data' : 'no data');
       if (data && data.options && data.options.position) {
         const { row, col } = data.options.position;
-        console.log(`Card ${setNumber}.${order} has position: row=${row}, col=${col}`);
         if (row !== null && col !== null && typeof row === 'number' && typeof col === 'number') {
           const key = `${row}-${col}`;
           if (gridPositions.has(key)) {
-            console.log(`Card ${setNumber}.${order} conflicts with existing card at position ${key}, adding to no-position list`);
             cardsWithoutPosition.push({ order, data });
           } else {
             gridPositions.set(key, { order, data });
-            console.log(`Card ${setNumber}.${order} placed at position ${key}`);
           }
         } else {
-          console.log(`Card ${setNumber}.${order} has invalid position, adding to no-position list`);
           cardsWithoutPosition.push({ order, data });
         }
       } else if (data) {
-        console.log(`Card ${setNumber}.${order} has no position, adding to no-position list`);
         cardsWithoutPosition.push({ order, data });
       } else {
-        console.log(`Card ${setNumber}.${order} has no data, skipping`);
       }
     });
-    console.log(`Cards without position: ${cardsWithoutPosition.length}`, cardsWithoutPosition.map(c => `${setNumber}.${c.order}`));
     let cardWithoutPosIndex = 0;
     for (let row = 1; row <= 5; row++) {
       for (let col = 1; col <= 3; col++) {
@@ -956,7 +894,6 @@ async function displaySet(setNumber) {
         if (!gridPositions.has(key) && cardWithoutPosIndex < cardsWithoutPosition.length) {
           const cardToPlace = cardsWithoutPosition[cardWithoutPosIndex];
           gridPositions.set(key, cardToPlace);
-          console.log(`Placed card ${setNumber}.${cardToPlace.order} at empty position ${key}`);
           cardsToFix.push({
             order: cardToPlace.order,
             data: cardToPlace.data,
@@ -1015,12 +952,6 @@ async function displaySet(setNumber) {
             const { primaryColor } = getCardColors(cardData);
             const textColor = calculateSvgTextColor(primaryColor, false);
             const useNaturalColors = cardData.options && cardData.options.svgColor === true;
-            console.log(`Card ${setNumber}.${order} SVG settings:`, {
-              backgroundColor: primaryColor,
-              svgColor: cardData.options?.svgColor,
-              useNaturalColors: useNaturalColors,
-              textColor: textColor
-            });
             const cleanedSvg = stripSvgColors(svgContent, useNaturalColors);
             const uniqueId = `svg-${setNumber}-${order}`;
             svgContainer.id = uniqueId;
@@ -1068,7 +999,6 @@ async function displaySet(setNumber) {
     statusEl.style.display = 'none';
     gridEl.style.display = 'grid';
     if (cardsToFix.length > 0) {
-      console.log(`Fixing position conflicts for ${cardsToFix.length} cards:`, cardsToFix.map(c => `${setNumber}.${c.order} -> ${c.newPosition.row}-${c.newPosition.col}`));
       fixCardPositions(setNumber, cardsToFix);
     }
     setupDragAndDrop(setNumber);
@@ -1097,13 +1027,14 @@ function openCardEditor(setNumber, order, cardData) {
   // Handle contenteditable divs
   const ruleEl = document.getElementById('editorRule');
   const inputEl = document.getElementById('editorInput');
-  ruleEl.textContent = cardData.rule || '';
+  ruleEl.value = cardData.rule || '';
   inputEl.textContent = cardData.input || '';
   
   // Trigger highlighting after a brief delay to ensure the content is set
   setTimeout(() => {
-    highlightEditor(ruleEl);
     highlightEditor(inputEl);
+    updateEditorOutput();
+    updateEditorPreview();
   }, 50);
   const positionDisplay = document.getElementById('editorPositionDisplay');
   if (cardData.options?.position) {
@@ -1112,7 +1043,6 @@ function openCardEditor(setNumber, order, cardData) {
     positionDisplay.textContent = 'Not set';
   }
   document.getElementById('cardEditorModal').style.display = 'flex';
-  updateEditorPreview();
 }
 function closeCardEditor() {
   document.getElementById('cardEditorModal').style.display = 'none';
@@ -1128,10 +1058,10 @@ function animateDrawing(ctx, ops, s, pad) {
   const firstVisibleAt = ops.map((_, i) => animStart + i * STEP_DELAY_MS);
   
   const drawFrame = (now) => {
-    // Clear canvas
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     
-    // Draw all operations up to current progress
+    drawGridPoints(ctx, s, ctx.canvas.width, ctx.canvas.height, thickness);
+    
     for (let i = 0; i < ops.length; i++) {
       const op = ops[i];
       const t0 = firstVisibleAt[i];
@@ -1234,7 +1164,6 @@ function highlightEditor(element) {
   }
   
   // Escape HTML special characters
-  const esc = (s) => s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const escText = esc(raw);
   
   // Basic hex highlighting - colorize hex pairs
@@ -1326,21 +1255,84 @@ function highlightEditor(element) {
   element.innerHTML = html;
 }
 
+function drawGridPoints(ctx, spacing, width, height, thickness) {
+  ctx.save();
+  const baseColor = '#666666';
+  const r = thickness * 3;
+  
+  for (let y = 0; y <= height; y += spacing) {
+    const textRowIndex = Math.floor(y / (8 * spacing));
+    const isEvenTextRow = textRowIndex % 2 === 0;
+    
+    const rowColor = isEvenTextRow ? '#6e6e6e' : '#565656';
+    
+    ctx.fillStyle = rowColor;
+    ctx.globalAlpha = 1;
+    
+    for (let x = 0; x <= width; x += spacing) {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function updateEditorOutput() {
+  const ruleEl = document.getElementById('editorRule');
+  const inputEl = document.getElementById('editorInput');
+  const outputEl = document.getElementById('editorOutput');
+  
+  const rule = ruleEl ? ruleEl.value : '';
+  const input = inputEl ? (inputEl.textContent || inputEl.innerText || '') : '';
+  
+  let output = input;
+  
+  output = output.split('\n')
+    .filter(line => !line.trim().startsWith('//'))
+    .join('\n');
+  
+  if (rule && rule.trim()) {
+    const lines = rule.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));
+    
+    for (const line of lines) {
+      const pairs = line.trim().split(/\s+/);
+      
+      for (const pair of pairs) {
+        const commaIndex = pair.indexOf(',');
+        if (commaIndex > 0 && commaIndex < pair.length - 1) {
+          const source = pair.substring(0, commaIndex);
+          const target = pair.substring(commaIndex + 1);
+          
+          output = output.replace(new RegExp(escapeRegExp(source), 'g'), target);
+        }
+      }
+    }
+  }
+  
+  if (outputEl) {
+    outputEl.textContent = output;
+  }
+}
+
 function updateEditorPreview() {
   const canvas = document.getElementById('editorCanvas');
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  canvas.style.background = '#000000';
+  
   const bgColor = document.getElementById('editorBackground').value;
   const bgColor2 = document.getElementById('editorBackground2').value;
-  const gradient = generateGradientFromColor(bgColor, bgColor2);
-  canvas.style.background = gradient;
   
-  // Get the input value to render (for contenteditable divs, use textContent)
-  const inputEl = document.getElementById('editorInput');
-  const input = inputEl ? (inputEl.textContent || inputEl.value || '') : '';
+  const outputEl = document.getElementById('editorOutput');
+  const output = outputEl ? (outputEl.textContent || outputEl.value || '') : '';
   
-  if (!input) {
-    // Show placeholder text if no input
+  if (!output) {
     ctx.fillStyle = '#666';
     ctx.font = '16px Arial';
     ctx.textAlign = 'center';
@@ -1348,30 +1340,27 @@ function updateEditorPreview() {
     return;
   }
   
-  // Render the hex graphics
   try {
-    const coloredItems = parseBytes(input);
+    const coloredItems = parseBytes(output);
     const s = 8;
     const pad = { left: 1, top: 1, right: 1 };
     const gridX = Math.floor(canvas.width / s);
     const { ops, visited } = buildOps(coloredItems, s, pad, gridX, bgColor, 0);
     
-    // Check if animation is enabled
+    const thickness = s / 10;
+    
     const animateCheckbox = document.getElementById('animatePreview');
     const shouldAnimate = animateCheckbox && animateCheckbox.checked;
     
     if (shouldAnimate) {
-      // Animated drawing
       animateDrawing(ctx, ops, s, pad);
     } else {
-      // Instant drawing
-      const thickness = s / 10;
+      drawGridPoints(ctx, s, canvas.width, canvas.height, thickness);
       for (const op of ops) {
         drawOp(ctx, op, s, thickness);
       }
     }
   } catch (error) {
-    // Fallback to error text if drawing fails
     ctx.fillStyle = '#ff0000';
     ctx.font = '14px Arial';
     ctx.textAlign = 'center';
@@ -1391,7 +1380,7 @@ async function saveCard() {
     const svgBackground = document.getElementById('editorSvg').value;
     const ruleEl = document.getElementById('editorRule');
     const inputEl = document.getElementById('editorInput');
-    const rule = ruleEl ? (ruleEl.textContent || ruleEl.value || '') : '';
+    const rule = ruleEl ? ruleEl.value : '';
     const input = inputEl ? (inputEl.textContent || inputEl.value || '') : '';
     const cardDataObj = currentEditingCard.cardData;
     cardDataObj.rule = rule;
@@ -1426,7 +1415,6 @@ async function saveCard() {
     cardData.set(key, cardDataObj);
     await displaySet(currentSetNumber);
     closeCardEditor();
-    console.log(`Card ${setNumber}.${order} saved successfully`);
   } catch (error) {
     console.error('Error saving card:', error);
   }
@@ -1462,28 +1450,14 @@ async function deleteCard() {
     const isSetEmpty = !currentSetInfo || currentSetInfo.cardCount === 0;
     const isSetRemoved = !availableSets.includes(currentSetNumber);
     const isLastSet = currentSetNumber === Math.max(...availableSets);
-    console.log('Delete check:', {
-      currentSetNumber,
-      availableSets,
-      currentSetInfo,
-      isSetEmpty,
-      isSetRemoved,
-      isLastSet,
-      availableSetsLength: availableSets.length
-    });
     if ((isSetEmpty || isSetRemoved) && availableSets.length > 0) {
       const newCurrentSet = Math.max(...availableSets);
-      console.log(`Set ${currentSetNumber} is now empty/removed, moving to set ${newCurrentSet}`);
       const oldSetNumber = currentSetNumber;
       currentSetNumber = newCurrentSet;
-      console.log(`About to call displaySet(${currentSetNumber})`);
       await displaySet(currentSetNumber);
-      console.log(`Successfully moved from set ${oldSetNumber} to set ${currentSetNumber}`);
     } else {
-      console.log('Not moving - conditions not met:', { isSetEmpty, isSetRemoved, availableSetsLength: availableSets.length });
       await displaySet(currentSetNumber);
     }
-    console.log(`Card ${set}.${order} deleted successfully`);
   } catch (error) {
     console.error('Error deleting card:', error);
   } finally {
@@ -1491,9 +1465,7 @@ async function deleteCard() {
   }
 }
 async function copyCard() {
-  console.log('copyCard function called, cardToCopy:', cardToCopy);
   if (!cardToCopy) {
-    console.log('No card to copy, returning');
     return;
   }
   try {
@@ -1520,7 +1492,6 @@ async function copyCard() {
         nextOrder++;
       }
       if (nextOrder > 15) {
-        console.log(`Set ${currentSetNumber} is full (15 cards), looking for next available set`);
         const availableSets = Array.from(setInfo.keys()).sort((a, b) => a - b);
         let foundSet = null;
         for (const setNum of availableSets) {
@@ -1538,15 +1509,12 @@ async function copyCard() {
           while (usedOrders.includes(nextOrder)) {
             nextOrder++;
           }
-          console.log(`Found available space in set ${targetSet}, order ${nextOrder}`);
         } else {
           targetSet = Math.max(...availableSets) + 1;
           nextOrder = 1;
-          console.log(`Creating new set ${targetSet}, order ${nextOrder}`);
         }
       }
     }
-    console.log(`Copying card to position ${targetSet}.${nextOrder}`);
     const newFileName = formatCardFilename(targetSet, nextOrder);
     const jsonString = JSON.stringify(copiedCardData, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
@@ -1560,18 +1528,12 @@ async function copyCard() {
       console.error(`Failed to save copied card ${targetSet}.${nextOrder}:`, error);
       return;
     }
-    console.log(`Successfully saved copied card to storage`);
     cardData.set(`${targetSet}.${nextOrder}`, copiedCardData);
-    console.log(`Updated card data cache with new card`);
     await scanAllSets();
-    console.log(`Rescanned all sets`);
     if (targetSet !== currentSetNumber) {
       currentSetNumber = targetSet;
-      console.log(`Switched to set ${currentSetNumber}`);
     }
     await displaySet(currentSetNumber);
-    console.log(`Refreshed display for set ${currentSetNumber}`);
-    console.log(`Card ${set}.${order} copied to ${targetSet}.${nextOrder} successfully`);
   } catch (error) {
     console.error('Error copying card:', error);
   } finally {
@@ -1689,13 +1651,15 @@ document.getElementById('editorItalics').addEventListener('change', updateEditor
 document.getElementById('editorSvgColor').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvg').addEventListener('input', updateEditorPreview);
 document.getElementById('editorRule').addEventListener('input', (e) => {
-  highlightEditor(e.target);
+  // Rule field is a plain textarea, no highlighting needed
+  updateEditorOutput();
   updateEditorPreview();
 });
 document.getElementById('editorInput').addEventListener('input', (e) => {
   // Use a small timeout to let the content settle
   setTimeout(() => {
     highlightEditor(e.target);
+    updateEditorOutput();
     updateEditorPreview();
   }, 10);
 });

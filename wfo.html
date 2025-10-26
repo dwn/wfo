@@ -124,11 +124,6 @@
 </div>
 <div class="form-group">
 <label>
-<input type="checkbox" id="editorItalics" checked> Italics
-</label>
-</div>
-<div class="form-group">
-<label>
 <input type="checkbox" id="editorSvgColor"> SVG Color
 </label>
 </div>
@@ -149,7 +144,7 @@
 <div class="editor-section">
 <h4>Rule</h4>
 <div class="form-group">
-            <div id="editorRule" class="code-editor highlightable" contenteditable="true" placeholder="Enter rule code..." role="textbox" style="min-height: 80px;"></div>
+<textarea id="editorRule" class="code-editor" placeholder="Enter rule code..." rows="4"></textarea>
 </div>
 </div>
 <div class="editor-section">
@@ -169,6 +164,9 @@
 <div class="preview-header">
 <h4>Preview</h4>
 <div class="preview-controls">
+<label>
+<input type="checkbox" id="editorItalics" checked> Italics
+</label>
 <label>
 <input type="checkbox" id="animatePreview"> Animate
 </label>
