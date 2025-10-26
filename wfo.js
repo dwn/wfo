@@ -141,7 +141,7 @@ const COLORS = [
 const THICKNESS_MULTIPLIERS = {
   outline: 12,
   main: 4,
-  pointOutline: 6,
+  pointOutline: 7.5,
   pointRadius: 4,
   endMarkerRadius: 3
 };
