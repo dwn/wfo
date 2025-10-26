@@ -810,12 +810,17 @@ async function showIndividualCard(setNumber, order, cardData) {
     gridContainer.remove();
   }
   individualCard.innerHTML = '';
+  
+  // Set the background gradient on the card container
+  const { primaryColor, secondColor } = getCardColors(cardData);
+  individualCard.style.background = generateGradientFromColor(primaryColor, secondColor);
+  
+  // Create transparent canvas for drawing text
   const canvas = document.createElement('canvas');
   canvas.width = 600;
   canvas.height = 848;
   individualCard.appendChild(canvas);
-  const { primaryColor, secondColor } = getCardColors(cardData);
-  canvas.style.background = generateGradientFromColor(primaryColor, secondColor);
+  
   drawCardPreview(canvas, cardData);
   if (cardData.options && cardData.options.svgBackground) {
     const svgValue = cardData.options.svgBackground;
