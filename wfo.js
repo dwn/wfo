@@ -43,6 +43,18 @@ function hexToRgb(hex) {
     b: parseInt(result[3], 16)
   } : { r: 128, g: 128, b: 128 };
 }
+function blendColors(color1, color2, ratio) {
+  const rgb1 = hexToRgb(color1);
+  const rgb2 = hexToRgb(color2);
+  // ratio is how much of color1 to use, (1-ratio) is how much of color2
+  const r = Math.round(rgb1.r * ratio + rgb2.r * (1 - ratio));
+  const g = Math.round(rgb1.g * ratio + rgb2.g * (1 - ratio));
+  const b = Math.round(rgb1.b * ratio + rgb2.b * (1 - ratio));
+  return `#${[r, g, b].map(x => {
+    const hex = x.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  }).join('')}`;
+}
 function getCardColor(cardData) {
   if (cardData && cardData.options && cardData.options.backgroundColor) {
     return cardData.options.backgroundColor;
@@ -323,7 +335,16 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
 }
 
 // Drawing functions
-function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false) {
+function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false, backgroundColor='#808080') {
+  // Calculate outline color (same as background)
+  const outlineColor = backgroundColor;
+  
+  // Calculate text color (62% blend between white/black and background)
+  const rgb = hexToRgb(backgroundColor);
+  const luminosity = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  const baseColor = luminosity > 0.5 ? '#000000' : '#ffffff';
+  const textColor = blendColors(baseColor, backgroundColor, 0.62);
+  
   if (op.type === 'line') {
     const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
     const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
@@ -331,11 +352,11 @@ function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
-    // Draw outline (thicker, black) - all lines
+    // Draw outline (thicker, opposite color) - all lines
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(p2.x, p2.y);
-    ctx.strokeStyle = '#000000';
+    ctx.strokeStyle = outlineColor;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
     ctx.stroke();
     ctx.restore();
@@ -346,32 +367,35 @@ function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
-    // Draw outline (thicker, black) - all arcs
+    // Draw outline (thicker, opposite color) - all arcs
     ctx.beginPath();
     ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, op.start, op.end, op.acw);
-    ctx.strokeStyle = '#000000';
+    ctx.strokeStyle = outlineColor;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
     ctx.stroke();
     ctx.restore();
   } else if (op.type === 'point') {
     const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
     
-    // Draw outline circle (thicker, black)
+    // Draw outline circle (thicker, same as background)
     ctx.beginPath();
     ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointOutline, 0, Math.PI * 2);
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = outlineColor;
     ctx.fill();
     
-    // Draw main point (smaller, colored)
+    // Draw main point (smaller, blended text color)
     ctx.beginPath();
     ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointRadius, 0, Math.PI * 2);
-    ctx.fillStyle = op.color;
+    ctx.fillStyle = textColor;
     ctx.fill();
   }
 }
 
 // Second pass to draw the colored insides after all outlines are done
-function drawOpInside(ctx, op, s=8, thickness=0.8, italicsMode=false) {
+function drawOpInside(ctx, op, s=8, thickness=0.8, italicsMode=false, textColor=null) {
+  // Use provided textColor or fall back to op.color
+  const strokeColor = textColor || op.color;
+  
   if (op.type === 'line') {
     const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
     const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
@@ -383,7 +407,7 @@ function drawOpInside(ctx, op, s=8, thickness=0.8, italicsMode=false) {
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(p2.x, p2.y);
-    ctx.strokeStyle = op.color;
+    ctx.strokeStyle = strokeColor;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
     ctx.restore();
@@ -397,7 +421,7 @@ function drawOpInside(ctx, op, s=8, thickness=0.8, italicsMode=false) {
     // Draw main arc (thinner, colored)
     ctx.beginPath();
     ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, op.start, op.end, op.acw);
-    ctx.strokeStyle = op.color;
+    ctx.strokeStyle = strokeColor;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
     ctx.restore();
@@ -453,14 +477,20 @@ function drawCardPreview(canvas, cardData) {
     const gridX = Math.floor(canvas.width / s);
     const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor, 0, true);
     
+    // Calculate text color (62% blend between white/black and background)
+    const rgb = hexToRgb(primaryColor);
+    const luminosity = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+    const baseColor = luminosity > 0.5 ? '#000000' : '#ffffff';
+    const textColor = blendColors(baseColor, primaryColor, 0.62);
+    
     // Draw all operations - two passes: first outlines, then insides
     const thickness = s / 10;
     for (const op of ops) {
-      drawOp(ctx, op, s, thickness, italicsMode);
+      drawOp(ctx, op, s, thickness, italicsMode, primaryColor);
     }
     for (const op of ops) {
       if (op.type !== 'point') {
-        drawOpInside(ctx, op, s, thickness, italicsMode);
+        drawOpInside(ctx, op, s, thickness, italicsMode, textColor);
       }
     }
   } catch (error) {
@@ -1159,7 +1189,7 @@ function closeCardEditor() {
   document.getElementById('cardEditorModal').style.display = 'none';
   currentEditingCard = null;
 }
-function animateDrawing(ctx, ops, s, pad, italicsMode=false) {
+function animateDrawing(ctx, ops, s, pad, italicsMode=false, backgroundColor='#808080') {
   const STEP_DELAY_MS = 20;
   const DRAW_MS = STEP_DELAY_MS;
   const thickness = s / 10;
@@ -1180,7 +1210,7 @@ function animateDrawing(ctx, ops, s, pad, italicsMode=false) {
       
       if (progress > 0) {
         // Draw with progress animation
-        drawOpAnimated(ctx, op, s, thickness, progress, italicsMode);
+        drawOpAnimated(ctx, op, s, thickness, progress, italicsMode, backgroundColor);
       }
     }
     
@@ -1194,7 +1224,16 @@ function animateDrawing(ctx, ops, s, pad, italicsMode=false) {
   requestAnimationFrame(drawFrame);
 }
 
-function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false) {
+function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false, backgroundColor='#808080') {
+  // Calculate outline color (same as background)
+  const outlineColor = backgroundColor;
+  
+  // Calculate text color (62% blend between white/black and background)
+  const rgb = hexToRgb(backgroundColor);
+  const luminosity = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  const baseColor = luminosity > 0.5 ? '#000000' : '#ffffff';
+  const textColor = blendColors(baseColor, backgroundColor, 0.62);
+  
   if (op.type === 'line') {
     const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
     const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
@@ -1210,7 +1249,7 @@ function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false) {
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(intermediate.x, intermediate.y);
-    ctx.strokeStyle = '#000000';
+    ctx.strokeStyle = outlineColor;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
     ctx.stroke();
     
@@ -1218,7 +1257,7 @@ function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false) {
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(intermediate.x, intermediate.y);
-    ctx.strokeStyle = op.color;
+    ctx.strokeStyle = textColor;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
     ctx.restore();
@@ -1244,14 +1283,14 @@ function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false) {
     // Draw outline
     ctx.beginPath();
     ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, startAngle, endAngle, op.acw);
-    ctx.strokeStyle = '#000000';
+    ctx.strokeStyle = outlineColor;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
     ctx.stroke();
     
     // Draw main arc
     ctx.beginPath();
     ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, startAngle, endAngle, op.acw);
-    ctx.strokeStyle = op.color;
+    ctx.strokeStyle = textColor;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
     ctx.restore();
@@ -1262,13 +1301,13 @@ function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false) {
     // Draw outline circle
     ctx.beginPath();
     ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointOutline * progress, 0, Math.PI * 2);
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = outlineColor;
     ctx.fill();
     
     // Draw main point
     ctx.beginPath();
     ctx.arc(c.x, c.y, radius, 0, Math.PI * 2);
-    ctx.fillStyle = op.color;
+    ctx.fillStyle = textColor;
     ctx.fill();
   }
 }
@@ -1616,17 +1655,23 @@ function updateEditorPreview() {
     const animateCheckbox = document.getElementById('animatePreview');
     const shouldAnimate = animateCheckbox && animateCheckbox.checked;
     
+    // Calculate text color (62% blend between white/black and background)
+    const rgb = hexToRgb(bgColor);
+    const luminosity = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+    const baseColor = luminosity > 0.5 ? '#000000' : '#ffffff';
+    const textColor = blendColors(baseColor, bgColor, 0.62);
+    
     if (shouldAnimate) {
-      animateDrawing(ctx, ops, s, pad, italicsMode);
+      animateDrawing(ctx, ops, s, pad, italicsMode, bgColor);
     } else {
       drawGridPoints(ctx, s, canvas.width, canvas.height, thickness, italicsMode);
       // Two passes: first outlines, then insides
       for (const op of ops) {
-        drawOp(ctx, op, s, thickness, italicsMode);
+        drawOp(ctx, op, s, thickness, italicsMode, bgColor);
       }
       for (const op of ops) {
         if (op.type !== 'point') {
-          drawOpInside(ctx, op, s, thickness, italicsMode);
+          drawOpInside(ctx, op, s, thickness, italicsMode, textColor);
         }
       }
     }
