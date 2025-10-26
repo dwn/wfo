@@ -124,20 +124,15 @@ async function loadCardData(set, order) {
   }
 }
 const COLORS = [
-  { name: 'bla', hex: '#000000' },
-  { name: 'car', hex: '#8c0004' },
-  { name: 'red', hex: '#e00000' },
-  { name: 'ora', hex: '#f34001' },
-  { name: 'amb', hex: '#faaf00' },
-  { name: 'yel', hex: '#dbd200' },
-  { name: 'grn', hex: '#00cb00' },
-  { name: 'cya', hex: '#00dfd8' },
-  { name: 'blu', hex: '#3441fc' },
-  { name: 'ind', hex: '#4020f0' },
-  { name: 'pur', hex: '#8000f0' },
-  { name: 'vio', hex: '#350063' },
-  { name: 'gry', hex: '#808080' },
-  { name: 'wht', hex: '#ffffff' }
+  { name: 'red', hex: '#FF0000' },
+  { name: 'orange', hex: '#FF7B00' },
+  { name: 'yellow', hex: '#FFF200' },
+  { name: 'green', hex: '#36FF00' },
+  { name: 'sky', hex: '#008EFF' },
+  { name: 'blue', hex: '#1100FF' },
+  { name: 'violet', hex: '#79008D' },
+  { name: 'gray', hex: '#808080' },
+  { name: 'white', hex: '#FFFFFF' }
 ];
 
 // ===== HEX TO GRAPHICS SYSTEM =====
@@ -151,11 +146,10 @@ const THICKNESS_MULTIPLIERS = {
   endMarkerRadius: 3
 };
 
-const HEX_PAIR_COLORS = [
-  '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', 
-  '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
-  '#10ac84', '#ee5a24', '#0984e3', '#6c5ce7', '#a29bfe'
-];
+// Derive hex pair colors from the COLORS array (excluding black, gray, white for better visibility)
+const HEX_PAIR_COLORS = COLORS
+  .filter(c => c.hex !== '#000000' && c.hex !== '#808080' && c.hex !== '#ffffff')
+  .map(c => c.hex);
 
 // Helper functions
 function triBitsToSigned(v3) { return (v3<=4) ? v3 : (4-v3); }
@@ -1314,8 +1308,117 @@ function updateEditorOutput() {
     }
   }
   
-  if (outputEl) {
-    outputEl.textContent = output;
+  if (outputEl && inputEl && output) {
+    // Apply highlighting based on cursor position in input field
+    const selection = window.getSelection();
+    const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    let cursorPos = 0;
+    
+    if (range && inputEl.contains(range.startContainer)) {
+      const preRange = document.createRange();
+      preRange.selectNodeContents(inputEl);
+      preRange.setEnd(range.endContainer, range.endOffset);
+      cursorPos = preRange.toString().length;
+    }
+    
+    const hasPipes = input.includes('|');
+    let currentLetterIndex = 0;
+    
+    if (hasPipes) {
+      for (let i = 0; i < input.length && i < cursorPos; i++) {
+        if (input[i] === '|') {
+          if (i + 1 < input.length && input[i + 1] === '|') {
+            currentLetterIndex++;
+            i++;
+          } else {
+            currentLetterIndex++;
+          }
+        }
+      }
+    }
+    
+    const escText = esc(output);
+    const HEX_CHAR_RE = /[0-9A-Fa-f]/;
+    let html = '';
+    let i = 0;
+    let letterIndex = 0;
+    let hexPairIndex = 0;
+    let inComment = false;
+    
+    while (i < escText.length) {
+      const ch = escText[i];
+      
+      if (ch === '/' && i + 1 < escText.length && escText[i + 1] === '/') {
+        inComment = true;
+        html += ch;
+        i++;
+        continue;
+      }
+      
+      if (inComment) {
+        html += ch;
+        i++;
+        if (ch === '\n' || ch === '\r') {
+          inComment = false;
+        }
+        continue;
+      }
+      
+      if (ch === '|') {
+        const next = escText[i + 1];
+        if (next === '|') {
+          html += '||';
+          i += 2;
+          if (hasPipes) {
+            letterIndex++;
+            hexPairIndex = 0;
+          }
+        } else {
+          html += '|';
+          i++;
+          if (hasPipes) {
+            letterIndex++;
+            hexPairIndex = 0;
+          }
+        }
+      } else if (HEX_CHAR_RE.test(ch) && i + 1 < escText.length && HEX_CHAR_RE.test(escText[i + 1])) {
+        const pair = escText.substr(i, 2);
+        const byte = parseInt(pair, 16);
+        const a = (byte >> 7) & 1;
+        const xxx = (byte >> 4) & 0b111;
+        const bitB = (byte >> 3) & 1;
+        const yyy = byte & 0b111;
+        const isZero = (xxx === 0 && yyy === 0);
+        const ab = (a << 1) | bitB;
+        const isInvisibleMove = ab === 0b11;
+        
+        const isCurrentLetter = (letterIndex === currentLetterIndex);
+        const isMoveOnly = ab === 0b00 && isZero;
+        
+        if (isCurrentLetter && !isInvisibleMove && !isMoveOnly) {
+          html += `<strong>${pair}</strong>`;
+        } else if (isInvisibleMove || isMoveOnly) {
+          html += `<span style="background: #ffff00; color: #000;">${pair}</span>`;
+        } else {
+          html += pair;
+        }
+        
+        if (isCurrentLetter) {
+          hexPairIndex++;
+        }
+        
+        i += 2;
+      } else {
+        html += ch;
+        i++;
+      }
+    }
+    
+    outputEl.innerHTML = html;
+  } else {
+    if (outputEl) {
+      outputEl.textContent = output;
+    }
   }
 }
 
