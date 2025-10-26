@@ -328,9 +328,59 @@ function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false) {
     const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
     const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
     ctx.save();
-    ctx.beginPath();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    
+    // Draw outline (thicker, black) - all lines
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
+    ctx.stroke();
+    ctx.restore();
+  } else if (op.type === 'arc') {
+    const transformedCenter = applyItalicsTransform({x: op.cx, y: op.cy}, s, italicsMode);
+    
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    // Draw outline (thicker, black) - all arcs
+    ctx.beginPath();
+    ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, op.start, op.end, op.acw);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
+    ctx.stroke();
+    ctx.restore();
+  } else if (op.type === 'point') {
+    const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
+    
+    // Draw outline circle (thicker, black)
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointOutline, 0, Math.PI * 2);
+    ctx.fillStyle = '#000000';
+    ctx.fill();
+    
+    // Draw main point (smaller, colored)
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointRadius, 0, Math.PI * 2);
+    ctx.fillStyle = op.color;
+    ctx.fill();
+  }
+}
+
+// Second pass to draw the colored insides after all outlines are done
+function drawOpInside(ctx, op, s=8, thickness=0.8, italicsMode=false) {
+  if (op.type === 'line') {
+    const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
+    const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    // Draw main line (thinner, colored)
+    ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(p2.x, p2.y);
     ctx.strokeStyle = op.color;
@@ -340,22 +390,17 @@ function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false) {
   } else if (op.type === 'arc') {
     const transformedCenter = applyItalicsTransform({x: op.cx, y: op.cy}, s, italicsMode);
     
-    // The angles stay the same, we just transform the center
     ctx.save();
-    ctx.beginPath();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    
+    // Draw main arc (thinner, colored)
+    ctx.beginPath();
     ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, op.start, op.end, op.acw);
     ctx.strokeStyle = op.color;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
     ctx.restore();
-  } else if (op.type === 'point') {
-    const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointRadius, 0, Math.PI * 2);
-    ctx.fillStyle = op.color;
-    ctx.fill();
   }
 }
 
@@ -408,10 +453,15 @@ function drawCardPreview(canvas, cardData) {
     const gridX = Math.floor(canvas.width / s);
     const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor, 0, true);
     
-    // Draw all operations
+    // Draw all operations - two passes: first outlines, then insides
     const thickness = s / 10;
     for (const op of ops) {
       drawOp(ctx, op, s, thickness, italicsMode);
+    }
+    for (const op of ops) {
+      if (op.type !== 'point') {
+        drawOpInside(ctx, op, s, thickness, italicsMode);
+      }
     }
   } catch (error) {
     // Fallback to text if drawing fails
@@ -1147,9 +1197,19 @@ function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false) {
       y: p1.y + (p2.y - p1.y) * progress
     };
     ctx.save();
-    ctx.beginPath();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    
+    // Draw outline
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(intermediate.x, intermediate.y);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
+    ctx.stroke();
+    
+    // Draw main line
+    ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(intermediate.x, intermediate.y);
     ctx.strokeStyle = op.color;
@@ -1160,19 +1220,31 @@ function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false) {
     const transformedCenter = applyItalicsTransform({x: op.cx, y: op.cy}, s, italicsMode);
     
     ctx.save();
-    ctx.beginPath();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    
+    let endAngle, startAngle;
     if (op.start === 0 && op.end === Math.PI * 2) {
-      const endAngle = progress * Math.PI * 2;
-      ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, 0, endAngle, false);
+      endAngle = progress * Math.PI * 2;
+      startAngle = 0;
     } else {
+      startAngle = op.start;
       let angleDiff = op.acw ? op.start - op.end : op.end - op.start;
       if (angleDiff <= 0) angleDiff += Math.PI * 2;
       const progressAngle = angleDiff * progress;
-      const progressEndAngle = op.acw ? op.start - progressAngle : op.start + progressAngle;
-      ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, op.start, progressEndAngle, op.acw);
+      endAngle = op.acw ? op.start - progressAngle : op.start + progressAngle;
     }
+    
+    // Draw outline
+    ctx.beginPath();
+    ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, startAngle, endAngle, op.acw);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
+    ctx.stroke();
+    
+    // Draw main arc
+    ctx.beginPath();
+    ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, startAngle, endAngle, op.acw);
     ctx.strokeStyle = op.color;
     ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
     ctx.stroke();
@@ -1180,6 +1252,14 @@ function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false) {
   } else if (op.type === 'point') {
     const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
     const radius = thickness * THICKNESS_MULTIPLIERS.pointRadius * progress;
+    
+    // Draw outline circle
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointOutline * progress, 0, Math.PI * 2);
+    ctx.fillStyle = '#000000';
+    ctx.fill();
+    
+    // Draw main point
     ctx.beginPath();
     ctx.arc(c.x, c.y, radius, 0, Math.PI * 2);
     ctx.fillStyle = op.color;
@@ -1534,8 +1614,14 @@ function updateEditorPreview() {
       animateDrawing(ctx, ops, s, pad, italicsMode);
     } else {
       drawGridPoints(ctx, s, canvas.width, canvas.height, thickness, italicsMode);
+      // Two passes: first outlines, then insides
       for (const op of ops) {
         drawOp(ctx, op, s, thickness, italicsMode);
+      }
+      for (const op of ops) {
+        if (op.type !== 'point') {
+          drawOpInside(ctx, op, s, thickness, italicsMode);
+        }
       }
     }
   } catch (error) {
