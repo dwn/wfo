@@ -39,15 +39,8 @@ function generateGradientFromColor(hexColor, secondColor = null) {
   return `linear-gradient(135deg, ${lighter} 0%, ${hexColor} 50%, ${darker} 100%)`;
 }
 
-function getCardColor(cardData) {
-  if (cardData && cardData.options && cardData.options.backgroundColor) {
-    return cardData.options.backgroundColor;
-  }
-  return '#808080';
-}
-
 function getCardColors(cardData) {
-  const primaryColor = getCardColor(cardData);
+  const primaryColor = (cardData && cardData.options && cardData.options.backgroundColor) || '#808080';
   const secondColor = cardData?.options?.backgroundColor2 || null;
   return { primaryColor, secondColor };
 }
