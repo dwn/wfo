@@ -523,7 +523,7 @@ function drawCardPreview(canvas, cardData, isIndividualView = false) {
     
     // Build drawing operations
     const s = 8;
-    const pad = { left: 2, top: 2, right: 2 };
+    const pad = { left: 3, top: 3, right: 3 };
     const gridX = Math.floor(canvas.width / s);
     const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor);
     
@@ -1498,7 +1498,7 @@ function updateEditorPreview() {
   try {
     const coloredItems = parseBytes(output);
     const s = 8;
-    const pad = { left: 2, top: 2, right: 2 };
+    const pad = { left: 3, top: 3, right: 3 };
     const gridX = Math.floor(canvas.width / s);
     const { ops, visited } = buildOps(coloredItems, s, pad, gridX, bgColor);
     
