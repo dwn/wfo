@@ -200,6 +200,43 @@ function applyItalicsTransform(point, s=8, italicsMode=true) {
   };
 }
 
+// Helper function to draw a correction line for arc endpoints in italics mode
+function drawArcCorrectionLine(ctx, op, s, thickness, italicsMode, transformedCenter, strokeStyle, lineWidth) {
+  if (!italicsMode || op.start === 0 && op.end === Math.PI * 2) return;
+  
+  // Where the ellipse arc actually ends (relative to transformed center)
+  const endX = op.rx * Math.cos(op.end);
+  const endY = op.ry * Math.sin(op.end);
+  const ellipseEndPoint = {x: transformedCenter.x + endX, y: transformedCenter.y + endY};
+  
+  // Where the endpoint should be (using transformed center as the base)
+  const originalEndX = op.rx * Math.cos(op.end);
+  const originalEndY = op.ry * Math.sin(op.end);
+  const originalCenter = {x: op.cx, y: op.cy};
+  const intendedEndPoint = applyItalicsTransform({
+    x: originalCenter.x + originalEndX,
+    y: originalCenter.y + originalEndY
+  }, s, italicsMode);
+  
+  // Draw a small line to fill the gap if they differ
+  const dx = intendedEndPoint.x - ellipseEndPoint.x;
+  const dy = intendedEndPoint.y - ellipseEndPoint.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  
+  if (dist > 0.1) {
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(ellipseEndPoint.x, ellipseEndPoint.y);
+    ctx.lineTo(intendedEndPoint.x, intendedEndPoint.y);
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
 // Parse hex bytes from input string
 function parseBytes(str) {
   const out = []; let buf = '';
@@ -366,40 +403,7 @@ function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false, backgroundColor=
       ctx.stroke();
       ctx.restore();
       
-      // In italics mode, extend the arc endpoint slightly to fill gaps
-      if (italicsMode && !(op.start === 0 && op.end === Math.PI * 2)) {
-        // Where the ellipse arc actually ends (relative to transformed center)
-        const endX = op.rx * Math.cos(op.end);
-        const endY = op.ry * Math.sin(op.end);
-        const ellipseEndPoint = {x: transformedCenter.x + endX, y: transformedCenter.y + endY};
-        
-        // Where the endpoint should be (using transformed center as the base)
-        const originalEndX = op.rx * Math.cos(op.end);
-        const originalEndY = op.ry * Math.sin(op.end);
-        const originalCenter = {x: op.cx, y: op.cy};
-        const intendedEndPoint = applyItalicsTransform({
-          x: originalCenter.x + originalEndX,
-          y: originalCenter.y + originalEndY
-        }, s, italicsMode);
-        
-        // Draw a small line to fill the gap if they differ
-        const dx = intendedEndPoint.x - ellipseEndPoint.x;
-        const dy = intendedEndPoint.y - ellipseEndPoint.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        
-        if (dist > 0.1) {
-          ctx.save();
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-          ctx.beginPath();
-          ctx.moveTo(ellipseEndPoint.x, ellipseEndPoint.y);
-          ctx.lineTo(intendedEndPoint.x, intendedEndPoint.y);
-          ctx.strokeStyle = whiteColor;
-          ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
-          ctx.stroke();
-          ctx.restore();
-        }
-      }
+      drawArcCorrectionLine(ctx, op, s, thickness, italicsMode, transformedCenter, whiteColor, thickness * THICKNESS_MULTIPLIERS.main);
       return;
     } else if (op.type === 'point') {
       const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
@@ -451,40 +455,7 @@ function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false, backgroundColor=
     ctx.stroke();
     ctx.restore();
     
-    // In italics mode, extend the arc endpoint slightly to fill gaps
-    if (italicsMode && !(op.start === 0 && op.end === Math.PI * 2)) {
-      // Where the ellipse arc actually ends (relative to transformed center)
-      const endX = op.rx * Math.cos(op.end);
-      const endY = op.ry * Math.sin(op.end);
-      const ellipseEndPoint = {x: transformedCenter.x + endX, y: transformedCenter.y + endY};
-      
-      // Where the endpoint should be (using transformed center as the base)
-      const originalEndX = op.rx * Math.cos(op.end);
-      const originalEndY = op.ry * Math.sin(op.end);
-      const originalCenter = {x: op.cx, y: op.cy};
-      const intendedEndPoint = applyItalicsTransform({
-        x: originalCenter.x + originalEndX,
-        y: originalCenter.y + originalEndY
-      }, s, italicsMode);
-      
-      // Draw a small line to fill the gap if they differ
-      const dx = intendedEndPoint.x - ellipseEndPoint.x;
-      const dy = intendedEndPoint.y - ellipseEndPoint.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      
-      if (dist > 0.1) {
-        ctx.save();
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-        ctx.moveTo(ellipseEndPoint.x, ellipseEndPoint.y);
-        ctx.lineTo(intendedEndPoint.x, intendedEndPoint.y);
-        ctx.strokeStyle = outlineColor;
-        ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
-        ctx.stroke();
-        ctx.restore();
-      }
-    }
+    drawArcCorrectionLine(ctx, op, s, thickness, italicsMode, transformedCenter, outlineColor, thickness * THICKNESS_MULTIPLIERS.outline);
   } else if (op.type === 'point') {
     const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
     
@@ -537,40 +508,7 @@ function drawOpInside(ctx, op, s=8, thickness=0.8, italicsMode=false, textColor=
     ctx.stroke();
     ctx.restore();
     
-    // In italics mode, extend the arc endpoint slightly to fill gaps
-    if (italicsMode && !(op.start === 0 && op.end === Math.PI * 2)) {
-      // Where the ellipse arc actually ends (relative to transformed center)
-      const endX = op.rx * Math.cos(op.end);
-      const endY = op.ry * Math.sin(op.end);
-      const ellipseEndPoint = {x: transformedCenter.x + endX, y: transformedCenter.y + endY};
-      
-      // Where the endpoint should be (using transformed center as the base)
-      const originalEndX = op.rx * Math.cos(op.end);
-      const originalEndY = op.ry * Math.sin(op.end);
-      const originalCenter = {x: op.cx, y: op.cy};
-      const intendedEndPoint = applyItalicsTransform({
-        x: originalCenter.x + originalEndX,
-        y: originalCenter.y + originalEndY
-      }, s, italicsMode);
-      
-      // Draw a small line to fill the gap if they differ
-      const dx = intendedEndPoint.x - ellipseEndPoint.x;
-      const dy = intendedEndPoint.y - ellipseEndPoint.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      
-      if (dist > 0.1) {
-        ctx.save();
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-        ctx.moveTo(ellipseEndPoint.x, ellipseEndPoint.y);
-        ctx.lineTo(intendedEndPoint.x, intendedEndPoint.y);
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
-        ctx.stroke();
-        ctx.restore();
-      }
-    }
+    drawArcCorrectionLine(ctx, op, s, thickness, italicsMode, transformedCenter, strokeColor, thickness * THICKNESS_MULTIPLIERS.main);
   }
 }
 
@@ -1441,39 +1379,8 @@ function drawOpAnimatedOutline(ctx, op, s, thickness, progress, italicsMode=fals
     ctx.stroke();
     ctx.restore();
     
-    // In italics mode, extend the arc endpoint slightly to fill gaps (only when fully drawn)
-    if (italicsMode && progress === 1 && !(op.start === 0 && op.end === Math.PI * 2)) {
-      // Where the ellipse arc actually ends (relative to transformed center)
-      const endX = op.rx * Math.cos(op.end);
-      const endY = op.ry * Math.sin(op.end);
-      const ellipseEndPoint = {x: transformedCenter.x + endX, y: transformedCenter.y + endY};
-      
-      // Where the endpoint should be (using transformed center as the base)
-      const originalEndX = op.rx * Math.cos(op.end);
-      const originalEndY = op.ry * Math.sin(op.end);
-      const originalCenter = {x: op.cx, y: op.cy};
-      const intendedEndPoint = applyItalicsTransform({
-        x: originalCenter.x + originalEndX,
-        y: originalCenter.y + originalEndY
-      }, s, italicsMode);
-      
-      // Draw a small line to fill the gap if they differ
-      const dx = intendedEndPoint.x - ellipseEndPoint.x;
-      const dy = intendedEndPoint.y - ellipseEndPoint.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      
-      if (dist > 0.1) {
-        ctx.save();
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-        ctx.moveTo(ellipseEndPoint.x, ellipseEndPoint.y);
-        ctx.lineTo(intendedEndPoint.x, intendedEndPoint.y);
-        ctx.strokeStyle = outlineColor;
-        ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
-        ctx.stroke();
-        ctx.restore();
-      }
+    if (italicsMode && progress === 1) {
+      drawArcCorrectionLine(ctx, op, s, thickness, italicsMode, transformedCenter, outlineColor, thickness * THICKNESS_MULTIPLIERS.outline);
     }
   } else if (op.type === 'point') {
     const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
@@ -1527,192 +1434,13 @@ function drawOpAnimatedInside(ctx, op, s, thickness, progress, italicsMode=false
     ctx.stroke();
     ctx.restore();
     
-    // In italics mode, extend the arc endpoint slightly to fill gaps (only when fully drawn)
-    if (italicsMode && progress === 1 && !(op.start === 0 && op.end === Math.PI * 2)) {
-      // Where the ellipse arc actually ends (relative to transformed center)
-      const endX = op.rx * Math.cos(op.end);
-      const endY = op.ry * Math.sin(op.end);
-      const ellipseEndPoint = {x: transformedCenter.x + endX, y: transformedCenter.y + endY};
-      
-      // Where the endpoint should be (using transformed center as the base)
-      const originalEndX = op.rx * Math.cos(op.end);
-      const originalEndY = op.ry * Math.sin(op.end);
-      const originalCenter = {x: op.cx, y: op.cy};
-      const intendedEndPoint = applyItalicsTransform({
-        x: originalCenter.x + originalEndX,
-        y: originalCenter.y + originalEndY
-      }, s, italicsMode);
-      
-      // Draw a small line to fill the gap if they differ
-      const dx = intendedEndPoint.x - ellipseEndPoint.x;
-      const dy = intendedEndPoint.y - ellipseEndPoint.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      
-      if (dist > 0.1) {
-        ctx.save();
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-        ctx.moveTo(ellipseEndPoint.x, ellipseEndPoint.y);
-        ctx.lineTo(intendedEndPoint.x, intendedEndPoint.y);
-        ctx.strokeStyle = textColor;
-        ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
-        ctx.stroke();
-        ctx.restore();
-      }
+    if (italicsMode && progress === 1) {
+      drawArcCorrectionLine(ctx, op, s, thickness, italicsMode, transformedCenter, textColor, thickness * THICKNESS_MULTIPLIERS.main);
     }
   } else if (op.type === 'point') {
     const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
     ctx.beginPath();
     ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointRadius * progress, 0, Math.PI * 2);
-    ctx.fillStyle = textColor;
-    ctx.fill();
-  }
-}
-
-function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false, backgroundColor='#808080', editorMode=false) {
-  if (editorMode) {
-    // Editor mode: just draw white text
-    const whiteColor = '#ffffff';
-    
-    if (op.type === 'line') {
-      const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
-      const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
-      const intermediate = {
-        x: p1.x + (p2.x - p1.x) * progress,
-        y: p1.y + (p2.y - p1.y) * progress
-      };
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(p1.x, p1.y);
-      ctx.lineTo(intermediate.x, intermediate.y);
-      ctx.strokeStyle = whiteColor;
-      ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
-      ctx.stroke();
-      ctx.restore();
-      return;
-    } else if (op.type === 'arc') {
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.strokeStyle = whiteColor;
-      ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
-      
-      // Calculate progress-based end angle
-      let endAngle, startAngle;
-      if (op.start === 0 && op.end === Math.PI * 2) {
-        endAngle = progress * Math.PI * 2;
-        startAngle = 0;
-      } else {
-        startAngle = op.start;
-        let angleDiff = op.acw ? op.start - op.end : op.end - op.start;
-        if (angleDiff <= 0) angleDiff += Math.PI * 2;
-        const progressAngle = angleDiff * progress;
-        endAngle = op.acw ? op.start - progressAngle : op.start + progressAngle;
-      }
-      
-      const transformedCenter = applyItalicsTransform({x: op.cx, y: op.cy}, s, italicsMode);
-      ctx.beginPath();
-      ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, startAngle, endAngle, op.acw);
-      ctx.stroke();
-      ctx.restore();
-      return;
-    } else if (op.type === 'point') {
-      const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
-      const radius = thickness * THICKNESS_MULTIPLIERS.pointRadius * progress;
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = whiteColor;
-      ctx.fill();
-      return;
-    }
-  }
-  
-  // Card mode: draw with outline and blended colors
-  // Calculate outline color (same as background)
-  const outlineColor = backgroundColor;
-  
-  // Calculate text color (62% blend between white/black and background)
-  const rgb = hexToRgb(backgroundColor);
-  const luminosity = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
-  const baseColor = luminosity > 0.5 ? '#000000' : '#ffffff';
-  const textColor = blendColors(baseColor, backgroundColor, 0.62);
-  
-  if (op.type === 'line') {
-    const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
-    const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
-    const intermediate = {
-      x: p1.x + (p2.x - p1.x) * progress,
-      y: p1.y + (p2.y - p1.y) * progress
-    };
-    ctx.save();
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    
-    // Draw outline
-    ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(intermediate.x, intermediate.y);
-    ctx.strokeStyle = outlineColor;
-    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
-    ctx.stroke();
-    
-    // Draw main line
-    ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(intermediate.x, intermediate.y);
-    ctx.strokeStyle = textColor;
-    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
-    ctx.stroke();
-    ctx.restore();
-  } else if (op.type === 'arc') {
-    const transformedCenter = applyItalicsTransform({x: op.cx, y: op.cy}, s, italicsMode);
-    
-    ctx.save();
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    
-    let endAngle, startAngle;
-    if (op.start === 0 && op.end === Math.PI * 2) {
-      endAngle = progress * Math.PI * 2;
-      startAngle = 0;
-    } else {
-      startAngle = op.start;
-      let angleDiff = op.acw ? op.start - op.end : op.end - op.start;
-      if (angleDiff <= 0) angleDiff += Math.PI * 2;
-      const progressAngle = angleDiff * progress;
-      endAngle = op.acw ? op.start - progressAngle : op.start + progressAngle;
-    }
-    
-    // Draw outline
-    ctx.beginPath();
-    ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, startAngle, endAngle, op.acw);
-    ctx.strokeStyle = outlineColor;
-    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
-    ctx.stroke();
-    
-    // Draw main arc
-    ctx.beginPath();
-    ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, startAngle, endAngle, op.acw);
-    ctx.strokeStyle = textColor;
-    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
-    ctx.stroke();
-    ctx.restore();
-  } else if (op.type === 'point') {
-    const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
-    const radius = thickness * THICKNESS_MULTIPLIERS.pointRadius * progress;
-    
-    // Draw outline circle
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointOutline * progress, 0, Math.PI * 2);
-    ctx.fillStyle = outlineColor;
-    ctx.fill();
-    
-    // Draw main point
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, radius, 0, Math.PI * 2);
     ctx.fillStyle = textColor;
     ctx.fill();
   }
