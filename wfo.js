@@ -335,7 +335,48 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
 }
 
 // Drawing functions
-function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false, backgroundColor='#808080') {
+function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false, backgroundColor='#808080', editorMode=false) {
+  if (editorMode) {
+    // Editor mode: just draw white text, no outline
+    const whiteColor = '#ffffff';
+    
+    if (op.type === 'line') {
+      const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
+      const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.strokeStyle = whiteColor;
+      ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
+      ctx.stroke();
+      ctx.restore();
+      return;
+    } else if (op.type === 'arc') {
+      const transformedCenter = applyItalicsTransform({x: op.cx, y: op.cy}, s, italicsMode);
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, op.start, op.end, op.acw);
+      ctx.strokeStyle = whiteColor;
+      ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
+      ctx.stroke();
+      ctx.restore();
+      return;
+    } else if (op.type === 'point') {
+      const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointRadius, 0, Math.PI * 2);
+      ctx.fillStyle = whiteColor;
+      ctx.fill();
+      return;
+    }
+  }
+  
+  // Card mode: draw with outline and blended colors
   // Calculate outline color (same as background)
   const outlineColor = backgroundColor;
   
@@ -428,7 +469,7 @@ function drawOpInside(ctx, op, s=8, thickness=0.8, italicsMode=false, textColor=
   }
 }
 
-function drawCardPreview(canvas, cardData) {
+function drawCardPreview(canvas, cardData, isIndividualView = false) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
@@ -471,9 +512,12 @@ function drawCardPreview(canvas, cardData) {
     // Get italics setting from card data
     const italicsMode = cardData.options?.italics !== false;
     
+    // Get animation setting from card data - only animate in individual view
+    const animateMode = isIndividualView && cardData.options?.animate === true;
+    
     // Build drawing operations
     const s = 8;
-    const pad = { left: 1, top: 1, right: 1 };
+    const pad = { left: 2, top: 2, right: 2 };
     const gridX = Math.floor(canvas.width / s);
     const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor, 0, true);
     
@@ -485,12 +529,19 @@ function drawCardPreview(canvas, cardData) {
     
     // Draw all operations - two passes: first outlines, then insides
     const thickness = s / 10;
-    for (const op of ops) {
-      drawOp(ctx, op, s, thickness, italicsMode, primaryColor);
-    }
-    for (const op of ops) {
-      if (op.type !== 'point') {
-        drawOpInside(ctx, op, s, thickness, italicsMode, textColor);
+    
+    if (animateMode) {
+      // Use animation
+      animateDrawing(ctx, ops, s, pad, italicsMode, primaryColor);
+    } else {
+      // Static drawing - two passes: first outlines, then insides
+      for (const op of ops) {
+        drawOp(ctx, op, s, thickness, italicsMode, primaryColor);
+      }
+      for (const op of ops) {
+        if (op.type !== 'point') {
+          drawOpInside(ctx, op, s, thickness, italicsMode, textColor);
+        }
       }
     }
   } catch (error) {
@@ -793,7 +844,7 @@ function setupDragAndDrop(setNumber) {
       console.error('Error in handleDrop:', error);
     } finally {
       isProcessingDrop = false;
-    }
+  }
   }
   gridEl.addEventListener('dragstart', handleDragStart);
   gridEl.addEventListener('dragend', handleDragEnd);
@@ -851,7 +902,7 @@ async function showIndividualCard(setNumber, order, cardData) {
   canvas.height = 848;
   individualCard.appendChild(canvas);
   
-  drawCardPreview(canvas, cardData);
+  drawCardPreview(canvas, cardData, true);  // true = individual view
   if (cardData.options && cardData.options.svgBackground) {
     const svgValue = cardData.options.svgBackground;
     let svgContent = null;
@@ -1162,6 +1213,7 @@ function openCardEditor(setNumber, order, cardData) {
   document.getElementById('editorBackground').value = cardData.options?.backgroundColor || 'transparent';
   document.getElementById('editorBackground2').value = cardData.options?.backgroundColor2 || '';
   document.getElementById('editorItalics').checked = cardData.options?.italics !== false;
+  document.getElementById('animatePreview').checked = cardData.options?.animate === true;
   document.getElementById('editorSvgColor').checked = cardData.options?.svgColor === true;
   document.getElementById('editorSvg').value = cardData.options?.svgBackground || '';
   
@@ -1194,6 +1246,12 @@ function animateDrawing(ctx, ops, s, pad, italicsMode=false, backgroundColor='#8
   const DRAW_MS = STEP_DELAY_MS;
   const thickness = s / 10;
   
+  // Calculate text color (62% blend between white/black and background)
+  const rgb = hexToRgb(backgroundColor);
+  const luminosity = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  const baseColor = luminosity > 0.5 ? '#000000' : '#ffffff';
+  const textColor = blendColors(baseColor, backgroundColor, 0.62);
+  
   let currentIndex = 0;
   const animStart = performance.now();
   const firstVisibleAt = ops.map((_, i) => animStart + i * STEP_DELAY_MS);
@@ -1201,16 +1259,25 @@ function animateDrawing(ctx, ops, s, pad, italicsMode=false, backgroundColor='#8
   const drawFrame = (now) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     
-    drawGridPoints(ctx, s, ctx.canvas.width, ctx.canvas.height, thickness, italicsMode);
-    
+    // First pass: draw all outlines
     for (let i = 0; i < ops.length; i++) {
       const op = ops[i];
       const t0 = firstVisibleAt[i];
       const progress = Math.max(0, Math.min(1, (now - t0) / DRAW_MS));
       
       if (progress > 0) {
-        // Draw with progress animation
-        drawOpAnimated(ctx, op, s, thickness, progress, italicsMode, backgroundColor);
+        drawOpAnimatedOutline(ctx, op, s, thickness, progress, italicsMode, backgroundColor);
+      }
+    }
+    
+    // Second pass: draw all insides
+    for (let i = 0; i < ops.length; i++) {
+      const op = ops[i];
+      const t0 = firstVisibleAt[i];
+      const progress = Math.max(0, Math.min(1, (now - t0) / DRAW_MS));
+      
+      if (progress > 0) {
+        drawOpAnimatedInside(ctx, op, s, thickness, progress, italicsMode, textColor);
       }
     }
     
@@ -1224,7 +1291,171 @@ function animateDrawing(ctx, ops, s, pad, italicsMode=false, backgroundColor='#8
   requestAnimationFrame(drawFrame);
 }
 
-function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false, backgroundColor='#808080') {
+function drawOpAnimatedOutline(ctx, op, s, thickness, progress, italicsMode=false, backgroundColor='#808080') {
+  const outlineColor = backgroundColor;
+  
+  if (op.type === 'line') {
+    const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
+    const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
+    const intermediate = {
+      x: p1.x + (p2.x - p1.x) * progress,
+      y: p1.y + (p2.y - p1.y) * progress
+    };
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(intermediate.x, intermediate.y);
+    ctx.strokeStyle = outlineColor;
+    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
+    ctx.stroke();
+    ctx.restore();
+  } else if (op.type === 'arc') {
+    const transformedCenter = applyItalicsTransform({x: op.cx, y: op.cy}, s, italicsMode);
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    let endAngle, startAngle;
+    if (op.start === 0 && op.end === Math.PI * 2) {
+      endAngle = progress * Math.PI * 2;
+      startAngle = 0;
+    } else {
+      startAngle = op.start;
+      let angleDiff = op.acw ? op.start - op.end : op.end - op.start;
+      if (angleDiff <= 0) angleDiff += Math.PI * 2;
+      const progressAngle = angleDiff * progress;
+      endAngle = op.acw ? op.start - progressAngle : op.start + progressAngle;
+    }
+    
+    ctx.beginPath();
+    ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, startAngle, endAngle, op.acw);
+    ctx.strokeStyle = outlineColor;
+    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.outline;
+    ctx.stroke();
+    ctx.restore();
+  } else if (op.type === 'point') {
+    const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointOutline * progress, 0, Math.PI * 2);
+    ctx.fillStyle = outlineColor;
+    ctx.fill();
+  }
+}
+
+function drawOpAnimatedInside(ctx, op, s, thickness, progress, italicsMode=false, textColor) {
+  if (op.type === 'line') {
+    const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
+    const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
+    const intermediate = {
+      x: p1.x + (p2.x - p1.x) * progress,
+      y: p1.y + (p2.y - p1.y) * progress
+    };
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(intermediate.x, intermediate.y);
+    ctx.strokeStyle = textColor;
+    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
+    ctx.stroke();
+    ctx.restore();
+  } else if (op.type === 'arc') {
+    const transformedCenter = applyItalicsTransform({x: op.cx, y: op.cy}, s, italicsMode);
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    let endAngle, startAngle;
+    if (op.start === 0 && op.end === Math.PI * 2) {
+      endAngle = progress * Math.PI * 2;
+      startAngle = 0;
+    } else {
+      startAngle = op.start;
+      let angleDiff = op.acw ? op.start - op.end : op.end - op.start;
+      if (angleDiff <= 0) angleDiff += Math.PI * 2;
+      const progressAngle = angleDiff * progress;
+      endAngle = op.acw ? op.start - progressAngle : op.start + progressAngle;
+    }
+    
+    ctx.beginPath();
+    ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, startAngle, endAngle, op.acw);
+    ctx.strokeStyle = textColor;
+    ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
+    ctx.stroke();
+    ctx.restore();
+  } else if (op.type === 'point') {
+    const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, thickness * THICKNESS_MULTIPLIERS.pointRadius * progress, 0, Math.PI * 2);
+    ctx.fillStyle = textColor;
+    ctx.fill();
+  }
+}
+
+function drawOpAnimated(ctx, op, s, thickness, progress, italicsMode=false, backgroundColor='#808080', editorMode=false) {
+  if (editorMode) {
+    // Editor mode: just draw white text
+    const whiteColor = '#ffffff';
+    
+    if (op.type === 'line') {
+      const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
+      const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
+      const intermediate = {
+        x: p1.x + (p2.x - p1.x) * progress,
+        y: p1.y + (p2.y - p1.y) * progress
+      };
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(intermediate.x, intermediate.y);
+      ctx.strokeStyle = whiteColor;
+      ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
+      ctx.stroke();
+      ctx.restore();
+      return;
+    } else if (op.type === 'arc') {
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = whiteColor;
+      ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
+      
+      // Calculate progress-based end angle
+      let endAngle, startAngle;
+      if (op.start === 0 && op.end === Math.PI * 2) {
+        endAngle = progress * Math.PI * 2;
+        startAngle = 0;
+      } else {
+        startAngle = op.start;
+        let angleDiff = op.acw ? op.start - op.end : op.end - op.start;
+        if (angleDiff <= 0) angleDiff += Math.PI * 2;
+        const progressAngle = angleDiff * progress;
+        endAngle = op.acw ? op.start - progressAngle : op.start + progressAngle;
+      }
+      
+      const transformedCenter = applyItalicsTransform({x: op.cx, y: op.cy}, s, italicsMode);
+      ctx.beginPath();
+      ctx.ellipse(transformedCenter.x, transformedCenter.y, op.rx, op.ry, 0, startAngle, endAngle, op.acw);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    } else if (op.type === 'point') {
+      const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
+      const radius = thickness * THICKNESS_MULTIPLIERS.pointRadius * progress;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = whiteColor;
+      ctx.fill();
+      return;
+    }
+  }
+  
+  // Card mode: draw with outline and blended colors
   // Calculate outline color (same as background)
   const outlineColor = backgroundColor;
   
@@ -1633,17 +1864,17 @@ function updateEditorPreview() {
   const output = outputEl ? (outputEl.textContent || outputEl.value || '') : '';
   
   if (!output) {
-    ctx.fillStyle = '#666';
-    ctx.font = '16px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Card Preview', canvas.width / 2, canvas.height / 2);
+  ctx.fillStyle = '#666';
+  ctx.font = '16px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Card Preview', canvas.width / 2, canvas.height / 2);
     return;
   }
   
   try {
     const coloredItems = parseBytes(output);
     const s = 8;
-    const pad = { left: 1, top: 1, right: 1 };
+    const pad = { left: 2, top: 2, right: 2 };
     const gridX = Math.floor(canvas.width / s);
     const { ops, visited } = buildOps(coloredItems, s, pad, gridX, bgColor, 0);
     
@@ -1652,28 +1883,11 @@ function updateEditorPreview() {
     const italicsCheckbox = document.getElementById('editorItalics');
     const italicsMode = italicsCheckbox ? italicsCheckbox.checked : false;
     
-    const animateCheckbox = document.getElementById('animatePreview');
-    const shouldAnimate = animateCheckbox && animateCheckbox.checked;
-    
-    // Calculate text color (62% blend between white/black and background)
-    const rgb = hexToRgb(bgColor);
-    const luminosity = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
-    const baseColor = luminosity > 0.5 ? '#000000' : '#ffffff';
-    const textColor = blendColors(baseColor, bgColor, 0.62);
-    
-    if (shouldAnimate) {
-      animateDrawing(ctx, ops, s, pad, italicsMode, bgColor);
-    } else {
-      drawGridPoints(ctx, s, canvas.width, canvas.height, thickness, italicsMode);
-      // Two passes: first outlines, then insides
-      for (const op of ops) {
-        drawOp(ctx, op, s, thickness, italicsMode, bgColor);
-      }
-      for (const op of ops) {
-        if (op.type !== 'point') {
-          drawOpInside(ctx, op, s, thickness, italicsMode, textColor);
-        }
-      }
+    // Always draw static preview in editor mode
+    drawGridPoints(ctx, s, canvas.width, canvas.height, thickness, italicsMode);
+    // Editor mode: draw white text only, no outline
+    for (const op of ops) {
+      drawOp(ctx, op, s, thickness, italicsMode, bgColor, true);
     }
   } catch (error) {
     ctx.fillStyle = '#ff0000';
@@ -1691,6 +1905,7 @@ async function saveCard() {
     const backgroundColor = document.getElementById('editorBackground').value;
     const backgroundColor2 = document.getElementById('editorBackground2').value;
     const italics = document.getElementById('editorItalics').checked;
+    const animate = document.getElementById('animatePreview').checked;
     const svgColor = document.getElementById('editorSvgColor').checked;
     const svgBackground = document.getElementById('editorSvg').value;
     const ruleEl = document.getElementById('editorRule');
@@ -1709,6 +1924,7 @@ async function saveCard() {
       delete cardDataObj.options.backgroundColor2;
     }
     cardDataObj.options.italics = italics;
+    cardDataObj.options.animate = animate;
     cardDataObj.options.svgColor = svgColor;
     if (svgBackground) {
       cardDataObj.options.svgBackground = svgBackground;
@@ -1978,7 +2194,6 @@ document.getElementById('editorInput').addEventListener('input', (e) => {
     updateEditorPreview();
   }, 10);
 });
-document.getElementById('animatePreview').addEventListener('change', updateEditorPreview);
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const individualView = document.getElementById('individualCardView');
