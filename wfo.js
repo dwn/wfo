@@ -365,6 +365,41 @@ function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false, backgroundColor=
       ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
       ctx.stroke();
       ctx.restore();
+      
+      // In italics mode, extend the arc endpoint slightly to fill gaps
+      if (italicsMode && !(op.start === 0 && op.end === Math.PI * 2)) {
+        // Where the ellipse arc actually ends (relative to transformed center)
+        const endX = op.rx * Math.cos(op.end);
+        const endY = op.ry * Math.sin(op.end);
+        const ellipseEndPoint = {x: transformedCenter.x + endX, y: transformedCenter.y + endY};
+        
+        // Where the endpoint should be (using transformed center as the base)
+        const originalEndX = op.rx * Math.cos(op.end);
+        const originalEndY = op.ry * Math.sin(op.end);
+        const originalCenter = {x: op.cx, y: op.cy};
+        const intendedEndPoint = applyItalicsTransform({
+          x: originalCenter.x + originalEndX,
+          y: originalCenter.y + originalEndY
+        }, s, italicsMode);
+        
+        // Draw a small line to fill the gap if they differ
+        const dx = intendedEndPoint.x - ellipseEndPoint.x;
+        const dy = intendedEndPoint.y - ellipseEndPoint.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if (dist > 0.1) {
+          ctx.save();
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          ctx.moveTo(ellipseEndPoint.x, ellipseEndPoint.y);
+          ctx.lineTo(intendedEndPoint.x, intendedEndPoint.y);
+          ctx.strokeStyle = whiteColor;
+          ctx.lineWidth = thickness * THICKNESS_MULTIPLIERS.main;
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
       return;
     } else if (op.type === 'point') {
       const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
