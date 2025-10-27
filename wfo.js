@@ -158,10 +158,6 @@ const THICKNESS_MULTIPLIERS = {
   endMarkerRadius: 3
 };
 
-// Derive hex pair colors from the COLORS array (excluding black, gray, white for better visibility)
-const HEX_PAIR_COLORS = COLORS
-  .filter(c => c.hex !== '#000000' && c.hex !== '#808080' && c.hex !== '#ffffff')
-  .map(c => c.hex);
 
 // Helper functions
 function triBitsToSigned(v3) { return (v3<=4) ? v3 : (4-v3); }
@@ -271,10 +267,9 @@ function parseBytes(str) {
 }
 
 // Build drawing operations from parsed bytes  
-function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.floor(600/s), backgroundColor='#808080', letterIndex=0, noColorization=false) {
+function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.floor(600/s), backgroundColor='#808080') {
   let xi = pad.left, yi = pad.top;
   const ops = []; const visited = [{xi, yi}];
-  let currentLetterHexPairIndex = 0;
   
   const preMoveWrap = (xi, yi, dx) => {
     const maxX = gridX - pad.right;
@@ -291,28 +286,14 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
       continue;
     }
     if (item.pipe) {
-      letterIndex++;
-      currentLetterHexPairIndex = 0;
       continue;
     }
     if (item.text && item.byte === undefined) continue;
     
     const b = item.byte;
-    const isCurrentLetter = letterIndex === 0;
     const rgb = hexToRgb(backgroundColor);
     const luminosity = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
-    let textColor = luminosity > 0.5 ? '#000000' : '#ffffff';
-    
-    let stroke;
-    if (noColorization) {
-      stroke = textColor;
-    } else if (isCurrentLetter) {
-      const colorIndex = currentLetterHexPairIndex % HEX_PAIR_COLORS.length;
-      stroke = HEX_PAIR_COLORS[colorIndex];
-      currentLetterHexPairIndex++;
-    } else {
-      stroke = textColor;
-    }
+    const textColor = luminosity > 0.5 ? '#000000' : '#ffffff';
     
     const a = (b >> 7) & 1;
     const xxx = (b >> 4) & 0b111;
@@ -322,16 +303,10 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
     const ab = (a << 1) | bitB;
     const isInvisibleMove = ab === 0b11;
     
-    if (!noColorization && isCurrentLetter && !isInvisibleMove) {
-      const colorIndex = currentLetterHexPairIndex % HEX_PAIR_COLORS.length;
-      stroke = HEX_PAIR_COLORS[colorIndex];
-      currentLetterHexPairIndex++;
-    }
-    
     if (isZero) {
       if (ab === 0b00) { yi = snapToLineTop(yi); }
-      else if (ab === 0b01) { ops.push({type: 'point', xi, yi, color: stroke}); }
-      else if (ab === 0b10) { ops.push({type: 'arc', cx: toCanvas({xi, yi}, s).x, cy: toCanvas({xi, yi}, s).y, rx: s*0.5, ry: s*0.5, start: 0, end: Math.PI*2, acw: false, color: stroke}); }
+      else if (ab === 0b01) { ops.push({type: 'point', xi, yi, color: textColor}); }
+      else if (ab === 0b10) { ops.push({type: 'arc', cx: toCanvas({xi, yi}, s).x, cy: toCanvas({xi, yi}, s).y, rx: s*0.5, ry: s*0.5, start: 0, end: Math.PI*2, acw: false, color: textColor}); }
       visited.push({xi, yi});
       continue;
     }
@@ -348,7 +323,7 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
     }
     
     if (ab === 0b00) {
-      ops.push({type: 'line', from, to, color: stroke});
+      ops.push({type: 'line', from, to, color: textColor});
     } else {
       const p0 = toCanvas(from, s), p1 = toCanvas(to, s);
       let cx, cy, rx, ry, a0, a1;
@@ -360,7 +335,7 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
         a1 = angleOnEllipse(cx, cy, rx, ry, p1.x, p1.y);
         a0 = normAngle(a0); a1 = normAngle(a1);
         const acw = anticlockwiseForShortest(a0, a1);
-        ops.push({type: 'arc', cx, cy, rx, ry, start: a0, end: a1, acw, color: stroke});
+        ops.push({type: 'arc', cx, cy, rx, ry, start: a0, end: a1, acw, color: textColor});
       }
     }
     
@@ -562,7 +537,7 @@ function drawCardPreview(canvas, cardData, isIndividualView = false) {
     const s = 8;
     const pad = { left: 2, top: 2, right: 2 };
     const gridX = Math.floor(canvas.width / s);
-    const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor, 0, true);
+    const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor);
     
     // Calculate text color (62% blend between white/black and background)
     const rgb = hexToRgb(primaryColor);
@@ -1490,12 +1465,11 @@ function highlightEditor(element) {
   // Escape HTML special characters
   const escText = esc(raw);
   
-  // Basic hex highlighting - colorize hex pairs
+  // Basic hex highlighting
   const HEX_CHAR_RE = /[0-9A-Fa-f]/;
   let html = '';
   let i = 0;
   let letterIndex = 0;
-  let hexPairIndex = 0;
   let inComment = false;
   
   while (i < escText.length) {
@@ -1527,14 +1501,12 @@ function highlightEditor(element) {
         i += 2;
         if (hasPipes) {
           letterIndex++;
-          hexPairIndex = 0;
         }
       } else {
         html += '|';
         i++;
         if (hasPipes) {
           letterIndex++;
-          hexPairIndex = 0;
         }
       }
     } else if (HEX_CHAR_RE.test(ch) && i + 1 < escText.length && HEX_CHAR_RE.test(escText[i + 1])) {
@@ -1553,20 +1525,13 @@ function highlightEditor(element) {
       const isMoveOnly = ab === 0b00 && isZero;
       
       if (isCurrentLetter && !isInvisibleMove && !isMoveOnly) {
-        // Color each hex pair in current letter with different colors
-        const colorIndex = hexPairIndex % HEX_PAIR_COLORS.length;
-        const hexColor = HEX_PAIR_COLORS[colorIndex];
-        html += `<strong style="color: ${hexColor};">${pair}</strong>`;
+        // Bold hex pairs in current letter
+        html += `<strong>${pair}</strong>`;
       } else if (isInvisibleMove || isMoveOnly) {
         // Invisible moves and move-only commands get yellow highlight background
         html += `<span style="background: #ffff00; color: #000;">${pair}</span>`;
       } else {
         html += pair;
-      }
-      
-      // Always increment hexPairIndex when in current letter
-      if (isCurrentLetter) {
-        hexPairIndex++;
       }
       
       i += 2;
@@ -1639,117 +1604,8 @@ function updateEditorOutput() {
     }
   }
   
-  if (outputEl && inputEl && output) {
-    // Apply highlighting based on cursor position in input field
-    const selection = window.getSelection();
-    const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-    let cursorPos = 0;
-    
-    if (range && inputEl.contains(range.startContainer)) {
-      const preRange = document.createRange();
-      preRange.selectNodeContents(inputEl);
-      preRange.setEnd(range.endContainer, range.endOffset);
-      cursorPos = preRange.toString().length;
-    }
-    
-    const hasPipes = input.includes('|');
-    let currentLetterIndex = 0;
-    
-    if (hasPipes) {
-      for (let i = 0; i < input.length && i < cursorPos; i++) {
-        if (input[i] === '|') {
-          if (i + 1 < input.length && input[i + 1] === '|') {
-            currentLetterIndex++;
-            i++;
-          } else {
-            currentLetterIndex++;
-          }
-        }
-      }
-    }
-    
-    const escText = esc(output);
-    const HEX_CHAR_RE = /[0-9A-Fa-f]/;
-    let html = '';
-    let i = 0;
-    let letterIndex = 0;
-    let hexPairIndex = 0;
-    let inComment = false;
-    
-    while (i < escText.length) {
-      const ch = escText[i];
-      
-      if (ch === '/' && i + 1 < escText.length && escText[i + 1] === '/') {
-        inComment = true;
-        html += ch;
-        i++;
-        continue;
-      }
-      
-      if (inComment) {
-        html += ch;
-        i++;
-        if (ch === '\n' || ch === '\r') {
-          inComment = false;
-        }
-        continue;
-      }
-      
-      if (ch === '|') {
-        const next = escText[i + 1];
-        if (next === '|') {
-          html += '||';
-          i += 2;
-          if (hasPipes) {
-            letterIndex++;
-            hexPairIndex = 0;
-          }
-        } else {
-          html += '|';
-          i++;
-          if (hasPipes) {
-            letterIndex++;
-            hexPairIndex = 0;
-          }
-        }
-      } else if (HEX_CHAR_RE.test(ch) && i + 1 < escText.length && HEX_CHAR_RE.test(escText[i + 1])) {
-        const pair = escText.substr(i, 2);
-        const byte = parseInt(pair, 16);
-        const a = (byte >> 7) & 1;
-        const xxx = (byte >> 4) & 0b111;
-        const bitB = (byte >> 3) & 1;
-        const yyy = byte & 0b111;
-        const isZero = (xxx === 0 && yyy === 0);
-        const ab = (a << 1) | bitB;
-        const isInvisibleMove = ab === 0b11;
-        
-        const isCurrentLetter = (letterIndex === currentLetterIndex);
-        const isMoveOnly = ab === 0b00 && isZero;
-        
-        if (isCurrentLetter && !isInvisibleMove && !isMoveOnly) {
-          html += `<strong>${pair}</strong>`;
-        } else if (isInvisibleMove || isMoveOnly) {
-          html += `<span style="background: #ffff00; color: #000;">${pair}</span>`;
-        } else {
-          html += pair;
-        }
-        
-        if (isCurrentLetter) {
-          hexPairIndex++;
-        }
-        
-        i += 2;
-      } else {
-        html += ch;
-        i++;
-      }
-    }
-    
-    outputEl.innerHTML = html;
-  } else {
-    if (outputEl) {
-      outputEl.textContent = output;
-    }
+  if (outputEl) {
+    outputEl.textContent = output;
   }
 }
 
@@ -1779,7 +1635,7 @@ function updateEditorPreview() {
     const s = 8;
     const pad = { left: 2, top: 2, right: 2 };
     const gridX = Math.floor(canvas.width / s);
-    const { ops, visited } = buildOps(coloredItems, s, pad, gridX, bgColor, 0);
+    const { ops, visited } = buildOps(coloredItems, s, pad, gridX, bgColor);
     
     const thickness = s / 10;
     
