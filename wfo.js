@@ -135,17 +135,6 @@ async function loadCardData(set, order) {
     return null;
   }
 }
-const COLORS = [
-  { name: 'red', hex: '#FF0000' },
-  { name: 'orange', hex: '#FF7B00' },
-  { name: 'yellow', hex: '#FFF200' },
-  { name: 'green', hex: '#36FF00' },
-  { name: 'sky', hex: '#008EFF' },
-  { name: 'blue', hex: '#1100FF' },
-  { name: 'violet', hex: '#79008D' },
-  { name: 'gray', hex: '#808080' },
-  { name: 'white', hex: '#FFFFFF' }
-];
 
 // ===== HEX TO GRAPHICS SYSTEM =====
 
@@ -177,7 +166,6 @@ const anticlockwiseForShortest = (a0, a1) => {
   return ccw <= cw;
 };
 const angleOnEllipse = (cx, cy, rx, ry, x, y) => Math.atan2((y - cy) / ry, (x - cx) / rx);
-const esc = (s) => s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
 // Italics transform function
 function applyItalicsTransform(point, s=8, italicsMode=true) {
@@ -1235,15 +1223,15 @@ function openCardEditor(setNumber, order, cardData) {
   document.getElementById('editorSvgColor').checked = cardData.options?.svgColor === true;
   document.getElementById('editorSvg').value = cardData.options?.svgBackground || '';
   
-  // Handle contenteditable divs
+  // Handle textarea elements
   const ruleEl = document.getElementById('editorRule');
   const inputEl = document.getElementById('editorInput');
+  const outputEl = document.getElementById('editorOutput');
   ruleEl.value = cardData.rule || '';
-  inputEl.textContent = cardData.input || '';
+  inputEl.value = cardData.input || '';
   
-  // Trigger highlighting after a brief delay to ensure the content is set
+  // Initialize output and preview after a brief delay
   setTimeout(() => {
-    highlightEditor(inputEl);
     updateEditorOutput();
     updateEditorPreview();
   }, 50);
@@ -1421,129 +1409,6 @@ function drawOpAnimatedInside(ctx, op, s, thickness, progress, italicsMode=false
   }
 }
 
-function highlightEditor(element) {
-  if (!element) return;
-  
-  // Get plain text content
-  const raw = element.textContent || element.innerText || '';
-  
-  if (!raw) {
-    element.innerHTML = '';
-    return;
-  }
-  
-  // Get current cursor position to determine which "letter" we're on
-  const selection = window.getSelection();
-  const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-  let cursorPos = 0;
-  if (range) {
-    const preRange = document.createRange();
-    preRange.selectNodeContents(element);
-    preRange.setEnd(range.endContainer, range.endOffset);
-    cursorPos = preRange.toString().length;
-  }
-  
-  // Calculate which letter index we're in (based on | separators)
-  const hasPipes = raw.includes('|');
-  let currentLetterIndex = 0;
-  let currentPos = 0;
-  
-  if (hasPipes) {
-    for (let i = 0; i < raw.length && i < cursorPos; i++) {
-      if (raw[i] === '|') {
-        if (i + 1 < raw.length && raw[i + 1] === '|') {
-          currentLetterIndex++;
-          i++;
-        } else {
-          currentLetterIndex++;
-        }
-      }
-      currentPos++;
-    }
-  }
-  
-  // Escape HTML special characters
-  const escText = esc(raw);
-  
-  // Basic hex highlighting
-  const HEX_CHAR_RE = /[0-9A-Fa-f]/;
-  let html = '';
-  let i = 0;
-  let letterIndex = 0;
-  let inComment = false;
-  
-  while (i < escText.length) {
-    const ch = escText[i];
-    
-    // Check for comment start
-    if (ch === '/' && i + 1 < escText.length && escText[i + 1] === '/') {
-      inComment = true;
-      html += ch;
-      i++;
-      continue;
-    }
-    
-    // If in comment, just output characters until end of line
-    if (inComment) {
-      html += ch;
-      i++;
-      // Check for newline (comment end)
-      if (ch === '\n' || ch === '\r') {
-        inComment = false;
-      }
-      continue;
-    }
-    
-    if (ch === '|') {
-      const next = escText[i + 1];
-      if (next === '|') {
-        html += '||';
-        i += 2;
-        if (hasPipes) {
-          letterIndex++;
-        }
-      } else {
-        html += '|';
-        i++;
-        if (hasPipes) {
-          letterIndex++;
-        }
-      }
-    } else if (HEX_CHAR_RE.test(ch) && i + 1 < escText.length && HEX_CHAR_RE.test(escText[i + 1])) {
-      // Found a hex pair
-      const pair = escText.substr(i, 2);
-      const byte = parseInt(pair, 16);
-      const a = (byte >> 7) & 1;
-      const xxx = (byte >> 4) & 0b111;
-      const bitB = (byte >> 3) & 1;
-      const yyy = byte & 0b111;
-      const isZero = (xxx === 0 && yyy === 0);
-      const ab = (a << 1) | bitB;
-      const isInvisibleMove = ab === 0b11;
-      
-      const isCurrentLetter = (letterIndex === currentLetterIndex);
-      const isMoveOnly = ab === 0b00 && isZero;
-      
-      if (isCurrentLetter && !isInvisibleMove && !isMoveOnly) {
-        // Bold hex pairs in current letter
-        html += `<strong>${pair}</strong>`;
-      } else if (isInvisibleMove || isMoveOnly) {
-        // Invisible moves and move-only commands get yellow highlight background
-        html += `<span style="background: #ffff00; color: #000;">${pair}</span>`;
-      } else {
-        html += pair;
-      }
-      
-      i += 2;
-    } else {
-      html += ch;
-      i++;
-    }
-  }
-  
-  element.innerHTML = html;
-}
-
 function drawGridPoints(ctx, spacing, width, height, thickness, italicsMode=false) {
   ctx.save();
   const baseColor = '#666666';
@@ -1578,7 +1443,7 @@ function updateEditorOutput() {
   const outputEl = document.getElementById('editorOutput');
   
   const rule = ruleEl ? ruleEl.value : '';
-  const input = inputEl ? (inputEl.textContent || inputEl.innerText || '') : '';
+  const input = inputEl ? inputEl.value : '';
   
   let output = input;
   
@@ -1605,7 +1470,7 @@ function updateEditorOutput() {
   }
   
   if (outputEl) {
-    outputEl.textContent = output;
+    outputEl.value = output;
   }
 }
 
@@ -1620,7 +1485,7 @@ function updateEditorPreview() {
   const bgColor2 = document.getElementById('editorBackground2').value;
   
   const outputEl = document.getElementById('editorOutput');
-  const output = outputEl ? (outputEl.textContent || outputEl.value || '') : '';
+  const output = outputEl ? outputEl.value : '';
   
   if (!output) {
   ctx.fillStyle = '#666';
@@ -1670,7 +1535,7 @@ async function saveCard() {
     const ruleEl = document.getElementById('editorRule');
     const inputEl = document.getElementById('editorInput');
     const rule = ruleEl ? ruleEl.value : '';
-    const input = inputEl ? (inputEl.textContent || inputEl.value || '') : '';
+    const input = inputEl ? inputEl.value : '';
     const cardDataObj = currentEditingCard.cardData;
     cardDataObj.rule = rule;
     cardDataObj.input = input;
@@ -1945,13 +1810,9 @@ document.getElementById('editorRule').addEventListener('input', (e) => {
   updateEditorOutput();
   updateEditorPreview();
 });
-document.getElementById('editorInput').addEventListener('input', (e) => {
-  // Use a small timeout to let the content settle
-  setTimeout(() => {
-    highlightEditor(e.target);
-    updateEditorOutput();
-    updateEditorPreview();
-  }, 10);
+document.getElementById('editorInput').addEventListener('input', () => {
+  updateEditorOutput();
+  updateEditorPreview();
 });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
