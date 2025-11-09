@@ -179,10 +179,35 @@
 </div>
 </div>
 <div class="card-editor-footer">
-<button id="saveCard" class="btn btn-primary">Save Card</button>
-<button id="cancelEdit" class="btn btn-secondary">Cancel</button>
+  <div class="footer-left">
+    <button id="showInstructions" class="btn btn-ghost" type="button">Instructions</button>
+  </div>
+  <div class="footer-actions">
+    <button id="saveCard" class="btn btn-primary" type="button">Save Card</button>
+    <button id="cancelEdit" class="btn btn-secondary" type="button">Cancel</button>
+  </div>
 </div>
 </div>
+</div>
+<div id="instructionsModal" class="instructions-modal" style="display: none;">
+  <div class="instructions-content" role="dialog" aria-modal="true" aria-labelledby="instructionsTitle">
+    <div class="instructions-header">
+      <h3 id="instructionsTitle">Digit Pair Instructions</h3>
+    </div>
+    <div class="instructions-body">
+      <ul>
+        <li><strong>Digit pairs drive drawing.</strong> Treat every two hexadecimal characters (for example <code>4F</code>) as a single command on the 8×8 grid.</li>
+        <li><strong>Bit layout matters.</strong> The byte splits into <code>a xxx b yyy</code>; the three-bit values <code>xxx</code>/<code>yyy</code> set horizontal/vertical offsets. Values 0–4 move forward, 5–7 wrap to −1, −2, −3.</li>
+        <li><strong>Command bits pick the stroke.</strong> The outer bits <code>a</code> and <code>b</code> (written together as <code>ab</code>) choose the action: <code>00</code> draws a straight line, <code>01</code> and <code>10</code> draw quarter arcs (vertical or horizontal bow), and <code>11</code> moves without drawing.</li>
+        <li><strong>Zero moves are special.</strong> With no movement, <code>00</code> snaps to the row top, <code>01</code> plots a point, <code>10</code> draws a full circle, and <code>11</code> does nothing.</li>
+        <li><strong>Layout helpers keep things tidy.</strong> Use <code>||</code> to start a new grid row, a single <code>|</code> to delimit successive glyphs, and prefix lines with <code>//</code> for comments that the renderer ignores.</li>
+        <li><strong>Rules transform the raw data.</strong> Add replacements like <code>13,24</code> (source,target) to the Rule box; they apply before the glyphs are drawn.</li>
+      </ul>
+    </div>
+    <div class="instructions-footer">
+      <button id="ackInstructions" class="btn btn-primary" type="button">Got it</button>
+    </div>
+  </div>
 </div>
 <div id="status" style="display: none;">
 <div class="spinner"></div>

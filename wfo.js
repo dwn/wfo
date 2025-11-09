@@ -442,6 +442,7 @@ function toggleAccordion(header) {
 }
 function openCardEditor(setNumber, order, cardData) {
   currentEditingCard = { setNumber, order, cardData };
+  hideInstructionsModal();
   document.getElementById('editorOrder').value = order || '';
   document.getElementById('editorSize').value = cardData.options?.size || 5;
   document.getElementById('editorSizeValue').textContent = cardData.options?.size || 5;
@@ -474,6 +475,7 @@ function openCardEditor(setNumber, order, cardData) {
 }
 function closeCardEditor() {
   document.getElementById('cardEditorModal').style.display = 'none';
+  hideInstructionsModal();
   currentEditingCard = null;
 }
 
@@ -627,6 +629,18 @@ function hideDeleteModal() {
   const modal = document.getElementById('deleteModal');
   modal.style.display = 'none';
   cardToDelete = null;
+}
+function showInstructionsModal() {
+  const modal = document.getElementById('instructionsModal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+function hideInstructionsModal() {
+  const modal = document.getElementById('instructionsModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
 }
 async function deleteCard() {
   if (!cardToDelete) return;
@@ -841,6 +855,13 @@ document.getElementById('confirmDelete').addEventListener('click', deleteCard);
 document.getElementById('cancelDelete').addEventListener('click', hideDeleteModal);
 document.getElementById('cancelEdit').addEventListener('click', closeCardEditor);
 document.getElementById('saveCard').addEventListener('click', saveCard);
+document.getElementById('showInstructions').addEventListener('click', showInstructionsModal);
+document.getElementById('ackInstructions').addEventListener('click', hideInstructionsModal);
+document.getElementById('instructionsModal').addEventListener('click', (event) => {
+  if (event.target === event.currentTarget) {
+    hideInstructionsModal();
+  }
+});
 document.getElementById('editorSize').addEventListener('input', (e) => {
   document.getElementById('editorSizeValue').textContent = e.target.value;
   updateEditorPreview();
@@ -861,6 +882,11 @@ document.getElementById('editorInput').addEventListener('input', () => {
 });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
+    const instructionsModal = document.getElementById('instructionsModal');
+    if (instructionsModal && instructionsModal.style.display === 'flex') {
+      hideInstructionsModal();
+      return;
+    }
     const individualView = document.getElementById('individualCardView');
     const deleteModal = document.getElementById('deleteModal');
     const cardEditorModal = document.getElementById('cardEditorModal');
@@ -875,6 +901,7 @@ document.addEventListener('keydown', (e) => {
   
   // Arrow keys to switch sets (only when no modals are open and no input is focused)
   if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    const instructionsModal = document.getElementById('instructionsModal');
     const individualView = document.getElementById('individualCardView');
     const deleteModal = document.getElementById('deleteModal');
     const cardEditorModal = document.getElementById('cardEditorModal');
@@ -884,7 +911,8 @@ document.addEventListener('keydown', (e) => {
       document.activeElement.tagName === 'SELECT'
     );
     
-    if (individualView.style.display !== 'flex' &&
+    if ((!instructionsModal || instructionsModal.style.display !== 'flex') &&
+        individualView.style.display !== 'flex' &&
         deleteModal.style.display !== 'flex' &&
         cardEditorModal.style.display !== 'flex' &&
         !isInputFocused) {
