@@ -152,6 +152,101 @@ function hideIndividualCard() {
   }
 }
 
+async function renderCardToWrapper(cardWrapper, setNumber, order, cardData) {
+  if (!cardData) {
+    cardWrapper.classList.add('empty-slot');
+    const placeholder = document.createElement('div');
+    placeholder.style.width = '100%';
+    placeholder.style.height = '100%';
+    placeholder.style.pointerEvents = 'none';
+    cardWrapper.appendChild(placeholder);
+    return;
+  }
+
+  cardWrapper.classList.remove('empty-slot');
+  cardWrapper.setAttribute('draggable', 'true');
+  cardWrapper.setAttribute('data-order', order);
+  cardWrapper.innerHTML = '';
+
+  const orderLabel = document.createElement('div');
+  orderLabel.className = 'card-order';
+  orderLabel.textContent = order;
+  cardWrapper.appendChild(orderLabel);
+
+  cardWrapper.addEventListener('click', () => {
+    showIndividualCard(setNumber, order, cardData);
+  });
+
+  const editButton = document.createElement('button');
+  editButton.className = 'card-edit-button';
+  editButton.innerHTML = '✏️';
+  editButton.title = 'Edit Card';
+  editButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openCardEditor(setNumber, order, cardData);
+  });
+  cardWrapper.appendChild(editButton);
+
+  const svgContainer = document.createElement('div');
+  svgContainer.className = 'svg-container';
+  cardWrapper.appendChild(svgContainer);
+
+  if (cardData.options && cardData.options.svgBackground) {
+    const svgValue = cardData.options.svgBackground;
+    let svgContent = null;
+    if (svgValue.startsWith('http://') || svgValue.startsWith('https://')) {
+      try {
+        const response = await fetch(svgValue);
+        svgContent = await response.text();
+      } catch (error) {
+        console.error('Failed to load SVG:', error);
+      }
+    } else {
+      svgContent = svgValue;
+    }
+    if (svgContent) {
+      const { primaryColor } = getCardColors(cardData);
+      const textColor = calculateSvgTextColor(primaryColor, false);
+      const useNaturalColors = cardData.options && cardData.options.svgColor === true;
+      const cleanedSvg = stripSvgColors(svgContent, useNaturalColors);
+      const uniqueId = `svg-${setNumber}-${order}`;
+      svgContainer.id = uniqueId;
+      svgContainer.innerHTML = `
+        <style>
+          #${uniqueId} svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+            object-position: center;
+            opacity: 0.5;
+            ${useNaturalColors ? '' : `color: ${textColor};`}
+          }
+          ${useNaturalColors ? '' : `#${uniqueId} svg * {
+            fill: currentColor;
+            stroke: currentColor;
+            stroke-width: 0;
+          }`}
+        </style>
+        ${cleanedSvg}
+      `;
+      svgContainer.offsetHeight;
+    }
+  }
+
+  const { primaryColor, secondColor } = getCardColors(cardData);
+  cardWrapper.style.background = generateGradientFromColor(primaryColor, secondColor);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 600;
+  canvas.height = 848;
+  cardWrapper.appendChild(canvas);
+  // Draw card preview if drawing module is available
+  if (typeof drawCardPreview === 'function') {
+    drawCardPreview(canvas, cardData);
+  }
+}
+
 async function displaySet(setNumber) {
   const statusEl = document.getElementById('status');
   let gridEl = document.getElementById('gridContainer');
@@ -162,167 +257,120 @@ async function displaySet(setNumber) {
     gridEl.style.display = 'none';
     document.body.insertBefore(gridEl, document.getElementById('individualCardView'));
   }
-  statusEl.style.display = 'block';
-  gridEl.style.display = 'none';
+
+  // Hide spinner and show grid immediately
+  statusEl.style.display = 'none';
   gridEl.innerHTML = '';
+  gridEl.style.display = 'grid';
+
+  // Create empty grid structure
+  const gridWrappers = new Map();
+  for (let row = 1; row <= 5; row++) {
+    for (let col = 1; col <= 3; col++) {
+      const key = `${row}-${col}`;
+      const cardWrapper = document.createElement('div');
+      cardWrapper.className = 'card-wrapper empty-slot';
+      cardWrapper.style.gridRow = row;
+      cardWrapper.style.gridColumn = col;
+      const placeholder = document.createElement('div');
+      placeholder.style.width = '100%';
+      placeholder.style.height = '100%';
+      placeholder.style.pointerEvents = 'none';
+      cardWrapper.appendChild(placeholder);
+      gridEl.appendChild(cardWrapper);
+      gridWrappers.set(key, cardWrapper);
+    }
+  }
+
   try {
-    let loadedCards;
+    // Determine which cards to load
+    let cardsToLoad = [];
     if (setInfo.has(setNumber)) {
       const setCards = setInfo.get(setNumber).cards;
-      const cardPromises = setCards.map(card => 
-        loadCardDataCached(setNumber, card.order).then(data => ({ order: card.order, data }))
-      );
-      loadedCards = await Promise.all(cardPromises);
+      cardsToLoad = setCards.map(card => card.order);
     } else {
-      const cardPromises = [];
       for (let order = 1; order <= 15; order++) {
-        cardPromises.push(loadCardDataCached(setNumber, order).then(data => ({ order, data })));
+        cardsToLoad.push(order);
       }
-      loadedCards = await Promise.all(cardPromises);
     }
+
+    // Track positions and cards without positions
     const gridPositions = new Map();
     const cardsWithoutPosition = [];
     const cardsToFix = [];
-    loadedCards.forEach(({ order, data }) => {
+
+    // Helper to process a loaded card and display it immediately if it has a position
+    async function processCard(order, data) {
       if (data && data.options && data.options.position) {
         const { row, col } = data.options.position;
         if (row !== null && col !== null && typeof row === 'number' && typeof col === 'number') {
           const key = `${row}-${col}`;
-          if (gridPositions.has(key)) {
-            cardsWithoutPosition.push({ order, data });
-          } else {
+          if (!gridPositions.has(key)) {
             gridPositions.set(key, { order, data });
+            const wrapper = gridWrappers.get(key);
+            if (wrapper) {
+              await renderCardToWrapper(wrapper, setNumber, order, data);
+            }
+            return;
           }
-        } else {
-          cardsWithoutPosition.push({ order, data });
         }
-      } else if (data) {
+      }
+      // Card doesn't have a valid position or doesn't exist, queue it
+      if (data) {
         cardsWithoutPosition.push({ order, data });
-      } else {
+      }
+    }
+
+    // Helper to fill empty slots with cards without positions
+    async function fillEmptySlots() {
+      // Sort cards without position by order
+      cardsWithoutPosition.sort((a, b) => a.order - b.order);
+
+      // Fill empty slots with cards without positions
+      let cardWithoutPosIndex = 0;
+      for (let row = 1; row <= 5; row++) {
+        for (let col = 1; col <= 3; col++) {
+          const key = `${row}-${col}`;
+          if (!gridPositions.has(key) && cardWithoutPosIndex < cardsWithoutPosition.length) {
+            const cardToPlace = cardsWithoutPosition[cardWithoutPosIndex];
+            gridPositions.set(key, cardToPlace);
+            cardsToFix.push({
+              order: cardToPlace.order,
+              data: cardToPlace.data,
+              newPosition: { row, col }
+            });
+            const wrapper = gridWrappers.get(key);
+            if (wrapper) {
+              await renderCardToWrapper(wrapper, setNumber, cardToPlace.order, cardToPlace.data);
+            }
+            cardWithoutPosIndex++;
+          }
+        }
+      }
+    }
+
+    // Load cards progressively - each card displays as soon as it loads
+    const loadPromises = cardsToLoad.map(async (order) => {
+      try {
+        const data = await loadCardDataCached(setNumber, order);
+        await processCard(order, data);
+      } catch (error) {
+        console.error(`Error loading card ${setNumber}.${order}:`, error);
       }
     });
-    let cardWithoutPosIndex = 0;
-    for (let row = 1; row <= 5; row++) {
-      for (let col = 1; col <= 3; col++) {
-        const key = `${row}-${col}`;
-        if (!gridPositions.has(key) && cardWithoutPosIndex < cardsWithoutPosition.length) {
-          const cardToPlace = cardsWithoutPosition[cardWithoutPosIndex];
-          gridPositions.set(key, cardToPlace);
-          cardsToFix.push({
-            order: cardToPlace.order,
-            data: cardToPlace.data,
-            newPosition: { row, col }
-          });
-          cardWithoutPosIndex++;
-        }
-      }
-    }
-    for (let row = 1; row <= 5; row++) {
-      for (let col = 1; col <= 3; col++) {
-        const key = `${row}-${col}`;
-        const cardInfo = gridPositions.get(key);
-        const cardWrapper = document.createElement('div');
-        cardWrapper.className = 'card-wrapper';
-        cardWrapper.style.gridRow = row;
-        cardWrapper.style.gridColumn = col;
-      if (cardInfo) {
-        const { order, data: cardData } = cardInfo;
-        cardWrapper.setAttribute('draggable', 'true');
-        cardWrapper.setAttribute('data-order', order);
-      if (cardData) {
-        const orderLabel = document.createElement('div');
-        orderLabel.className = 'card-order';
-        orderLabel.textContent = order;
-        cardWrapper.appendChild(orderLabel);
-        cardWrapper.addEventListener('click', () => {
-          showIndividualCard(setNumber, order, cardData);
-        });
-        const editButton = document.createElement('button');
-        editButton.className = 'card-edit-button';
-        editButton.innerHTML = '✏️';
-        editButton.title = 'Edit Card';
-        editButton.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openCardEditor(setNumber, order, cardData);
-        });
-        cardWrapper.appendChild(editButton);
-        const svgContainer = document.createElement('div');
-        svgContainer.className = 'svg-container';
-        cardWrapper.appendChild(svgContainer);
-        if (cardData.options && cardData.options.svgBackground) {
-          const svgValue = cardData.options.svgBackground;
-          let svgContent = null;
-          if (svgValue.startsWith('http://') || svgValue.startsWith('https://')) {
-            try {
-              const response = await fetch(svgValue);
-              svgContent = await response.text();
-            } catch (error) {
-              console.error('Failed to load SVG:', error);
-            }
-          } else {
-            svgContent = svgValue;
-          }
-          if (svgContent) {
-            const { primaryColor } = getCardColors(cardData);
-            const textColor = calculateSvgTextColor(primaryColor, false);
-            const useNaturalColors = cardData.options && cardData.options.svgColor === true;
-            const cleanedSvg = stripSvgColors(svgContent, useNaturalColors);
-            const uniqueId = `svg-${setNumber}-${order}`;
-            svgContainer.id = uniqueId;
-            svgContainer.innerHTML = `
-              <style>
-                #${uniqueId} svg {
-                  width: 100%;
-                  height: 100%;
-                  display: block;
-                  object-fit: contain;
-                  object-position: center;
-                  opacity: 0.5;
-                  ${useNaturalColors ? '' : `color: ${textColor};`}
-                }
-                ${useNaturalColors ? '' : `#${uniqueId} svg * {
-                  fill: currentColor;
-                  stroke: currentColor;
-                  stroke-width: 0;
-                }`}
-              </style>
-              ${cleanedSvg}
-            `;
-            svgContainer.offsetHeight;
-          }
-        }
-        const { primaryColor, secondColor } = getCardColors(cardData);
-        cardWrapper.style.background = generateGradientFromColor(primaryColor, secondColor);
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = 600;
-        canvas.height = 848;
-        cardWrapper.appendChild(canvas);
-        // Draw card preview if drawing module is available
-        if (typeof drawCardPreview === 'function') {
-          drawCardPreview(canvas, cardData);
-        }
-      }
-      } else {
-        cardWrapper.classList.add('empty-slot');
-        const placeholder = document.createElement('div');
-        placeholder.style.width = '100%';
-        placeholder.style.height = '100%';
-        placeholder.style.pointerEvents = 'none';
-        cardWrapper.appendChild(placeholder);
-      }
-      gridEl.appendChild(cardWrapper);
-      }
-    }
-    statusEl.style.display = 'none';
-    gridEl.style.display = 'grid';
+
+    // Wait for all loads to complete (but cards display progressively as they load)
+    await Promise.all(loadPromises);
+
+    // After all cards are loaded, fill remaining empty slots
+    await fillEmptySlots();
+
     if (cardsToFix.length > 0) {
       fixCardPositions(setNumber, cardsToFix);
     }
     setupDragAndDrop(setNumber);
     updateNavigationAreas();
   } catch (error) {
-    statusEl.style.display = 'none';
     console.error('Error displaying set:', error);
   }
 }
