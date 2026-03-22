@@ -1,0 +1,16 @@
+{
+  "options": {
+    "size": 10,
+    "backgroundColor": "#000000",
+    "italics": false,
+    "animate": true,
+    "svgColor": true,
+    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/mercury.svg",
+    "position": {
+      "row": 4,
+      "col": 1
+    }
+  },
+  "rule": "\n          ",
+  "input": "\n          "
+}

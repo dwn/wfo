@@ -1,0 +1,16 @@
+{
+  "options": {
+    "size": 8,
+    "backgroundColor": "#008EFF",
+    "italics": true,
+    "animate": false,
+    "svgColor": true,
+    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/uranus.svg",
+    "position": {
+      "row": 3,
+      "col": 2
+    }
+  },
+  "rule": "d,9a05d55991100191 r,1dd540 @,52 g,00a801a519e259 n,a908",
+  "input": "dr@gn||\ndr@gn||\ndr@gn\n\n"
+}

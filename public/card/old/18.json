@@ -1,0 +1,17 @@
+{
+  "input": "",
+  "rule": "",
+  "options": {
+    "size": 10,
+    "backgroundColor": "#808080",
+    "italics": false,
+    "animate": true,
+    "svgColor": false,
+    "svgBackground": "",
+    "position": {
+      "row": 2,
+      "col": 2
+    },
+    "order": null
+  }
+}

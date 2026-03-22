@@ -1,0 +1,16 @@
+{
+  "options": {
+    "size": 5,
+    "backgroundColor": "#6600CC",
+    "italics": true,
+    "animate": false,
+    "svgColor": true,
+    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/moon.svg",
+    "position": {
+      "row": 1,
+      "col": 2
+    }
+  },
+  "rule": "\n          ",
+  "input": ""
+}

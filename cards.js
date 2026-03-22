@@ -1,5 +1,17 @@
 // Card operations module
 
+function resolveSvgFetchUrl(url) {
+  if (!url) return url;
+  if (typeof USE_SUPABASE !== 'undefined' && !USE_SUPABASE) {
+    const marker = '/object/public/svg/';
+    const i = url.indexOf(marker);
+    if (i !== -1) {
+      return '/svg/' + url.slice(i + marker.length).split(/[?#]/)[0];
+    }
+  }
+  return url;
+}
+
 // Base color utility functions
 function hexToRgb(hex) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -99,7 +111,7 @@ async function showIndividualCard(setNumber, order, cardData) {
     let svgContent = null;
     if (svgValue.startsWith('http://') || svgValue.startsWith('https://')) {
       try {
-        const response = await fetch(svgValue);
+        const response = await fetch(resolveSvgFetchUrl(svgValue));
         svgContent = await response.text();
       } catch (error) {
         console.error('Failed to load SVG:', error);
@@ -196,7 +208,7 @@ async function renderCardToWrapper(cardWrapper, setNumber, order, cardData) {
     let svgContent = null;
     if (svgValue.startsWith('http://') || svgValue.startsWith('https://')) {
       try {
-        const response = await fetch(svgValue);
+        const response = await fetch(resolveSvgFetchUrl(svgValue));
         svgContent = await response.text();
       } catch (error) {
         console.error('Failed to load SVG:', error);

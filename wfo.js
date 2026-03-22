@@ -1,7 +1,11 @@
+const USE_SUPABASE = false; // WFO_INJECT_USE_SUPABASE
 const SUPABASE_URL = '{{SUPABASE_URL}}';
 const SUPABASE_SERVICE_ROLE_KEY = '{{SUPABASE_SERVICE_ROLE_KEY}}';
-const CARD_BASE_URL = `${SUPABASE_URL}/storage/v1/object/public/card/`;
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const CARD_BASE_URL = '{{CARD_BASE_URL}}';
+let supabaseClient = null;
+if (USE_SUPABASE && typeof supabase !== 'undefined') {
+  supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+}
 let cardData = new Map();
 let setInfo = new Map();
 let currentSetNumber = 1;
@@ -337,6 +341,7 @@ function setupDragAndDrop(setNumber) {
 }
 async function updateCardPosition(set, order, row, col) {
   try {
+    if (!requireSupabaseForSave('Saving card position')) return;
     const key = `${set}.${order}`;
     let cardDataObj = cardData.get(key);
     if (!cardDataObj) {
@@ -367,38 +372,53 @@ async function updateCardPosition(set, order, row, col) {
     console.error(`Error updating position for ${set}.${order}:`, error);
   }
 }
+function applyCardIndexList(filenames) {
+  const sets = new Map();
+  let maxSetFound = 0;
+  for (const name of filenames) {
+    const parsed = parseCardFilename(name);
+    if (parsed) {
+      if (!sets.has(parsed.set)) {
+        sets.set(parsed.set, []);
+      }
+      sets.get(parsed.set).push(parsed);
+      maxSetFound = Math.max(maxSetFound, parsed.set);
+    }
+  }
+  availableSets = [];
+  for (let setNum = 1; setNum <= maxSetFound; setNum++) {
+    const cards = sets.get(setNum) || [];
+    const sortedCards = cards.sort((a, b) => a.order - b.order);
+    setInfo.set(setNum, {
+      cardCount: cards.length,
+      cards: sortedCards
+    });
+    availableSets.push(setNum);
+  }
+}
 async function scanAllSets() {
   try {
-    const { data: files, error } = await supabaseClient.storage
-      .from('card')
-      .list('', { limit: 1000 });
-    if (error) throw error;
-    const sets = new Map();
-    let maxSetFound = 0;
-    for (const file of files) {
-      const parsed = parseCardFilename(file.name);
-      if (parsed) {
-        if (!sets.has(parsed.set)) {
-          sets.set(parsed.set, []);
-        }
-        sets.get(parsed.set).push(parsed);
-        maxSetFound = Math.max(maxSetFound, parsed.set);
-      } else {
-      }
+    if (USE_SUPABASE && supabaseClient) {
+      const { data: files, error } = await supabaseClient.storage
+        .from('card')
+        .list('', { limit: 1000 });
+      if (error) throw error;
+      const names = files.map((f) => f.name);
+      applyCardIndexList(names);
+      return;
     }
-    availableSets = [];
-    for (let setNum = 1; setNum <= maxSetFound; setNum++) {
-      const cards = sets.get(setNum) || [];
-      const sortedCards = cards.sort((a, b) => a.order - b.order);
-      setInfo.set(setNum, {
-        cardCount: cards.length,
-        cards: sortedCards
-      });
-      availableSets.push(setNum);
-    }
+    const res = await fetch('/api/card-list');
+    if (!res.ok) throw new Error(`card-list ${res.status}`);
+    const names = await res.json();
+    applyCardIndexList(names);
   } catch (error) {
     console.error('Error scanning sets:', error);
   }
+}
+function requireSupabaseForSave(actionLabel) {
+  if (USE_SUPABASE && supabaseClient) return true;
+  console.warn(`${actionLabel} needs Supabase (set WFO_USE_SUPABASE=1 and credentials in .env, or use the hosted app).`);
+  return false;
 }
 async function loadCardDataCached(set, order) {
   const key = `${set}.${order}`;
@@ -411,6 +431,7 @@ async function loadCardDataCached(set, order) {
 }
 async function fixCardPositions(setNumber, cardsToFix) {
   try {
+    if (!requireSupabaseForSave('Fixing card position')) return;
     for (const cardFix of cardsToFix) {
       const { order, data, newPosition } = cardFix;
       if (!data.options) data.options = {};
@@ -569,6 +590,7 @@ function updateEditorPreview() {
 }
 async function saveCard() {
   if (!currentEditingCard) return;
+  if (!requireSupabaseForSave('Saving card')) return;
   try {
     const { setNumber, order } = currentEditingCard;
     const newOrder = document.getElementById('editorOrder').value;
@@ -644,6 +666,7 @@ function hideInstructionsModal() {
 }
 async function deleteCard() {
   if (!cardToDelete) return;
+  if (!requireSupabaseForSave('Deleting card')) return;
   try {
     const { set, order } = cardToDelete;
     const fileName = formatCardFilename(set, order);
@@ -682,6 +705,7 @@ async function copyCard() {
   if (!cardToCopy) {
     return;
   }
+  if (!requireSupabaseForSave('Copying card')) return;
   try {
     const { set, order } = cardToCopy;
     const key = `${set}.${order}`;
@@ -755,6 +779,7 @@ async function copyCard() {
   }
 }
 async function moveCardToSet(fromSet, cardOrder, toSet) {
+  if (!requireSupabaseForSave('Moving card')) return;
   try {
     const key = `${fromSet}.${cardOrder}`;
     let cardDataObj = cardData.get(key);

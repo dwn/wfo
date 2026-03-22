@@ -1,0 +1,16 @@
+{
+  "options": {
+    "size": 5,
+    "backgroundColor": "#ffffff",
+    "italics": true,
+    "animate": false,
+    "svgColor": true,
+    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/sun.svg",
+    "position": {
+      "row": 2,
+      "col": 3
+    }
+  },
+  "rule": "\n          ",
+  "input": "\n//t d\n04|00 ca 05 d5 59 91 10 02|\n//k g\n00 c8 62 00 04|00 b8 01 a5 19 e2 59|\n//m n\n00 c8 40 60 04\n\n//dr@gn\n||00\n9a 05 d5 59 91 10 01 91|1d d5 40|52|00 a8 01 a5 19 e2 59|a9 08|\n\n//trinity\n||00\n98 03 91|1d d5 30|dd 08|8a 08|ae 51 11|00 98 03 91|2e a2 ef 08|\n//u^n\nca 08|cd 02|d5 81 20|\n//in\n3e a2|e9 08|\n//esens\n00 a8 30 64 00|c8 98 50 82 10|50 82 10|d9 08|00 c8 8a 50 82 10|\n//@nd\n87|8c 08|00 ca 05 d5 59 91 10 02|\n//undivaid&d\n00 ba 02|d5 81 20|00 aa 05 d5 59 91 10 01 91|2e a2|00 20 62 00 04|8e 40 20|fd 02|00 b8 9a 05 d5 59 91 10 02|8e b2|00 9a 05 d5 59 91 10 02\n\n//janlwk\n||00\n19 03 91|00 da 40|e9 08|00 a8 20 e8 03 02|00 8b 28 e1 40|00 a8 62 00 04|\n\n//picard\n00 b8 10 09 50 10 09 50 00 03 91|2e a2|00 a8 62 00 04|00 8a 10 19 91|10 1d d5 30|00 9a 05 d5 59 91 10 02\n\n//uili^m\n||00\n9b 08|8e 08|00 c8 60 03 91|2e a2|ee 02 91|00 40 e8 04|\n\n//ty\n00 b8 03 91|2e a2 00 dd 51 30|\n\n//raikr\n00 19 d1 50 02|8e 40 20|ed 02|00 c8 62 00 03 91|1d d5 30\n\n//dy@n^\n||00\naa 05 d5 59 91 10 01 91|2e a2 ef 08|00 c8 a8 74|30|00 9a 02|\n\n//troi\n00 a8 03 91|1d d5 30|00 b8 84 2e e6|8a 08\n\n//uorf\n||00\n9b 08|00 c8 84 2e e6 59 b3 10|1d d5 30|00 d8 28 a0 e8 04\n\n//ded^\n||00\naa 05 d5 59 91 10 02|00 8a 40 10 f8 e8 89 40 10|00 8a 05 d5 59 91 10 02|00 aa 02\n\n//u&sly\n||00\n9b 08 8d b2|00 b8 8a 50 82 10 61|00 8d 02 05 28 01\n||00\n9b 08 8d b2|00 b8 8a 50 82 10 61|00 8d 02 05 28 01\n||00\n9b 08 8d b2|00 b8 8a 50 82 10 61|00 8d 02 05 28 01\n||00\n9b 08 8d b2|00 b8 8a 50 82 10 61|00 8d 02 05 28 01\n||00\n9b 08 8d b2|00 b8 8a 50 82 10 61|00 8d 02 05 28 01\n||00\n9b 08 8d b2|00 b8 8a 50 82 10 61|00 8d 02 05 28 01\n||00\n9b 08 8d b2|00 b8 8a 50 82 10 61|00 8d 02 05 28 01\n||00\n9b 08 8d b2|00 b8 8a 50 82 10 61|00 8d 02 05 28 01\n"
+}

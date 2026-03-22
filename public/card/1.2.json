@@ -1,0 +1,16 @@
+{
+  "options": {
+    "size": 5,
+    "backgroundColor": "#FF7B00",
+    "italics": true,
+    "animate": false,
+    "svgColor": true,
+    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/jupiter.svg",
+    "position": {
+      "row": 3,
+      "col": 1
+    }
+  },
+  "rule": "\n          ",
+  "input": ""
+}

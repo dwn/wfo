@@ -1,0 +1,17 @@
+{
+  "options": {
+    "size": 2,
+    "backgroundColor": "#8c0004",
+    "italics": false,
+    "animate": true,
+    "svgColor": true,
+    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/mars.svg",
+    "order": 1,
+    "position": {
+      "row": 2,
+      "col": 1
+    }
+  },
+  "rule": "\n          ",
+  "input": "\n          "
+}
