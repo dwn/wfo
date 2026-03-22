@@ -2,12 +2,10 @@
 
 function resolveSvgFetchUrl(url) {
   if (!url) return url;
-  if (typeof USE_SUPABASE !== 'undefined' && !USE_SUPABASE) {
-    const marker = '/object/public/svg/';
-    const i = url.indexOf(marker);
-    if (i !== -1) {
-      return '/svg/' + url.slice(i + marker.length).split(/[?#]/)[0];
-    }
+  const marker = '/object/public/svg/';
+  const i = url.indexOf(marker);
+  if (i !== -1) {
+    return '/svg/' + url.slice(i + marker.length).split(/[?#]/)[0];
   }
   return url;
 }

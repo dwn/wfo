@@ -1,11 +1,3 @@
-const USE_SUPABASE = false; // WFO_INJECT_USE_SUPABASE
-const SUPABASE_URL = '{{SUPABASE_URL}}';
-const SUPABASE_SERVICE_ROLE_KEY = '{{SUPABASE_SERVICE_ROLE_KEY}}';
-const CARD_BASE_URL = '{{CARD_BASE_URL}}';
-let supabaseClient = null;
-if (USE_SUPABASE && typeof supabase !== 'undefined') {
-  supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-}
 let cardData = new Map();
 let setInfo = new Map();
 let currentSetNumber = 1;
@@ -27,13 +19,7 @@ function parseCardFilename(filename) {
 async function loadCardData(set, order) {
   try {
     const filename = formatCardFilename(set, order);
-    const cacheBuster = `?t=${Date.now()}`;
-    const response = await fetch(`${CARD_BASE_URL}${filename}${cacheBuster}`);
-    if (!response.ok) {
-      return null;
-    }
-    const cardData = await response.json();
-    return cardData;
+    return await cardStorage.readJson(filename);
   } catch (error) {
     console.error(`Failed to load card ${set}.${order}:`, error);
     return null;
@@ -341,7 +327,6 @@ function setupDragAndDrop(setNumber) {
 }
 async function updateCardPosition(set, order, row, col) {
   try {
-    if (!requireSupabaseForSave('Saving card position')) return;
     const key = `${set}.${order}`;
     let cardDataObj = cardData.get(key);
     if (!cardDataObj) {
@@ -356,18 +341,8 @@ async function updateCardPosition(set, order, row, col) {
     }
     cardDataObj.options.position = { row, col };
     cardData.set(key, cardDataObj);
-    const jsonString = JSON.stringify(cardDataObj, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
     const fileName = formatCardFilename(set, order);
-    const { error } = await supabaseClient.storage
-      .from('card')
-      .upload(fileName, blob, {
-        contentType: 'application/json',
-        upsert: true
-      });
-    if (error) {
-      console.error(`Failed to save position for ${set}.${order}:`, error);
-    }
+    await cardStorage.put(fileName, cardDataObj);
   } catch (error) {
     console.error(`Error updating position for ${set}.${order}:`, error);
   }
@@ -398,27 +373,11 @@ function applyCardIndexList(filenames) {
 }
 async function scanAllSets() {
   try {
-    if (USE_SUPABASE && supabaseClient) {
-      const { data: files, error } = await supabaseClient.storage
-        .from('card')
-        .list('', { limit: 1000 });
-      if (error) throw error;
-      const names = files.map((f) => f.name);
-      applyCardIndexList(names);
-      return;
-    }
-    const res = await fetch('/api/card-list');
-    if (!res.ok) throw new Error(`card-list ${res.status}`);
-    const names = await res.json();
+    const names = await cardStorage.listFilenames();
     applyCardIndexList(names);
   } catch (error) {
     console.error('Error scanning sets:', error);
   }
-}
-function requireSupabaseForSave(actionLabel) {
-  if (USE_SUPABASE && supabaseClient) return true;
-  console.warn(`${actionLabel} needs Supabase (set WFO_USE_SUPABASE=1 and credentials in .env, or use the hosted app).`);
-  return false;
 }
 async function loadCardDataCached(set, order) {
   const key = `${set}.${order}`;
@@ -431,25 +390,17 @@ async function loadCardDataCached(set, order) {
 }
 async function fixCardPositions(setNumber, cardsToFix) {
   try {
-    if (!requireSupabaseForSave('Fixing card position')) return;
     for (const cardFix of cardsToFix) {
       const { order, data, newPosition } = cardFix;
       if (!data.options) data.options = {};
       data.options.position = newPosition;
-      const jsonString = JSON.stringify(data, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
       const fileName = formatCardFilename(setNumber, order);
-      const { error } = await supabaseClient.storage
-        .from('card')
-        .upload(fileName, blob, {
-          contentType: 'application/json',
-          upsert: true
-        });
-      if (error) {
-        console.error(`Failed to fix position for card ${setNumber}.${order}:`, error);
-      } else {
+      try {
+        await cardStorage.put(fileName, data);
         const key = `${setNumber}.${order}`;
         cardData.set(key, data);
+      } catch (err) {
+        console.error(`Failed to fix position for card ${setNumber}.${order}:`, err);
       }
     }
     await scanAllSets();
@@ -590,10 +541,8 @@ function updateEditorPreview() {
 }
 async function saveCard() {
   if (!currentEditingCard) return;
-  if (!requireSupabaseForSave('Saving card')) return;
   try {
     const { setNumber, order } = currentEditingCard;
-    const newOrder = document.getElementById('editorOrder').value;
     const size = parseInt(document.getElementById('editorSize').value);
     const backgroundColor = document.getElementById('editorBackground').value;
     const backgroundColor2 = document.getElementById('editorBackground2').value;
@@ -622,19 +571,8 @@ async function saveCard() {
     if (svgBackground) {
       cardDataObj.options.svgBackground = svgBackground;
     }
-    const jsonString = JSON.stringify(cardDataObj, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
     const fileName = formatCardFilename(setNumber, order);
-    const { error } = await supabaseClient.storage
-      .from('card')
-      .upload(fileName, blob, {
-        contentType: 'application/json',
-        upsert: true
-      });
-    if (error) {
-      console.error('Failed to save card:', error);
-      return;
-    }
+    await cardStorage.put(fileName, cardDataObj);
     const key = `${setNumber}.${order}`;
     cardData.set(key, cardDataObj);
     await displaySet(currentSetNumber);
@@ -666,17 +604,10 @@ function hideInstructionsModal() {
 }
 async function deleteCard() {
   if (!cardToDelete) return;
-  if (!requireSupabaseForSave('Deleting card')) return;
   try {
     const { set, order } = cardToDelete;
     const fileName = formatCardFilename(set, order);
-    const { error } = await supabaseClient.storage
-      .from('card')
-      .remove([fileName]);
-    if (error) {
-      console.error(`Failed to delete card ${set}.${order}:`, error);
-      return;
-    }
+    await cardStorage.delete(fileName);
     const key = `${set}.${order}`;
     cardData.delete(key);
     if (cardToDelete.element) {
@@ -705,7 +636,6 @@ async function copyCard() {
   if (!cardToCopy) {
     return;
   }
-  if (!requireSupabaseForSave('Copying card')) return;
   try {
     const { set, order } = cardToCopy;
     const key = `${set}.${order}`;
@@ -754,18 +684,7 @@ async function copyCard() {
       }
     }
     const newFileName = formatCardFilename(targetSet, nextOrder);
-    const jsonString = JSON.stringify(copiedCardData, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const { error } = await supabaseClient.storage
-      .from('card')
-      .upload(newFileName, blob, {
-        contentType: 'application/json',
-        upsert: true
-      });
-    if (error) {
-      console.error(`Failed to save copied card ${targetSet}.${nextOrder}:`, error);
-      return;
-    }
+    await cardStorage.put(newFileName, copiedCardData);
     cardData.set(`${targetSet}.${nextOrder}`, copiedCardData);
     await scanAllSets();
     if (targetSet !== currentSetNumber) {
@@ -779,7 +698,6 @@ async function copyCard() {
   }
 }
 async function moveCardToSet(fromSet, cardOrder, toSet) {
-  if (!requireSupabaseForSave('Moving card')) return;
   try {
     const key = `${fromSet}.${cardOrder}`;
     let cardDataObj = cardData.get(key);
@@ -796,16 +714,12 @@ async function moveCardToSet(fromSet, cardOrder, toSet) {
       }
     }
     const oldFileName = formatCardFilename(fromSet, cardOrder);
-    await supabaseClient.storage.from('card').remove([oldFileName]);
+    await cardStorage.delete(oldFileName);
     if (cardDataObj.options) {
       cardDataObj.options.position = null;
     }
     const newFileName = formatCardFilename(toSet, nextOrder);
-    const jsonString = JSON.stringify(cardDataObj, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    await supabaseClient.storage
-      .from('card')
-      .upload(newFileName, blob, { contentType: 'application/json', upsert: true });
+    await cardStorage.put(newFileName, cardDataObj);
     cardData.delete(key);
     cardData.set(`${toSet}.${nextOrder}`, cardDataObj);
     await scanAllSets();
