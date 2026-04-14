@@ -1,9 +1,9 @@
 {
   "options": {
-    "size": 5,
+    "size": 10,
     "backgroundColor": "#000000",
-    "italics": true,
-    "animate": false,
+    "italics": false,
+    "animate": true,
     "svgColor": true,
     "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/mercury.svg",
     "position": {
@@ -12,5 +12,5 @@
     }
   },
   "rule": "\n          ",
-  "input": ""
+  "input": "\n          "
 }

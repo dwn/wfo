@@ -1,13 +1,13 @@
 {
   "options": {
     "size": 5,
-    "backgroundColor": "#B00000",
+    "backgroundColor": "#4B0080",
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/moon.svg",
+    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/venus.svg",
     "position": {
-      "row": 1,
+      "row": 4,
       "col": 2
     }
   },

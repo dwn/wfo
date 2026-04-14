@@ -66,5 +66,6 @@ async def serve_wfo():
 
 
 if __name__ == '__main__':
-    print('Starting WFO Server...')
-    uvicorn.run('wfo:app', host='localhost', port=8080, reload=True)
+    port = 3000
+    print(f'Starting WFO Server on port {port}...')
+    uvicorn.run('wfo:app', host='localhost', port=port, reload=True)

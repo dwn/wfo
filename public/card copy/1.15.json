@@ -5,10 +5,10 @@
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/tree.svg",
+    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/moon.svg",
     "position": {
-      "row": 5,
-      "col": 1
+      "row": 1,
+      "col": 2
     }
   },
   "rule": "\n          ",
