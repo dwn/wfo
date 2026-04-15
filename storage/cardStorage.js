@@ -61,15 +61,15 @@ const cardStorage = {
     return res.json();
   },
 
-  async copySetInto(fromSet, toSet) {
-    const res = await fetch('/api/copy-set-into', {
+  async insertSetCopyAfter(afterSet) {
+    const res = await fetch('/api/insert-set-copy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: fromSet, to: toSet }),
+      body: JSON.stringify({ after: afterSet }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || `copy-set-into ${res.status}`);
+      throw new Error(err.error || `insert-set-copy ${res.status}`);
     }
     return res.json();
   },

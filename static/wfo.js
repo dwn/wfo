@@ -780,14 +780,7 @@ function updateNavigationAreas() {
       nextArea.classList.add('disabled');
     }
   }
-  updateSetToolbarState();
   syncUrlFragment();
-}
-function updateSetToolbarState() {
-  const copyBtn = document.getElementById('copyFromPrevSetButton');
-  if (copyBtn) {
-    copyBtn.disabled = currentSetNumber <= 1;
-  }
 }
 function goToNextSet() {
   const currentIndex = availableSets.indexOf(currentSetNumber);
@@ -830,18 +823,18 @@ async function insertBlankSetAfterCurrent() {
     console.error('Error inserting blank set:', error);
   }
 }
-async function requestCopySetInto(fromSet, toSet) {
-  if (typeof cardStorage.copySetInto === 'function') {
-    return cardStorage.copySetInto(fromSet, toSet);
+async function requestInsertSetCopyAfter(after) {
+  if (typeof cardStorage.insertSetCopyAfter === 'function') {
+    return cardStorage.insertSetCopyAfter(after);
   }
-  const res = await fetch('/api/copy-set-into', {
+  const res = await fetch('/api/insert-set-copy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: fromSet, to: toSet }),
+    body: JSON.stringify({ after }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `copy-set-into ${res.status}`);
+    throw new Error(err.error || `insert-set-copy ${res.status}`);
   }
   return res.json();
 }
@@ -860,41 +853,20 @@ async function requestDeleteSet(setNum) {
   }
   return res.json();
 }
-function hideCopyPrevSetModal() {
-  const el = document.getElementById('copyPrevSetModal');
-  if (el) el.style.display = 'none';
-}
 function hideDeleteSetModal() {
   const el = document.getElementById('deleteSetModal');
   if (el) el.style.display = 'none';
 }
-async function runCopyPrevSet() {
-  hideCopyPrevSetModal();
-  const toSet = currentSetNumber;
-  const fromSet = toSet - 1;
-  if (fromSet < 1) return;
+async function insertSetCopyAfterCurrent() {
   try {
-    await requestCopySetInto(fromSet, toSet);
+    const after = currentSetNumber;
+    const { insertedSet } = await requestInsertSetCopyAfter(after);
     cardData.clear();
-    await scanAllSets();
+    await scanAllSets({ extendThrough: insertedSet });
+    currentSetNumber = insertedSet;
     await displaySet(currentSetNumber);
   } catch (error) {
-    console.error('Error copying previous set:', error);
-  }
-}
-function onCopyFromPrevSetClick() {
-  const prev = currentSetNumber - 1;
-  if (prev < 1) return;
-  const info = setInfo.get(currentSetNumber);
-  const n = info ? info.cardCount : 0;
-  if (n > 0) {
-    const body = document.getElementById('copyPrevSetModalBody');
-    body.textContent =
-      `Set ${currentSetNumber} has ${n} card${n === 1 ? '' : 's'}. Replace them with copies from set ${prev}? ` +
-      'Each card keeps the same grid position as in the previous set.';
-    document.getElementById('copyPrevSetModal').style.display = 'flex';
-  } else {
-    runCopyPrevSet();
+    console.error('Error duplicating set:', error);
   }
 }
 function onDeleteCurrentSetClick() {
@@ -941,20 +913,44 @@ function findNonFullSet(direction = 'next') {
   }
   return null;
 }
+function closeSetMenu() {
+  const root = document.getElementById('setMenuRoot');
+  const toggle = document.getElementById('setMenuToggle');
+  if (!root || !toggle) return;
+  root.classList.remove('open');
+  toggle.setAttribute('aria-expanded', 'false');
+}
+function toggleSetMenu() {
+  const root = document.getElementById('setMenuRoot');
+  const toggle = document.getElementById('setMenuToggle');
+  if (!root || !toggle) return;
+  const open = !root.classList.contains('open');
+  root.classList.toggle('open', open);
+  toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
 document.getElementById('nextSetArea').addEventListener('click', goToNextSet);
 document.getElementById('prevSetArea').addEventListener('click', goToPreviousSet);
 document.getElementById('newBlankSetButton').addEventListener('click', insertBlankSetAfterCurrent);
-document.getElementById('copyFromPrevSetButton').addEventListener('click', onCopyFromPrevSetClick);
+document.getElementById('copySetButton').addEventListener('click', insertSetCopyAfterCurrent);
 document.getElementById('deleteCurrentSetButton').addEventListener('click', onDeleteCurrentSetClick);
-document.getElementById('confirmCopyPrevSet').addEventListener('click', () => runCopyPrevSet());
-document.getElementById('cancelCopyPrevSet').addEventListener('click', hideCopyPrevSetModal);
-document.getElementById('confirmDeleteSet').addEventListener('click', () => runDeleteCurrentSet());
-document.getElementById('cancelDeleteSet').addEventListener('click', hideDeleteSetModal);
-document.getElementById('copyPrevSetModal').addEventListener('click', (event) => {
-  if (event.target === event.currentTarget) {
-    hideCopyPrevSetModal();
+document.getElementById('setMenuToggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleSetMenu();
+});
+document.addEventListener('click', (e) => {
+  const root = document.getElementById('setMenuRoot');
+  if (!root || !root.classList.contains('open')) return;
+  if (!root.contains(e.target)) {
+    closeSetMenu();
   }
 });
+document.getElementById('setToolbar').addEventListener('click', (e) => {
+  if (e.target.closest('.toolbar-btn')) {
+    queueMicrotask(() => closeSetMenu());
+  }
+});
+document.getElementById('confirmDeleteSet').addEventListener('click', () => runDeleteCurrentSet());
+document.getElementById('cancelDeleteSet').addEventListener('click', hideDeleteSetModal);
 document.getElementById('deleteSetModal').addEventListener('click', (event) => {
   if (event.target === event.currentTarget) {
     hideDeleteSetModal();
@@ -997,15 +993,17 @@ document.addEventListener('keydown', (e) => {
       hideInstructionsModal();
       return;
     }
+    const setMenuRoot = document.getElementById('setMenuRoot');
+    if (setMenuRoot && setMenuRoot.classList.contains('open')) {
+      closeSetMenu();
+      return;
+    }
     const individualView = document.getElementById('individualCardView');
-    const copyPrevSetModal = document.getElementById('copyPrevSetModal');
     const deleteSetModal = document.getElementById('deleteSetModal');
     const deleteModal = document.getElementById('deleteModal');
     const cardEditorModal = document.getElementById('cardEditorModal');
     if (individualView.style.display === 'flex') {
       hideIndividualCard();
-    } else if (copyPrevSetModal && copyPrevSetModal.style.display === 'flex') {
-      hideCopyPrevSetModal();
     } else if (deleteSetModal && deleteSetModal.style.display === 'flex') {
       hideDeleteSetModal();
     } else if (deleteModal.style.display === 'flex') {
@@ -1019,7 +1017,6 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
     const instructionsModal = document.getElementById('instructionsModal');
     const individualView = document.getElementById('individualCardView');
-    const copyPrevSetModal = document.getElementById('copyPrevSetModal');
     const deleteSetModal = document.getElementById('deleteSetModal');
     const deleteModal = document.getElementById('deleteModal');
     const cardEditorModal = document.getElementById('cardEditorModal');
@@ -1031,7 +1028,6 @@ document.addEventListener('keydown', (e) => {
     
     if ((!instructionsModal || instructionsModal.style.display !== 'flex') &&
         individualView.style.display !== 'flex' &&
-        (!copyPrevSetModal || copyPrevSetModal.style.display !== 'flex') &&
         (!deleteSetModal || deleteSetModal.style.display !== 'flex') &&
         deleteModal.style.display !== 'flex' &&
         cardEditorModal.style.display !== 'flex' &&
@@ -1057,7 +1053,6 @@ async function initialize() {
     await displaySet(currentSetNumber);
   } else {
     currentSetNumber = 1;
-    updateSetToolbarState();
     syncUrlFragment();
   }
 }

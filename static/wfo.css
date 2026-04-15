@@ -5,8 +5,16 @@ body{background:#1a1a1a;color:#ffffff;font-family:system-ui,-apple-system,sans-s
 .nav-right{left:calc(50% + (100vh * 3 / 7.07) / 2);right:0}
 .nav-area:hover{background:rgba(255,255,255,0.05)}
 .nav-area.disabled:hover{background:transparent}
-.set-toolbar{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:500;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;max-width:calc(100vw - 24px);pointer-events:none}
-.set-toolbar .toolbar-btn{pointer-events:auto;padding:8px 12px;font-size:13px;font-weight:500;font-family:inherit;color:#ccc;background:#333;border:2px solid #666;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:all 0.2s ease}
+.set-menu-root{position:fixed;bottom:16px;left:16px;z-index:500;display:flex;flex-direction:column;align-items:flex-start;gap:8px;pointer-events:none}
+.set-menu-root .set-toolbar,.set-menu-root .set-menu-toggle{pointer-events:auto}
+.set-menu-toggle{width:48px;height:48px;padding:0;border:2px solid #666;border-radius:10px;background:#333;color:#ccc;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;transition:background 0.2s ease,border-color 0.2s ease,color 0.2s ease}
+.set-menu-toggle:hover{background:#444;border-color:#888;color:#fff}
+.set-menu-root.open .set-menu-toggle{border-color:#5a8a5a;color:#fff}
+.set-menu-toggle-lines{display:flex;flex-direction:column;gap:5px;width:22px}
+.set-menu-toggle-lines span{display:block;height:2px;background:currentColor;border-radius:1px}
+.set-toolbar{display:none;flex-direction:column;flex-wrap:nowrap;gap:8px;align-items:stretch;min-width:160px;padding:10px;border-radius:10px;background:#2a2a2a;border:1px solid #555;box-shadow:0 6px 24px rgba(0,0,0,0.5)}
+.set-menu-root.open .set-toolbar{display:flex}
+.set-toolbar .toolbar-btn{width:100%;text-align:center;padding:10px 12px;font-size:13px;font-weight:500;font-family:inherit;color:#ccc;background:#3a3a3a;border:2px solid #666;border-radius:8px;cursor:pointer;transition:all 0.2s ease}
 .set-toolbar .toolbar-btn:hover:not(:disabled){background:#444;border-color:#888;color:#fff}
 .set-toolbar .toolbar-btn:disabled{opacity:0.4;cursor:not-allowed}
 .set-toolbar .toolbar-btn-accent{border-color:#5a8a5a}
@@ -53,7 +61,6 @@ body{background:#1a1a1a;color:#ffffff;font-family:system-ui,-apple-system,sans-s
 .delete-modal{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:2000}
 .delete-modal-content{background:#333;border-radius:12px;padding:24px;max-width:400px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
 .delete-modal-content h3{color:#ff6b6b;margin-bottom:16px;font-size:20px}
-#copyPrevSetModal .delete-modal-content h3{color:#fff}
 .delete-modal-content p{color:#ccc;margin-bottom:24px;line-height:1.5}
 .delete-modal-buttons{display:flex;gap:12px;justify-content:center}
 .btn{padding:10px 20px;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s ease}

@@ -42,8 +42,12 @@ class CardStore(Protocol):
         """
         ...
 
-    def copy_set_into(self, from_set: int, to_set: int) -> None:
-        """Replace all cards in ``to_set`` with copies of cards from ``from_set`` (same order indices)."""
+    def insert_set_copy_after(self, after_set: int) -> int:
+        """
+        Insert a new set after ``after_set``, then fill it with copies of set ``after_set``.
+
+        Returns the new set index (``after_set + 1``).
+        """
         ...
 
     def delete_set_and_close_gap(self, set_num: int) -> None:
@@ -106,6 +110,13 @@ class LocalCardStore:
                 _set_part, order = base.split('.', 1)
                 new_name = f'{s + 1}.{order}.json'
                 path.rename(self._dir / new_name)
+        return inserted
+
+    def insert_set_copy_after(self, after_set: int) -> int:
+        if after_set < 1:
+            raise ValueError('after_set must be >= 1')
+        inserted = self.insert_blank_set_after(after_set)
+        self.copy_set_into(after_set, inserted)
         return inserted
 
     def copy_set_into(self, from_set: int, to_set: int) -> None:

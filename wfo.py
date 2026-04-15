@@ -61,19 +61,19 @@ async def insert_blank_set(body: dict = Body(...)):
     return JSONResponse({'insertedSet': inserted})
 
 
-@app.post('/api/copy-set-into')
-async def copy_set_into(body: dict = Body(...)):
-    from_set = body.get('from')
-    to_set = body.get('to')
-    if not isinstance(from_set, int) or not isinstance(to_set, int):
-        return JSONResponse({'error': 'Body must include from and to (integers)'}, status_code=400)
-    if from_set < 1 or to_set < 1:
-        return JSONResponse({'error': 'from and to must be >= 1'}, status_code=400)
+@app.post('/api/insert-set-copy')
+async def insert_set_copy(body: dict = Body(...)):
+    after = body.get('after')
+    if not isinstance(after, int) or after < 1:
+        return JSONResponse(
+            {'error': 'Body must include after (integer >= 1; duplicates that set into a new set after it)'},
+            status_code=400,
+        )
     try:
-        card_store.copy_set_into(from_set, to_set)
+        inserted = card_store.insert_set_copy_after(after)
     except ValueError as e:
         return JSONResponse({'error': str(e)}, status_code=400)
-    return JSONResponse({'ok': True})
+    return JSONResponse({'insertedSet': inserted})
 
 
 @app.post('/api/delete-set')
