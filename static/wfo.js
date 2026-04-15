@@ -741,6 +741,25 @@ async function moveCardToSet(fromSet, cardOrder, toSet) {
     console.error('Error moving card to set:', error);
   }
 }
+function parseSetFromHash(hash) {
+  if (!hash || hash === '#') {
+    return null;
+  }
+  const m = /^#(\d+)$/.exec(hash);
+  if (!m) {
+    return null;
+  }
+  const n = parseInt(m[1], 10);
+  return n >= 1 ? n : null;
+}
+function syncUrlFragment() {
+  const fragment = `#${currentSetNumber}`;
+  const nextUrl = `${location.pathname}${location.search}${fragment}`;
+  if (`${location.pathname}${location.search}${location.hash}` === nextUrl) {
+    return;
+  }
+  history.replaceState(null, '', nextUrl);
+}
 function updateNavigationAreas() {
   const currentIndex = availableSets.indexOf(currentSetNumber);
   const canGoPrev = currentIndex > 0;
@@ -762,6 +781,7 @@ function updateNavigationAreas() {
     }
   }
   updateSetToolbarState();
+  syncUrlFragment();
 }
 function updateSetToolbarState() {
   const copyBtn = document.getElementById('copyFromPrevSetButton');
@@ -1026,12 +1046,36 @@ document.addEventListener('keydown', (e) => {
 });
 async function initialize() {
   await scanAllSets();
+  const fromHash = parseSetFromHash(location.hash);
   if (availableSets.length > 0) {
-    currentSetNumber = availableSets[0];
+    const maxSet = Math.max(...availableSets);
+    if (fromHash !== null && fromHash >= 1) {
+      currentSetNumber = Math.min(fromHash, maxSet);
+    } else {
+      currentSetNumber = availableSets[0];
+    }
     await displaySet(currentSetNumber);
   } else {
     currentSetNumber = 1;
     updateSetToolbarState();
+    syncUrlFragment();
   }
 }
+window.addEventListener('hashchange', () => {
+  const raw = parseSetFromHash(location.hash);
+  if (raw === null || availableSets.length === 0) {
+    syncUrlFragment();
+    return;
+  }
+  const maxSet = Math.max(...availableSets);
+  const n = Math.min(Math.max(1, raw), maxSet);
+  if (n !== currentSetNumber) {
+    currentSetNumber = n;
+    displaySet(currentSetNumber);
+    return;
+  }
+  if (location.hash !== `#${currentSetNumber}`) {
+    syncUrlFragment();
+  }
+});
 initialize();
