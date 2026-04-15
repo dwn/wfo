@@ -47,4 +47,43 @@ const cardStorage = {
       throw new Error(err.error || `Delete failed (${res.status})`);
     }
   },
+
+  async insertBlankSetAfter(afterSet) {
+    const res = await fetch('/api/insert-blank-set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ after: afterSet }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `insert-blank-set ${res.status}`);
+    }
+    return res.json();
+  },
+
+  async copySetInto(fromSet, toSet) {
+    const res = await fetch('/api/copy-set-into', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: fromSet, to: toSet }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `copy-set-into ${res.status}`);
+    }
+    return res.json();
+  },
+
+  async deleteSet(setNum) {
+    const res = await fetch('/api/delete-set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ set: setNum }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `delete-set ${res.status}`);
+    }
+    return res.json();
+  },
 };

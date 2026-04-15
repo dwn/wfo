@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Body, FastAPI
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
@@ -49,12 +49,55 @@ async def card_delete(filename: str):
     return JSONResponse({'ok': True})
 
 
+@app.post('/api/insert-blank-set')
+async def insert_blank_set(body: dict = Body(...)):
+    after = body.get('after')
+    if not isinstance(after, int) or after < 1:
+        return JSONResponse({'error': 'Body must include after (integer >= 1)'}, status_code=400)
+    try:
+        inserted = card_store.insert_blank_set_after(after)
+    except ValueError as e:
+        return JSONResponse({'error': str(e)}, status_code=400)
+    return JSONResponse({'insertedSet': inserted})
+
+
+@app.post('/api/copy-set-into')
+async def copy_set_into(body: dict = Body(...)):
+    from_set = body.get('from')
+    to_set = body.get('to')
+    if not isinstance(from_set, int) or not isinstance(to_set, int):
+        return JSONResponse({'error': 'Body must include from and to (integers)'}, status_code=400)
+    if from_set < 1 or to_set < 1:
+        return JSONResponse({'error': 'from and to must be >= 1'}, status_code=400)
+    try:
+        card_store.copy_set_into(from_set, to_set)
+    except ValueError as e:
+        return JSONResponse({'error': str(e)}, status_code=400)
+    return JSONResponse({'ok': True})
+
+
+@app.post('/api/delete-set')
+async def delete_set(body: dict = Body(...)):
+    set_num = body.get('set')
+    if not isinstance(set_num, int) or set_num < 1:
+        return JSONResponse({'error': 'Body must include set (integer >= 1)'}, status_code=400)
+    try:
+        card_store.delete_set_and_close_gap(set_num)
+    except ValueError as e:
+        return JSONResponse({'error': str(e)}, status_code=400)
+    return JSONResponse({'ok': True})
+
+
 @app.get('/storage/cardStorage.js')
 async def serve_card_storage_js():
     path = ROOT / 'storage' / 'cardStorage.js'
     if not path.is_file():
         return JSONResponse({'error': 'File not found'}, status_code=404)
-    return FileResponse(str(path), media_type='application/javascript')
+    return FileResponse(
+        str(path),
+        media_type='application/javascript',
+        headers={'Cache-Control': 'no-store'},
+    )
 
 
 @app.get('/')

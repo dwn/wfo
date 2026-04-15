@@ -33,6 +33,23 @@ class CardStore(Protocol):
         """
         ...
 
+    def insert_blank_set_after(self, after_set: int) -> int:
+        """
+        Renumber every card in sets ``after_set + 1`` and above to the next set number,
+        leaving set ``after_set + 1`` empty on disk.
+
+        Returns the new empty set index (always ``after_set + 1``).
+        """
+        ...
+
+    def copy_set_into(self, from_set: int, to_set: int) -> None:
+        """Replace all cards in ``to_set`` with copies of cards from ``from_set`` (same order indices)."""
+        ...
+
+    def delete_set_and_close_gap(self, set_num: int) -> None:
+        """Remove all cards in ``set_num`` and renumber sets ``set_num + 1`` and above down by one."""
+        ...
+
 
 class LocalCardStore:
     """Filesystem storage under a single directory (``public/card``)."""
@@ -67,6 +84,80 @@ class LocalCardStore:
         if not path.is_file():
             raise FileNotFoundError(filename)
         path.unlink()
+
+    def insert_blank_set_after(self, after_set: int) -> int:
+        if after_set < 1:
+            raise ValueError('after_set must be >= 1')
+        inserted = after_set + 1
+        self._dir.mkdir(parents=True, exist_ok=True)
+        max_set = 0
+        by_set: dict[int, list[Path]] = {}
+        for f in self._dir.iterdir():
+            if not f.is_file() or not CARD_NAME_RE.match(f.name):
+                continue
+            base = f.name.removesuffix('.json')
+            set_part, _order = base.split('.', 1)
+            s = int(set_part, 10)
+            max_set = max(max_set, s)
+            by_set.setdefault(s, []).append(f)
+        for s in range(max_set, after_set, -1):
+            for path in by_set.get(s, []):
+                base = path.name.removesuffix('.json')
+                _set_part, order = base.split('.', 1)
+                new_name = f'{s + 1}.{order}.json'
+                path.rename(self._dir / new_name)
+        return inserted
+
+    def copy_set_into(self, from_set: int, to_set: int) -> None:
+        if from_set < 1 or to_set < 1:
+            raise ValueError('set numbers must be >= 1')
+        if from_set == to_set:
+            raise ValueError('from and to must differ')
+        self._dir.mkdir(parents=True, exist_ok=True)
+        for path in list(self._dir.iterdir()):
+            if not path.is_file() or not CARD_NAME_RE.match(path.name):
+                continue
+            base = path.name.removesuffix('.json')
+            set_part, _order = base.split('.', 1)
+            if int(set_part, 10) == to_set:
+                path.unlink()
+        for path in sorted(
+            f for f in self._dir.iterdir() if f.is_file() and CARD_NAME_RE.match(f.name)
+        ):
+            base = path.name.removesuffix('.json')
+            set_part, order = base.split('.', 1)
+            if int(set_part, 10) != from_set:
+                continue
+            data: dict = json.loads(path.read_text(encoding='utf-8'))
+            self.put(f'{to_set}.{order}.json', data)
+
+    def delete_set_and_close_gap(self, set_num: int) -> None:
+        if set_num < 1:
+            raise ValueError('set_num must be >= 1')
+        self._dir.mkdir(parents=True, exist_ok=True)
+        paths = [
+            f
+            for f in self._dir.iterdir()
+            if f.is_file() and CARD_NAME_RE.match(f.name)
+        ]
+        for path in paths:
+            base = path.name.removesuffix('.json')
+            set_part, _order = base.split('.', 1)
+            if int(set_part, 10) == set_num:
+                path.unlink()
+        to_shift: list[tuple[int, str, Path]] = []
+        for path in self._dir.iterdir():
+            if not path.is_file() or not CARD_NAME_RE.match(path.name):
+                continue
+            base = path.name.removesuffix('.json')
+            set_part, order = base.split('.', 1)
+            s = int(set_part, 10)
+            if s > set_num:
+                to_shift.append((s, order, path))
+        to_shift.sort(key=lambda t: (t[0], int(t[1], 10)))
+        for s, order, path in to_shift:
+            new_name = f'{s - 1}.{order}.json'
+            path.rename(self._dir / new_name)
 
 
 def get_card_store() -> CardStore:

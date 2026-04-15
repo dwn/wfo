@@ -347,7 +347,8 @@ async function updateCardPosition(set, order, row, col) {
     console.error(`Error updating position for ${set}.${order}:`, error);
   }
 }
-function applyCardIndexList(filenames) {
+function applyCardIndexList(filenames, options = {}) {
+  const extendThrough = options.extendThrough ?? 0;
   const sets = new Map();
   let maxSetFound = 0;
   for (const name of filenames) {
@@ -360,8 +361,9 @@ function applyCardIndexList(filenames) {
       maxSetFound = Math.max(maxSetFound, parsed.set);
     }
   }
+  const maxSet = Math.max(maxSetFound, extendThrough);
   availableSets = [];
-  for (let setNum = 1; setNum <= maxSetFound; setNum++) {
+  for (let setNum = 1; setNum <= maxSet; setNum++) {
     const cards = sets.get(setNum) || [];
     const sortedCards = cards.sort((a, b) => a.order - b.order);
     setInfo.set(setNum, {
@@ -371,10 +373,10 @@ function applyCardIndexList(filenames) {
     availableSets.push(setNum);
   }
 }
-async function scanAllSets() {
+async function scanAllSets(options = {}) {
   try {
     const names = await cardStorage.listFilenames();
-    applyCardIndexList(names);
+    applyCardIndexList(names, options);
   } catch (error) {
     console.error('Error scanning sets:', error);
   }
@@ -759,6 +761,13 @@ function updateNavigationAreas() {
       nextArea.classList.add('disabled');
     }
   }
+  updateSetToolbarState();
+}
+function updateSetToolbarState() {
+  const copyBtn = document.getElementById('copyFromPrevSetButton');
+  if (copyBtn) {
+    copyBtn.disabled = currentSetNumber <= 1;
+  }
 }
 function goToNextSet() {
   const currentIndex = availableSets.indexOf(currentSetNumber);
@@ -772,6 +781,131 @@ function goToPreviousSet() {
   if (currentIndex > 0) {
     currentSetNumber = availableSets[currentIndex - 1];
     displaySet(currentSetNumber);
+  }
+}
+async function requestInsertBlankSetAfter(after) {
+  if (typeof cardStorage.insertBlankSetAfter === 'function') {
+    return cardStorage.insertBlankSetAfter(after);
+  }
+  const res = await fetch('/api/insert-blank-set', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ after }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `insert-blank-set ${res.status}`);
+  }
+  return res.json();
+}
+async function insertBlankSetAfterCurrent() {
+  try {
+    const after = currentSetNumber;
+    const { insertedSet } = await requestInsertBlankSetAfter(after);
+    cardData.clear();
+    await scanAllSets({ extendThrough: insertedSet });
+    currentSetNumber = insertedSet;
+    await displaySet(currentSetNumber);
+  } catch (error) {
+    console.error('Error inserting blank set:', error);
+  }
+}
+async function requestCopySetInto(fromSet, toSet) {
+  if (typeof cardStorage.copySetInto === 'function') {
+    return cardStorage.copySetInto(fromSet, toSet);
+  }
+  const res = await fetch('/api/copy-set-into', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: fromSet, to: toSet }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `copy-set-into ${res.status}`);
+  }
+  return res.json();
+}
+async function requestDeleteSet(setNum) {
+  if (typeof cardStorage.deleteSet === 'function') {
+    return cardStorage.deleteSet(setNum);
+  }
+  const res = await fetch('/api/delete-set', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ set: setNum }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `delete-set ${res.status}`);
+  }
+  return res.json();
+}
+function hideCopyPrevSetModal() {
+  const el = document.getElementById('copyPrevSetModal');
+  if (el) el.style.display = 'none';
+}
+function hideDeleteSetModal() {
+  const el = document.getElementById('deleteSetModal');
+  if (el) el.style.display = 'none';
+}
+async function runCopyPrevSet() {
+  hideCopyPrevSetModal();
+  const toSet = currentSetNumber;
+  const fromSet = toSet - 1;
+  if (fromSet < 1) return;
+  try {
+    await requestCopySetInto(fromSet, toSet);
+    cardData.clear();
+    await scanAllSets();
+    await displaySet(currentSetNumber);
+  } catch (error) {
+    console.error('Error copying previous set:', error);
+  }
+}
+function onCopyFromPrevSetClick() {
+  const prev = currentSetNumber - 1;
+  if (prev < 1) return;
+  const info = setInfo.get(currentSetNumber);
+  const n = info ? info.cardCount : 0;
+  if (n > 0) {
+    const body = document.getElementById('copyPrevSetModalBody');
+    body.textContent =
+      `Set ${currentSetNumber} has ${n} card${n === 1 ? '' : 's'}. Replace them with copies from set ${prev}? ` +
+      'Each card keeps the same grid position as in the previous set.';
+    document.getElementById('copyPrevSetModal').style.display = 'flex';
+  } else {
+    runCopyPrevSet();
+  }
+}
+function onDeleteCurrentSetClick() {
+  const n = setInfo.get(currentSetNumber)?.cardCount ?? 0;
+  if (n === 0) {
+    runDeleteCurrentSet();
+    return;
+  }
+  const body = document.getElementById('deleteSetModalBody');
+  body.textContent =
+    `Remove all ${n} card${n === 1 ? '' : 's'} in set ${currentSetNumber}. ` +
+    'Later sets will be renumbered one step lower. This cannot be undone.';
+  document.getElementById('deleteSetModal').style.display = 'flex';
+}
+async function runDeleteCurrentSet() {
+  hideDeleteSetModal();
+  const deleted = currentSetNumber;
+  try {
+    await requestDeleteSet(deleted);
+    cardData.clear();
+    await scanAllSets();
+    if (availableSets.length === 0) {
+      currentSetNumber = 1;
+      await displaySet(1);
+    } else {
+      const maxSet = Math.max(...availableSets);
+      currentSetNumber = Math.min(deleted, maxSet);
+      await displaySet(currentSetNumber);
+    }
+  } catch (error) {
+    console.error('Error deleting set:', error);
   }
 }
 function findNonFullSet(direction = 'next') {
@@ -789,6 +923,23 @@ function findNonFullSet(direction = 'next') {
 }
 document.getElementById('nextSetArea').addEventListener('click', goToNextSet);
 document.getElementById('prevSetArea').addEventListener('click', goToPreviousSet);
+document.getElementById('newBlankSetButton').addEventListener('click', insertBlankSetAfterCurrent);
+document.getElementById('copyFromPrevSetButton').addEventListener('click', onCopyFromPrevSetClick);
+document.getElementById('deleteCurrentSetButton').addEventListener('click', onDeleteCurrentSetClick);
+document.getElementById('confirmCopyPrevSet').addEventListener('click', () => runCopyPrevSet());
+document.getElementById('cancelCopyPrevSet').addEventListener('click', hideCopyPrevSetModal);
+document.getElementById('confirmDeleteSet').addEventListener('click', () => runDeleteCurrentSet());
+document.getElementById('cancelDeleteSet').addEventListener('click', hideDeleteSetModal);
+document.getElementById('copyPrevSetModal').addEventListener('click', (event) => {
+  if (event.target === event.currentTarget) {
+    hideCopyPrevSetModal();
+  }
+});
+document.getElementById('deleteSetModal').addEventListener('click', (event) => {
+  if (event.target === event.currentTarget) {
+    hideDeleteSetModal();
+  }
+});
 document.getElementById('individualCard').addEventListener('click', hideIndividualCard);
 document.getElementById('confirmDelete').addEventListener('click', deleteCard);
 document.getElementById('cancelDelete').addEventListener('click', hideDeleteModal);
@@ -827,10 +978,16 @@ document.addEventListener('keydown', (e) => {
       return;
     }
     const individualView = document.getElementById('individualCardView');
+    const copyPrevSetModal = document.getElementById('copyPrevSetModal');
+    const deleteSetModal = document.getElementById('deleteSetModal');
     const deleteModal = document.getElementById('deleteModal');
     const cardEditorModal = document.getElementById('cardEditorModal');
     if (individualView.style.display === 'flex') {
       hideIndividualCard();
+    } else if (copyPrevSetModal && copyPrevSetModal.style.display === 'flex') {
+      hideCopyPrevSetModal();
+    } else if (deleteSetModal && deleteSetModal.style.display === 'flex') {
+      hideDeleteSetModal();
     } else if (deleteModal.style.display === 'flex') {
       hideDeleteModal();
     } else if (cardEditorModal.style.display === 'flex') {
@@ -842,6 +999,8 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
     const instructionsModal = document.getElementById('instructionsModal');
     const individualView = document.getElementById('individualCardView');
+    const copyPrevSetModal = document.getElementById('copyPrevSetModal');
+    const deleteSetModal = document.getElementById('deleteSetModal');
     const deleteModal = document.getElementById('deleteModal');
     const cardEditorModal = document.getElementById('cardEditorModal');
     const isInputFocused = document.activeElement && (
@@ -852,6 +1011,8 @@ document.addEventListener('keydown', (e) => {
     
     if ((!instructionsModal || instructionsModal.style.display !== 'flex') &&
         individualView.style.display !== 'flex' &&
+        (!copyPrevSetModal || copyPrevSetModal.style.display !== 'flex') &&
+        (!deleteSetModal || deleteSetModal.style.display !== 'flex') &&
         deleteModal.style.display !== 'flex' &&
         cardEditorModal.style.display !== 'flex' &&
         !isInputFocused) {
@@ -867,7 +1028,10 @@ async function initialize() {
   await scanAllSets();
   if (availableSets.length > 0) {
     currentSetNumber = availableSets[0];
-    displaySet(currentSetNumber);
+    await displaySet(currentSetNumber);
+  } else {
+    currentSetNumber = 1;
+    updateSetToolbarState();
   }
 }
 initialize();

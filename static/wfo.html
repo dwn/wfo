@@ -8,6 +8,11 @@
 </head>
 <body>
 <div id="prevSetArea" class="nav-area nav-left" title="Previous Set"></div>
+<div id="setToolbar" class="set-toolbar">
+<button type="button" id="copyFromPrevSetButton" class="toolbar-btn" title="Copy all cards from the previous set into this one">Copy prev</button>
+<button type="button" id="newBlankSetButton" class="toolbar-btn toolbar-btn-accent" title="Insert empty set after this one (later sets shift up)">+ Blank set</button>
+<button type="button" id="deleteCurrentSetButton" class="toolbar-btn toolbar-btn-danger" title="Delete this set and shift later sets down">Delete set</button>
+</div>
 <div id="nextSetArea" class="nav-area nav-right" title="Next Set"></div>
 <div id="trashCan" class="trash-can" title="Drag cards here to delete">
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -29,6 +34,26 @@
 <div class="delete-modal-buttons">
 <button id="confirmDelete" class="btn btn-danger">Delete</button>
 <button id="cancelDelete" class="btn btn-secondary">Cancel</button>
+</div>
+</div>
+</div>
+<div id="copyPrevSetModal" class="delete-modal" style="display: none;" role="dialog" aria-modal="true">
+<div class="delete-modal-content">
+<h3 id="copyPrevSetModalTitle">Overwrite current set?</h3>
+<p id="copyPrevSetModalBody" class="delete-modal-text"></p>
+<div class="delete-modal-buttons">
+<button type="button" id="confirmCopyPrevSet" class="btn btn-primary">Copy</button>
+<button type="button" id="cancelCopyPrevSet" class="btn btn-secondary">Cancel</button>
+</div>
+</div>
+</div>
+<div id="deleteSetModal" class="delete-modal" style="display: none;" role="dialog" aria-modal="true">
+<div class="delete-modal-content">
+<h3>Delete this set?</h3>
+<p id="deleteSetModalBody" class="delete-modal-text"></p>
+<div class="delete-modal-buttons">
+<button type="button" id="confirmDeleteSet" class="btn btn-danger">Delete set</button>
+<button type="button" id="cancelDeleteSet" class="btn btn-secondary">Cancel</button>
 </div>
 </div>
 </div>
@@ -219,7 +244,7 @@
 </div>
 <script src="/static/cards.js"></script>
 <script src="/static/draw.js"></script>
-<script src="/storage/cardStorage.js"></script>
+<script src="/storage/cardStorage.js?v=3"></script>
 <script src="/static/wfo.js"></script>
 </body>
 </html>
