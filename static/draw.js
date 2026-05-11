@@ -29,6 +29,51 @@ const anticlockwiseForShortest = (a0, a1) => {
 };
 const angleOnEllipse = (cx, cy, rx, ry, x, y) => Math.atan2((y - cy) / ry, (x - cx) / rx);
 
+function applyRuleTransforms(input, rule) {
+  let output = input || '';
+
+  output = output.split('\n')
+    .filter(line => !line.trim().startsWith('//'))
+    .join('\n');
+
+  if (!rule || !rule.trim()) return output;
+
+  const lines = rule.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));
+
+  for (const line of lines) {
+    const replacements = [];
+    const pairs = line.trim().split(/\s+/);
+
+    for (const pair of pairs) {
+      const commaIndex = pair.indexOf(',');
+      if (commaIndex > 0 && commaIndex < pair.length - 1) {
+        replacements.push({
+          source: pair.substring(0, commaIndex),
+          target: pair.substring(commaIndex + 1)
+        });
+      }
+    }
+
+    if (!replacements.length) continue;
+
+    let transformed = '';
+    for (let i = 0; i < output.length;) {
+      const replacement = replacements.find(({source}) => output.startsWith(source, i));
+      if (replacement) {
+        transformed += replacement.target;
+        i += replacement.source.length;
+      } else {
+        transformed += output[i];
+        i += 1;
+      }
+    }
+
+    output = transformed;
+  }
+
+  return output;
+}
+
 // Italics transform function
 function applyItalicsTransform(point, s=8, italicsMode=true) {
   if (!italicsMode) return point;
@@ -345,31 +390,7 @@ function drawCardPreview(canvas, cardData, isIndividualView = false) {
   
   try {
     // Process input through rules to get output
-    let output = cardData.input;
-    
-    // Filter out comment lines
-    output = output.split('\n')
-      .filter(line => !line.trim().startsWith('//'))
-      .join('\n');
-    
-    // Apply replacement rules if they exist
-    if (cardData.rule && cardData.rule.trim()) {
-      const lines = cardData.rule.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));
-      
-      for (const line of lines) {
-        const pairs = line.trim().split(/\s+/);
-        
-        for (const pair of pairs) {
-          const commaIndex = pair.indexOf(',');
-          if (commaIndex > 0 && commaIndex < pair.length - 1) {
-            const source = pair.substring(0, commaIndex);
-            const target = pair.substring(commaIndex + 1);
-            
-            output = output.replace(new RegExp(escapeRegExp(source), 'g'), target);
-          }
-        }
-      }
-    }
+    const output = applyRuleTransforms(cardData.input, cardData.rule);
     
     // Parse hex output (not input)
     const coloredItems = parseBytes(output);

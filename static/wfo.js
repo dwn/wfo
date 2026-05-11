@@ -452,12 +452,6 @@ function closeCardEditor() {
   hideInstructionsModal();
   currentEditingCard = null;
 }
-
-
-function escapeRegExp(string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 function updateEditorOutput() {
   const ruleEl = document.getElementById('editorRule');
   const inputEl = document.getElementById('editorInput');
@@ -465,30 +459,7 @@ function updateEditorOutput() {
   
   const rule = ruleEl ? ruleEl.value : '';
   const input = inputEl ? inputEl.value : '';
-  
-  let output = input;
-  
-  output = output.split('\n')
-    .filter(line => !line.trim().startsWith('//'))
-    .join('\n');
-  
-  if (rule && rule.trim()) {
-    const lines = rule.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));
-    
-    for (const line of lines) {
-      const pairs = line.trim().split(/\s+/);
-      
-      for (const pair of pairs) {
-        const commaIndex = pair.indexOf(',');
-        if (commaIndex > 0 && commaIndex < pair.length - 1) {
-          const source = pair.substring(0, commaIndex);
-          const target = pair.substring(commaIndex + 1);
-          
-          output = output.replace(new RegExp(escapeRegExp(source), 'g'), target);
-        }
-      }
-    }
-  }
+  const output = applyRuleTransforms(input, rule);
   
   if (outputEl) {
     outputEl.value = output;
