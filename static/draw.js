@@ -29,6 +29,27 @@ const anticlockwiseForShortest = (a0, a1) => {
 };
 const angleOnEllipse = (cx, cy, rx, ry, x, y) => Math.atan2((y - cy) / ry, (x - cx) / rx);
 
+function findRuleDelimiter(pair) {
+  for (let i = 0; i < pair.length; i++) {
+    if (pair[i] === '\\') {
+      i++;
+    } else if (pair[i] === ',') {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+function unescapeRulePart(part) {
+  return part.replace(/\\([\\,])/g, '$1');
+}
+
+function normalizeDrawingSize(value, fallback = 8) {
+  const size = Number(value);
+  return Number.isFinite(size) && size > 0 ? size : fallback;
+}
+
 function applyRuleTransforms(input, rule) {
   let output = input || '';
 
@@ -45,11 +66,11 @@ function applyRuleTransforms(input, rule) {
     const pairs = line.trim().split(/\s+/);
 
     for (const pair of pairs) {
-      const commaIndex = pair.indexOf(',');
+      const commaIndex = findRuleDelimiter(pair);
       if (commaIndex > 0 && commaIndex < pair.length - 1) {
         replacements.push({
-          source: pair.substring(0, commaIndex),
-          target: pair.substring(commaIndex + 1)
+          source: unescapeRulePart(pair.substring(0, commaIndex)),
+          target: unescapeRulePart(pair.substring(commaIndex + 1))
         });
       }
     }
@@ -405,7 +426,7 @@ function drawCardPreview(canvas, cardData, isIndividualView = false) {
     const animateMode = isIndividualView && cardData.options?.animate === true;
     
     // Build drawing operations
-    const s = 8;
+    const s = normalizeDrawingSize(cardData.options?.size);
     const pad = { left: 3, top: 3, right: 3 };
     const gridX = Math.floor(canvas.width / s);
     const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor);
