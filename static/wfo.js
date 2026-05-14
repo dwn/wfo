@@ -543,6 +543,8 @@ async function saveCard() {
     cardDataObj.options.svgColor = svgColor;
     if (svgBackground) {
       cardDataObj.options.svgBackground = svgBackground;
+    } else {
+      delete cardDataObj.options.svgBackground;
     }
     const fileName = formatCardFilename(setNumber, order);
     await cardStorage.put(fileName, cardDataObj);

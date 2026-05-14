@@ -1,13 +1,14 @@
 {
   "options": {
-    "size": 14,
-    "backgroundColor": "#000000",
+    "size": 5,
+    "backgroundColor": "#808080",
     "italics": true,
     "animate": false,
     "svgColor": false,
+    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/six.svg",
     "position": {
-      "row": 1,
-      "col": 2
+      "row": 5,
+      "col": 3
     }
   },
   "rule": "\n          ",
