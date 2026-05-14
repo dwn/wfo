@@ -78,7 +78,7 @@ DEFAULT_INPUT = (
 QUENYA_RULE_LINES = (
     "// Quenya\n"
     "a,(cl1d1)(Cr1d1)(cr1u1)(u1)(d4)((r2))(.) "
-    "b,(cl1d1)(Cr1d1)(cr1u1)((r1u1))(cl1d1)(Cr1d1)(cr1u1)(u1)(d2)((r2))(.)"
+    "b,(cl1d1)(Cr1d1)(cr1u1)((r1u1))(cl1d1)(Cr1d1)(cr1u1)(u1)(d2)((r2))((l3u2))((l3))(r4)((r2))(.)"
 )
 QUENYA_PAIR_COUNT = 2
 
