@@ -309,23 +309,26 @@ async function displaySet(setNumber) {
     const cardsWithoutPosition = [];
     const cardsToFix = [];
 
+    const GRID_ROWS = 5;
+    const GRID_COLS = 3;
+
     // Helper to process a loaded card and display it immediately if it has a position
     async function processCard(order, data) {
       if (data && data.options && data.options.position) {
         const { row, col } = data.options.position;
         if (row !== null && col !== null && typeof row === 'number' && typeof col === 'number') {
+          const inBounds =
+            row >= 1 && row <= GRID_ROWS && col >= 1 && col <= GRID_COLS;
           const key = `${row}-${col}`;
-          if (!gridPositions.has(key)) {
+          const wrapper = inBounds ? gridWrappers.get(key) : null;
+          if (wrapper && !gridPositions.has(key)) {
             gridPositions.set(key, { order, data });
-            const wrapper = gridWrappers.get(key);
-            if (wrapper) {
-              await renderCardToWrapper(wrapper, setNumber, order, data);
-            }
+            await renderCardToWrapper(wrapper, setNumber, order, data);
             return;
           }
         }
       }
-      // Card doesn't have a valid position or doesn't exist, queue it
+      // Card doesn't have a valid in-bounds position, slot missing, or collision — queue it
       if (data) {
         cardsWithoutPosition.push({ order, data });
       }
