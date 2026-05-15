@@ -436,8 +436,7 @@ function openCardEditor(setNumber, order, cardData) {
   
   // Initialize output and preview after a brief delay
   setTimeout(() => {
-    updateEditorOutput();
-    updateEditorPreview();
+    updateEditorOutput().then(() => updateEditorPreview());
   }, 50);
   const positionDisplay = document.getElementById('editorPositionDisplay');
   if (cardData.options?.position) {
@@ -459,11 +458,28 @@ function updateEditorOutput() {
   
   const rule = ruleEl ? ruleEl.value : '';
   const input = inputEl ? inputEl.value : '';
-  const output = applyRuleTransforms(input, rule);
-  
-  if (outputEl) {
-    outputEl.value = output;
+
+  const applyResolved = async () => {
+    let resolvedInput = input;
+    let resolvedRule = rule;
+    if (typeof resolveReferencedInput === 'function') {
+      resolvedInput = await resolveReferencedInput(input);
+    }
+    if (typeof resolveReferencedRule === 'function') {
+      resolvedRule = await resolveReferencedRule(rule);
+    }
+    return applyRuleTransforms(resolvedInput, resolvedRule);
+  };
+
+  if (typeof resolveReferencedRule !== 'function' && typeof resolveReferencedInput !== 'function') {
+    const output = applyRuleTransforms(input, rule);
+    if (outputEl) outputEl.value = output;
+    return Promise.resolve();
   }
+
+  return applyResolved().then((output) => {
+    if (outputEl) outputEl.value = output;
+  });
 }
 
 function updateEditorPreview() {
@@ -950,14 +966,12 @@ document.getElementById('editorBackground2').addEventListener('change', updateEd
 document.getElementById('editorItalics').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvgColor').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvg').addEventListener('input', updateEditorPreview);
-document.getElementById('editorRule').addEventListener('input', (e) => {
+document.getElementById('editorRule').addEventListener('input', () => {
   // Rule field is a plain textarea, no highlighting needed
-  updateEditorOutput();
-  updateEditorPreview();
+  updateEditorOutput().then(() => updateEditorPreview());
 });
 document.getElementById('editorInput').addEventListener('input', () => {
-  updateEditorOutput();
-  updateEditorPreview();
+  updateEditorOutput().then(() => updateEditorPreview());
 });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {

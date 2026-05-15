@@ -223,6 +223,8 @@
         <li><strong>Zero moves are special.</strong> With no movement, <code>00</code> snaps to the row top, <code>01</code> plots a point, <code>10</code> draws a full circle, and <code>11</code> does nothing.</li>
         <li><strong>Layout helpers keep things tidy.</strong> Use <code>||</code> to start a new grid row, a single <code>|</code> to delimit successive glyphs, and prefix lines with <code>//</code> for comments that the renderer ignores.</li>
         <li><strong>Rules transform the raw data.</strong> Add replacements like <code>13,24</code> (source,target) to the Rule box; pairs on the same line apply simultaneously, then later lines cascade before glyphs are drawn. Use <code>\,</code> for a literal comma source.</li>
+        <li><strong>Reuse another card's rule.</strong> If the entire Rule body is only <code>{use_rule 1.2}</code> (with optional <code>//</code> comment lines), that card's Rule is used instead; references can chain. A cycle or missing card logs a warning and falls back to an empty rule.</li>
+        <li><strong>Reuse another card's input.</strong> Same idea for Input: only <code>{use_input 1.2}</code> (plus optional <code>//</code> lines) pulls that card's Input; chaining and cycle handling match the rule case.</li>
       </ul>
     </div>
     <div class="instructions-footer">

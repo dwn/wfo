@@ -50,6 +50,105 @@ function normalizeDrawingSize(value, fallback = 8) {
   return Number.isFinite(size) && size > 0 ? size : fallback;
 }
 
+/**
+ * Non-empty, non-// lines — used to detect sole `{use_rule …}` / `{use_input …}` directives.
+ */
+function meaningfulDirectiveLines(text) {
+  if (text == null || typeof text !== 'string') return [];
+  const meaningful = [];
+  for (const line of text.split('\n')) {
+    const t = line.trim();
+    if (!t || t.startsWith('//')) continue;
+    meaningful.push(t);
+  }
+  return meaningful;
+}
+
+/**
+ * When the Rule field is only `{use_rule set.order}` (optional // comment lines),
+ * use that card's `rule` instead. Chains are followed; cycles yield an empty rule.
+ */
+const RULE_USE_REFERENCE_RE = /^\{use_rule\s+(\d+)\.(\d+)\}\s*$/i;
+
+function parseRuleUseReference(rule) {
+  const meaningful = meaningfulDirectiveLines(rule);
+  if (meaningful.length !== 1) return null;
+  const m = meaningful[0].match(RULE_USE_REFERENCE_RE);
+  if (!m) return null;
+  return { set: parseInt(m[1], 10), order: parseInt(m[2], 10) };
+}
+
+/**
+ * When the Input field is only `{use_input set.order}` (optional // comment lines),
+ * use that card's `input` instead. Chains are followed; cycles yield empty input.
+ */
+const INPUT_USE_REFERENCE_RE = /^\{use_input\s+(\d+)\.(\d+)\}\s*$/i;
+
+function parseInputUseReference(input) {
+  const meaningful = meaningfulDirectiveLines(input);
+  if (meaningful.length !== 1) return null;
+  const m = meaningful[0].match(INPUT_USE_REFERENCE_RE);
+  if (!m) return null;
+  return { set: parseInt(m[1], 10), order: parseInt(m[2], 10) };
+}
+
+async function fetchCardJsonForCardRef(setNum, orderNum) {
+  const filename = `${setNum}.${orderNum}.json`;
+  if (typeof cardStorage !== 'undefined' && cardStorage && typeof cardStorage.readJson === 'function') {
+    return cardStorage.readJson(filename);
+  }
+  const res = await fetch(`/card/${filename}?t=${Date.now()}`);
+  if (!res.ok) return null;
+  return res.json();
+}
+
+async function resolveReferencedRule(rule, seen) {
+  const ref = parseRuleUseReference(rule);
+  if (!ref) return rule;
+
+  const key = `${ref.set}.${ref.order}`;
+  const chain = seen || new Set();
+  if (chain.has(key)) {
+    console.warn(`Rules: reference cycle involving card ${key}; using empty rule.`);
+    return '';
+  }
+  chain.add(key);
+  try {
+    const data = await fetchCardJsonForCardRef(ref.set, ref.order);
+    if (!data || typeof data.rule !== 'string') {
+      console.warn(`Rules: could not load card ${key} for {use_rule …}.`);
+      return '';
+    }
+    return await resolveReferencedRule(data.rule, chain);
+  } finally {
+    chain.delete(key);
+  }
+}
+
+async function resolveReferencedInput(input, seen) {
+  const ref = parseInputUseReference(input);
+  if (!ref) return input == null ? '' : String(input);
+
+  const key = `${ref.set}.${ref.order}`;
+  const chain = seen || new Set();
+  if (chain.has(key)) {
+    console.warn(`Input: reference cycle involving card ${key}; using empty input.`);
+    return '';
+  }
+  chain.add(key);
+  try {
+    const data = await fetchCardJsonForCardRef(ref.set, ref.order);
+    if (!data) {
+      console.warn(`Input: could not load card ${key} for {use_input …}.`);
+      return '';
+    }
+    const next = data.input == null ? '' : String(data.input);
+    return await resolveReferencedInput(next, chain);
+  } finally {
+    chain.delete(key);
+  }
+}
+
 function applyRuleTransforms(input, rule) {
   let output = input || '';
 
@@ -403,15 +502,20 @@ function drawOpInside(ctx, op, s=8, thickness=0.8, italicsMode=false, textColor=
   }
 }
 
-function drawCardPreview(canvas, cardData, isIndividualView = false) {
+async function drawCardPreview(canvas, cardData, isIndividualView = false) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-  if (!cardData || !cardData.input) return;
-  
+  if (!cardData) return;
+  const rawInput = cardData.input;
+  if (rawInput == null) return;
+  const rawStr = String(rawInput);
+  if (rawStr.trim() === '') return;
+
   try {
-    // Process input through rules to get output
-    const output = applyRuleTransforms(cardData.input, cardData.rule);
+    const resolvedInput = await resolveReferencedInput(rawStr);
+    const resolvedRule = await resolveReferencedRule(cardData.rule);
+    const output = applyRuleTransforms(resolvedInput, resolvedRule);
     
     // Parse hex output (not input)
     const coloredItems = parseBytes(output);

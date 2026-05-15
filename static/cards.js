@@ -102,7 +102,7 @@ async function showIndividualCard(setNumber, order, cardData) {
   
   // Draw card preview if drawing module is available
   if (typeof drawCardPreview === 'function') {
-    drawCardPreview(canvas, cardData, true);  // true = individual view
+    await drawCardPreview(canvas, cardData, true);  // true = individual view
   }
   if (cardData.options && cardData.options.svgBackground) {
     const svgValue = cardData.options.svgBackground;
@@ -253,7 +253,7 @@ async function renderCardToWrapper(cardWrapper, setNumber, order, cardData) {
   cardWrapper.appendChild(canvas);
   // Draw card preview if drawing module is available
   if (typeof drawCardPreview === 'function') {
-    drawCardPreview(canvas, cardData);
+    await drawCardPreview(canvas, cardData);
   }
 }
 
