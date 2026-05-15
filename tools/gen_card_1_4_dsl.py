@@ -34,11 +34,19 @@ Optional:
   (.) — row snap (byte 00, same as Latin glyphs often end with)
   (*) — draw a point at the current pen position
 
+Quenya (first rule line, letter → output; then main line expands mnemonics → hex):
+  a,b — your hand-tuned starters (constants in this file).
+  c–z — hand-authored in tools/quenya_cz_mnemonics.py (telco/lúva-style sketches per Smith
+  tengwa name), same DSL vocabulary as a/b — not copied from card 1.3. Preview and edit there.
+
 Run: python3 tools/gen_card_1_4_dsl.py
 
-If public/card/1.4.json already exists (e.g. you added the card in the app), the script
-merges: it refreshes rule from this generator, fills missing option keys from defaults,
-and keeps your input unless it is empty (then it uses the demo input).
+If public/card/1.4.json already exists, the script merges options and default input only.
+It does **not** replace an existing non-empty ``rule`` unless you pass ``--force-rule``
+(so hand-edited Quenya + mnemonic tables in the JSON are preserved).
+
+Run: python3 tools/gen_card_1_4_dsl.py
+      python3 tools/gen_card_1_4_dsl.py --force-rule   # overwrite rule from this generator
 
 Rule formatting: non-comment lines are split on whitespace into many source,target pairs;
 each line is one applyRuleTransforms pass over the input. All pairs live on one line
@@ -47,9 +55,12 @@ here (after // comments) so the engine does a single pass instead of one pass pe
 
 from __future__ import annotations
 
+import argparse
 import json
+import string
 from pathlib import Path
 
+from quenya_cz_mnemonics import QUENYA_CZ
 from tengwar_hex_codec import enc_arc_h, enc_arc_v, enc_dot, enc_line, enc_move, enc_snap
 
 REPO = Path(__file__).resolve().parents[1]
@@ -75,12 +86,47 @@ DEFAULT_INPUT = (
 )
 
 # First rule pass: letter → mnemonic chains. Second pass (main pairs line): mnemonics → hex.
-QUENYA_RULE_LINES = (
-    "// Quenya\n"
-    "a,(cl1d1)(Cr1d1)(cr1u1)(u1)(d4)((r2))(.) "
-    "b,(cl1d1)(Cr1d1)(cr1u1)((r1u1))(cl1d1)(Cr1d1)(cr1u1)(u1)(d2)((r2))((l3u2))((l3))(r4)((r2))(.)"
+QUENYA_MANUAL_A = "(cl1d1)(Cr1d1)(cr1u1)(u1)(d4)((r2))(.)"
+QUENYA_MANUAL_B = (
+    "(cl1d1)(Cr1d1)(cr1u1)((r1u1))(cl1d1)(Cr1d1)(cr1u1)(u1)(d2)((r2))"
+    "((l3u2))((l3))(r4)((r2))(.)"
 )
-QUENYA_PAIR_COUNT = 2
+QUENYA_PAIR_COUNT = 26
+
+
+def build_quenya_rule_block() -> str:
+    pairs = [f"a,{QUENYA_MANUAL_A}", f"b,{QUENYA_MANUAL_B}"]
+    for ch in string.ascii_lowercase[2:]:
+        pairs.append(f"{ch},{QUENYA_CZ[ch]}")
+    return "// Quenya\n" + " ".join(pairs)
+
+
+def _validate_quenya_against_sources(sources: set[str]) -> None:
+    """Every Quenya parenthesis-token must be a defined rule source (handles nested ((…)))."""
+    sorted_src = sorted(sources, key=len, reverse=True)
+
+    def consume_chain(chain: str, label: str) -> None:
+        i = 0
+        while i < len(chain):
+            if chain[i] != "(":
+                raise ValueError(f"Quenya {label}: expected '(' at {i} in {chain[:100]!r}…")
+            matched = False
+            for src in sorted_src:
+                if chain.startswith(src, i):
+                    matched = True
+                    i += len(src)
+                    break
+            if not matched:
+                raise ValueError(
+                    f"Quenya {label}: no rule source matches at {i}: {chain[i : i + 40]!r}…"
+                )
+
+    for label, chain in (
+        ("a", QUENYA_MANUAL_A),
+        ("b", QUENYA_MANUAL_B),
+        *((ch, QUENYA_CZ[ch]) for ch in sorted(QUENYA_CZ)),
+    ):
+        consume_chain(chain, label)
 
 
 def hx1(b: int) -> str:
@@ -208,10 +254,20 @@ def build_rule_string() -> str:
         ("(*)", hx1(enc_dot())),
     ]
     pairs_line = " ".join(f"{src},{tgt}" for src, tgt in all_pairs)
-    return QUENYA_RULE_LINES + "\n" + "\n".join([*comments, pairs_line])
+    sources = {src for src, _ in all_pairs}
+    _validate_quenya_against_sources(sources)
+    return build_quenya_rule_block() + "\n" + "\n".join([*comments, pairs_line])
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Build or merge public/card/1.4.json")
+    parser.add_argument(
+        "--force-rule",
+        action="store_true",
+        help="Replace an existing card's rule with the generated rule (default: keep your rule).",
+    )
+    args = parser.parse_args()
+
     rule = build_rule_string()
     n_rules = (
         QUENYA_PAIR_COUNT
@@ -244,8 +300,13 @@ def main() -> None:
             card["options"] = dict(DEFAULT_OPTIONS)
         if not str(card.get("input") or "").strip():
             card["input"] = DEFAULT_INPUT
-        card["rule"] = rule
-        print(f"Merged into existing {OUT} ({n_rules} rule replacements)")
+        existing_rule = str(card.get("rule") or "").strip()
+        if args.force_rule or not existing_rule:
+            card["rule"] = rule
+            msg = f"replaced rule ({n_rules} mnemonic→hex pairs in body line)"
+        else:
+            msg = "kept your rule (pass --force-rule to replace from generator)"
+        print(f"Merged {OUT}: {msg}")
     else:
         card = {
             "options": dict(DEFAULT_OPTIONS),
