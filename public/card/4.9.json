@@ -1,16 +1,16 @@
 {
   "options": {
-    "size": 5,
-    "backgroundColor": "#79008D",
+    "size": 30,
+    "backgroundColor": "#700000",
     "italics": true,
     "animate": false,
-    "svgColor": false,
-    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/two.svg",
+    "svgColor": true,
+    "svgBackground": " ",
     "position": {
       "row": 2,
-      "col": 3
+      "col": 1
     }
   },
-  "rule": "",
-  "input": ""
+  "rule": "{use_rule 1.1}",
+  "input": "H"
 }

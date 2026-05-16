@@ -1,0 +1,16 @@
+{
+  "options": {
+    "size": 40,
+    "backgroundColor": "#700000",
+    "italics": true,
+    "animate": false,
+    "svgColor": false,
+    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/seven.svg",
+    "position": {
+      "row": 4,
+      "col": 1
+    }
+  },
+  "rule": "{use_rule 1.1}",
+  "input": "7"
+}

@@ -1,16 +1,16 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#A6FF00",
+    "backgroundColor": "#808080",
     "italics": true,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 5,
+      "row": 4,
       "col": 3
     }
   },
   "rule": "{use_rule 1.1}",
-  "input": "F"
+  "input": "Ag"
 }
