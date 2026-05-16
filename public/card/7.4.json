@@ -1,16 +1,15 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#FF7B00",
+    "size": 40,
+    "backgroundColor": "#36FF00",
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
     "position": {
-      "row": 3,
+      "row": 1,
       "col": 1
     }
   },
   "rule": "{use_rule 1.1}",
-  "input": "Na|11"
+  "input": "2|Ea"
 }
