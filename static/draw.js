@@ -50,47 +50,8 @@ function normalizeDrawingSize(value, fallback = 8) {
   return Number.isFinite(size) && size > 0 ? size : fallback;
 }
 
-/**
- * Non-empty, non-// lines — used to detect sole `{use_rule …}` / `{use_input …}` directives.
- */
-function meaningfulDirectiveLines(text) {
-  if (text == null || typeof text !== 'string') return [];
-  const meaningful = [];
-  for (const line of text.split('\n')) {
-    const t = line.trim();
-    if (!t || t.startsWith('//')) continue;
-    meaningful.push(t);
-  }
-  return meaningful;
-}
-
-/**
- * When the Rule field is only `{use_rule set.order}` (optional // comment lines),
- * use that card's `rule` instead. Chains are followed; cycles yield an empty rule.
- */
-const RULE_USE_REFERENCE_RE = /^\{use_rule\s+(\d+)\.(\d+)\}\s*$/i;
-
-function parseRuleUseReference(rule) {
-  const meaningful = meaningfulDirectiveLines(rule);
-  if (meaningful.length !== 1) return null;
-  const m = meaningful[0].match(RULE_USE_REFERENCE_RE);
-  if (!m) return null;
-  return { set: parseInt(m[1], 10), order: parseInt(m[2], 10) };
-}
-
-/**
- * When the Input field is only `{use_input set.order}` (optional // comment lines),
- * use that card's `input` instead. Chains are followed; cycles yield empty input.
- */
-const INPUT_USE_REFERENCE_RE = /^\{use_input\s+(\d+)\.(\d+)\}\s*$/i;
-
-function parseInputUseReference(input) {
-  const meaningful = meaningfulDirectiveLines(input);
-  if (meaningful.length !== 1) return null;
-  const m = meaningful[0].match(INPUT_USE_REFERENCE_RE);
-  if (!m) return null;
-  return { set: parseInt(m[1], 10), order: parseInt(m[2], 10) };
-}
+const RULE_USE_TOKEN_RE = /\{use_rule\s+(\d+)\.(\d+)\}/i;
+const INPUT_USE_TOKEN_RE = /\{use_input\s+(\d+)\.(\d+)\}/i;
 
 async function fetchCardJsonForCardRef(setNum, orderNum) {
   const filename = `${setNum}.${orderNum}.json`;
@@ -102,51 +63,84 @@ async function fetchCardJsonForCardRef(setNum, orderNum) {
   return res.json();
 }
 
-async function resolveReferencedRule(rule, seen) {
-  const ref = parseRuleUseReference(rule);
-  if (!ref) return rule;
-
-  const key = `${ref.set}.${ref.order}`;
-  const chain = seen || new Set();
-  if (chain.has(key)) {
-    console.warn(`Rules: reference cycle involving card ${key}; using empty rule.`);
-    return '';
-  }
-  chain.add(key);
-  try {
-    const data = await fetchCardJsonForCardRef(ref.set, ref.order);
+/**
+ * Replace each `{use_rule set.order}` token with that card's rule (recursively).
+ * Tokens may appear anywhere in the Rule field. Cycles insert an empty string; missing cards too.
+ */
+async function expandRuleInsertions(rule, expansionPath) {
+  if (rule == null) return '';
+  let out = String(rule);
+  const path = expansionPath || [];
+  let match;
+  while ((match = out.match(RULE_USE_TOKEN_RE)) !== null) {
+    const full = match[0];
+    const set = parseInt(match[1], 10);
+    const order = parseInt(match[2], 10);
+    const key = `${set}.${order}`;
+    if (path.includes(key)) {
+      console.warn(`Rules: reference cycle involving card ${key}; inserting empty rule.`);
+      out = out.replace(full, '');
+      continue;
+    }
+    const data = await fetchCardJsonForCardRef(set, order);
+    let fragment = '';
     if (!data || typeof data.rule !== 'string') {
       console.warn(`Rules: could not load card ${key} for {use_rule …}.`);
-      return '';
+    } else {
+      path.push(key);
+      try {
+        fragment = await expandRuleInsertions(data.rule, path);
+      } finally {
+        path.pop();
+      }
     }
-    return await resolveReferencedRule(data.rule, chain);
-  } finally {
-    chain.delete(key);
+    out = out.replace(full, fragment);
   }
+  return out;
 }
 
-async function resolveReferencedInput(input, seen) {
-  const ref = parseInputUseReference(input);
-  if (!ref) return input == null ? '' : String(input);
-
-  const key = `${ref.set}.${ref.order}`;
-  const chain = seen || new Set();
-  if (chain.has(key)) {
-    console.warn(`Input: reference cycle involving card ${key}; using empty input.`);
-    return '';
-  }
-  chain.add(key);
-  try {
-    const data = await fetchCardJsonForCardRef(ref.set, ref.order);
+/**
+ * Replace each `{use_input set.order}` token with that card's input (recursively).
+ */
+async function expandInputInsertions(input, expansionPath) {
+  if (input == null) return '';
+  let out = String(input);
+  const path = expansionPath || [];
+  let match;
+  while ((match = out.match(INPUT_USE_TOKEN_RE)) !== null) {
+    const full = match[0];
+    const set = parseInt(match[1], 10);
+    const order = parseInt(match[2], 10);
+    const key = `${set}.${order}`;
+    if (path.includes(key)) {
+      console.warn(`Input: reference cycle involving card ${key}; inserting empty input.`);
+      out = out.replace(full, '');
+      continue;
+    }
+    const data = await fetchCardJsonForCardRef(set, order);
+    let fragment = '';
     if (!data) {
       console.warn(`Input: could not load card ${key} for {use_input …}.`);
-      return '';
+    } else {
+      const next = data.input == null ? '' : String(data.input);
+      path.push(key);
+      try {
+        fragment = await expandInputInsertions(next, path);
+      } finally {
+        path.pop();
+      }
     }
-    const next = data.input == null ? '' : String(data.input);
-    return await resolveReferencedInput(next, chain);
-  } finally {
-    chain.delete(key);
+    out = out.replace(full, fragment);
   }
+  return out;
+}
+
+async function resolveReferencedRule(rule) {
+  return expandRuleInsertions(rule, []);
+}
+
+async function resolveReferencedInput(input) {
+  return expandInputInsertions(input, []);
 }
 
 function applyRuleTransforms(input, rule) {

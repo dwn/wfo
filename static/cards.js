@@ -10,6 +10,102 @@ function resolveSvgFetchUrl(url) {
   return url;
 }
 
+const SVG_USE_TOKEN_RE = /\{use_svg\s+([a-zA-Z0-9_.-]+\.svg)\}/i;
+const SVG_LOCAL_FILENAME_RE = /^[a-zA-Z0-9_-]+\.svg$/i;
+
+/** Turn svgBackground value into a fetch URL, or null if inline / empty. */
+function svgBackgroundToFetchUrl(svgValue) {
+  const trimmed = (svgValue || '').trim();
+  if (!trimmed) return null;
+
+  const token = trimmed.match(SVG_USE_TOKEN_RE);
+  if (token) {
+    return '/svg/' + token[1];
+  }
+
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return resolveSvgFetchUrl(trimmed);
+  }
+
+  if (trimmed.startsWith('/svg/')) {
+    const name = trimmed.slice('/svg/'.length).split(/[?#]/)[0];
+    if (SVG_LOCAL_FILENAME_RE.test(name)) {
+      return '/svg/' + name;
+    }
+    return null;
+  }
+
+  if (SVG_LOCAL_FILENAME_RE.test(trimmed)) {
+    return '/svg/' + trimmed;
+  }
+
+  return null;
+}
+
+function isInlineSvgMarkup(svgValue) {
+  const t = (svgValue || '').trim();
+  return t.startsWith('<') || t.startsWith('<?xml');
+}
+
+/**
+ * Load SVG for options.svgBackground: local file ({use_svg moon.svg}, moon.svg, /svg/moon.svg),
+ * remote URL, or inline markup.
+ */
+async function loadSvgBackgroundContent(svgValue) {
+  const trimmed = (svgValue || '').trim();
+  if (!trimmed) return null;
+
+  const fetchUrl = svgBackgroundToFetchUrl(trimmed);
+  if (fetchUrl) {
+    try {
+      const response = await fetch(fetchUrl);
+      if (!response.ok) {
+        console.error('Failed to load SVG:', fetchUrl, response.status);
+        return null;
+      }
+      return await response.text();
+    } catch (error) {
+      console.error('Failed to load SVG:', fetchUrl, error);
+      return null;
+    }
+  }
+
+  if (isInlineSvgMarkup(trimmed)) {
+    return trimmed;
+  }
+
+  return null;
+}
+
+function mountSvgInContainer(svgContainer, svgContent, cardData, setNumber, order) {
+  const { primaryColor } = getCardColors(cardData);
+  const textColor = calculateSvgTextColor(primaryColor, false);
+  const useNaturalColors = cardData.options && cardData.options.svgColor === true;
+  const cleanedSvg = stripSvgColors(svgContent, useNaturalColors);
+  const uniqueId = `svg-${setNumber}-${order}`;
+  svgContainer.id = uniqueId;
+  svgContainer.innerHTML = `
+    <style>
+      #${uniqueId} svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: contain;
+        object-position: center;
+        opacity: 0.5;
+        ${useNaturalColors ? '' : `color: ${textColor};`}
+      }
+      ${useNaturalColors ? '' : `#${uniqueId} svg * {
+        fill: currentColor;
+        stroke: currentColor;
+        stroke-width: 0;
+      }`}
+    </style>
+    ${cleanedSvg}
+  `;
+  svgContainer.offsetHeight;
+}
+
 // Base color utility functions
 function hexToRgb(hex) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -105,48 +201,12 @@ async function showIndividualCard(setNumber, order, cardData) {
     await drawCardPreview(canvas, cardData, true);  // true = individual view
   }
   if (cardData.options && cardData.options.svgBackground) {
-    const svgValue = cardData.options.svgBackground;
-    let svgContent = null;
-    if (svgValue.startsWith('http://') || svgValue.startsWith('https://')) {
-      try {
-        const response = await fetch(resolveSvgFetchUrl(svgValue));
-        svgContent = await response.text();
-      } catch (error) {
-        console.error('Failed to load SVG:', error);
-      }
-    } else {
-      svgContent = svgValue;
-    }
+    const svgContent = await loadSvgBackgroundContent(cardData.options.svgBackground);
     if (svgContent) {
-      const { primaryColor } = getCardColors(cardData);
-      const textColor = calculateSvgTextColor(primaryColor, false);
-      const useNaturalColors = cardData.options && cardData.options.svgColor === true;
-      const cleanedSvg = stripSvgColors(svgContent, useNaturalColors);
       const svgContainer = document.createElement('div');
       svgContainer.className = 'svg-container';
-      const uniqueId = `svg-${setNumber}-${order}`;
-      svgContainer.id = uniqueId;
-      svgContainer.innerHTML = `
-        <style>
-          #${uniqueId} svg {
-            width: 100%;
-            height: 100%;
-            display: block;
-            object-fit: contain;
-            object-position: center;
-            opacity: 0.5;
-            ${useNaturalColors ? '' : `color: ${textColor};`}
-          }
-          ${useNaturalColors ? '' : `#${uniqueId} svg * {
-            fill: currentColor;
-            stroke: currentColor;
-            stroke-width: 0;
-          }`}
-        </style>
-        ${cleanedSvg}
-      `;
+      mountSvgInContainer(svgContainer, svgContent, cardData, setNumber, order);
       individualCard.appendChild(svgContainer);
-      svgContainer.offsetHeight;
     }
   }
   individualView.style.display = 'flex';
@@ -202,45 +262,9 @@ async function renderCardToWrapper(cardWrapper, setNumber, order, cardData) {
   cardWrapper.appendChild(svgContainer);
 
   if (cardData.options && cardData.options.svgBackground) {
-    const svgValue = cardData.options.svgBackground;
-    let svgContent = null;
-    if (svgValue.startsWith('http://') || svgValue.startsWith('https://')) {
-      try {
-        const response = await fetch(resolveSvgFetchUrl(svgValue));
-        svgContent = await response.text();
-      } catch (error) {
-        console.error('Failed to load SVG:', error);
-      }
-    } else {
-      svgContent = svgValue;
-    }
+    const svgContent = await loadSvgBackgroundContent(cardData.options.svgBackground);
     if (svgContent) {
-      const { primaryColor } = getCardColors(cardData);
-      const textColor = calculateSvgTextColor(primaryColor, false);
-      const useNaturalColors = cardData.options && cardData.options.svgColor === true;
-      const cleanedSvg = stripSvgColors(svgContent, useNaturalColors);
-      const uniqueId = `svg-${setNumber}-${order}`;
-      svgContainer.id = uniqueId;
-      svgContainer.innerHTML = `
-        <style>
-          #${uniqueId} svg {
-            width: 100%;
-            height: 100%;
-            display: block;
-            object-fit: contain;
-            object-position: center;
-            opacity: 0.5;
-            ${useNaturalColors ? '' : `color: ${textColor};`}
-          }
-          ${useNaturalColors ? '' : `#${uniqueId} svg * {
-            fill: currentColor;
-            stroke: currentColor;
-            stroke-width: 0;
-          }`}
-        </style>
-        ${cleanedSvg}
-      `;
-      svgContainer.offsetHeight;
+      mountSvgInContainer(svgContainer, svgContent, cardData, setNumber, order);
     }
   }
 

@@ -5,12 +5,11 @@
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/two.svg",
     "position": {
       "row": 1,
       "col": 1
     }
   },
   "rule": "{use_rule 1.1}",
-  "input": "2"
+  "input": "2||Ea"
 }

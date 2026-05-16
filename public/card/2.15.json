@@ -1,16 +1,16 @@
 {
   "options": {
-    "size": 5,
+    "size": 30,
     "backgroundColor": "#B00000",
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/moon.svg",
+    "svgBackground": "{use_svg mars.svg}",
     "position": {
       "row": 1,
       "col": 2
     }
   },
-  "rule": "\n          ",
-  "input": ""
+  "rule": "{use_rule 1.1}\n          ",
+  "input": "Ma"
 }

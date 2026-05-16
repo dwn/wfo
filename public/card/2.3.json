@@ -1,16 +1,16 @@
 {
   "options": {
-    "size": 5,
+    "size": 30,
     "backgroundColor": "#0060FF",
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/neptune.svg",
+    "svgBackground": "{use_svg neptune.svg}",
     "position": {
       "row": 2,
       "col": 2
     }
   },
-  "rule": "",
-  "input": ""
+  "rule": "{use_rule 1.1}",
+  "input": "Ne"
 }

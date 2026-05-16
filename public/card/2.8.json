@@ -1,16 +1,16 @@
 {
   "options": {
-    "size": 5,
+    "size": 30,
     "backgroundColor": "#000000",
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "https://cutdrikcxggwysenttsl.supabase.co/storage/v1/object/public/svg/mercury.svg",
+    "svgBackground": "{use_svg ceres.svg}",
     "position": {
       "row": 4,
       "col": 1
     }
   },
-  "rule": "\n          ",
-  "input": ""
+  "rule": "{use_rule 1.1}",
+  "input": "Ce"
 }
