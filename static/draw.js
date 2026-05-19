@@ -343,6 +343,18 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
         rx = Math.abs(dx)*s; ry = Math.abs(dy)*s;
         if (ab === 0b01) { cx = p0.x; cy = p0.y + dy*s; }
         else { cx = p0.x + dx*s; cy = p0.y; }
+      } else if (dx !== 0 || dy !== 0) {
+        if (dy === 0) {
+          rx = ry = Math.abs(dx)*s*0.5;
+          cx = p0.x + dx*s*0.5;
+          cy = ab === 0b10 ? p0.y : p0.y + Math.sign(dx)*rx;
+        } else {
+          rx = ry = Math.abs(dy)*s*0.5;
+          cy = p0.y + dy*s*0.5;
+          cx = ab === 0b01 ? p0.x : p0.x + Math.sign(dy)*rx;
+        }
+      }
+      if (rx) {
         a0 = angleOnEllipse(cx, cy, rx, ry, p0.x, p0.y);
         a1 = angleOnEllipse(cx, cy, rx, ry, p1.x, p1.y);
         a0 = normAngle(a0); a1 = normAngle(a1);
