@@ -170,6 +170,9 @@ function applyRuleTransforms(input, rule) {
 
     if (!replacements.length) continue;
 
+    // Longest source first so e.g. ((d4)) wins over (d4), (cl1d1) over (cl1).
+    replacements.sort((a, b) => b.source.length - a.source.length);
+
     let transformed = '';
     for (let i = 0; i < output.length;) {
       const replacement = replacements.find(({source}) => output.startsWith(source, i));
