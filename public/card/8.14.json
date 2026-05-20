@@ -1,16 +1,15 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#B00000",
+    "size": 40,
+    "backgroundColor": "#700000",
     "italics": true,
     "animate": false,
-    "svgColor": true,
-    "svgBackground": " ",
+    "svgColor": false,
     "position": {
-      "row": 1,
+      "row": 5,
       "col": 2
     }
   },
   "rule": "{use_rule 1.1}",
-  "input": "Ne"
+  "input": "2|Me"
 }
