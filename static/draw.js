@@ -280,7 +280,11 @@ function parseBytes(str) {
 
 // Build drawing operations from parsed bytes  
 function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.floor(600/s), backgroundColor='#808080') {
-  let xi = pad.left, yi = pad.top;
+  const ROW_TOP_OVERHANG = 2;
+  const rowTopBase = pad.top - ROW_TOP_OVERHANG;
+  const snapToLineTop = (yi) => rowTopBase + 8 * Math.floor((yi - rowTopBase) / 8);
+
+  let xi = pad.left, yi = rowTopBase;
   const ops = []; const visited = [{xi, yi}];
   
   const preMoveWrap = (xi, yi, dx) => {
@@ -288,11 +292,10 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
     if (dx > 0 && (xi + dx) > maxX) { xi = pad.left; yi += 8; }
     return { xi, yi };
   };
-  const snapToLineTop = (yi) => pad.top + 8 * Math.floor((yi - pad.top) / 8);
   
   for (const item of coloredItems) {
     if (item.newline) {
-      yi = pad.top + 8 * (Math.floor((yi - pad.top) / 8) + 1);
+      yi = rowTopBase + 8 * (Math.floor((yi - rowTopBase) / 8) + 1);
       xi = pad.left;
       visited.push({xi, yi});
       continue;
