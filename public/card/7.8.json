@@ -12,5 +12,5 @@
     }
   },
   "rule": "{use_rule 1.2}",
-  "input": "x|\nw|\nr"
+  "input": "x`\nw`\nr"
 }

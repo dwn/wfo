@@ -12,5 +12,5 @@
     }
   },
   "rule": "{use_rule 1.2}",
-  "input": "m|\na|\nf"
+  "input": "m`\na`\nf"
 }

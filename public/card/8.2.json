@@ -11,5 +11,5 @@
     }
   },
   "rule": "{use_rule 1.1}",
-  "input": "2|Lu"
+  "input": "2-Lu"
 }

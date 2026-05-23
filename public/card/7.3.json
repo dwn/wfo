@@ -12,5 +12,5 @@
     }
   },
   "rule": "{use_rule 1.2}",
-  "input": "l|\n&|\nv"
+  "input": "l`\n&`\nv"
 }

@@ -143,34 +143,49 @@ async function resolveReferencedInput(input) {
   return expandInputInsertions(input, []);
 }
 
-function applyRuleTransforms(input, rule) {
-  let output = input || '';
+function isPathVocabLine(line) {
+  const parts = line.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return false;
+  return parts.every(part => {
+    const commaIndex = findRuleDelimiter(part);
+    if (commaIndex <= 0) return false;
+    const source = part.substring(0, commaIndex);
+    return /^[.*^o|()]/.test(source) || source.startsWith('.');
+  });
+}
 
-  output = output.split('\n')
-    .filter(line => !line.trim().startsWith('//'))
-    .join('\n');
+function parseRuleLinePairs(line) {
+  const pairs = [];
+  let items;
+  if (isPathVocabLine(line)) {
+    items = line.trim().split(/\s+/);
+  } else if (/\s+(?=[^|\s]+,)/.test(line)) {
+    items = line.split(/\s+(?=[^|\s]+,)/);
+  } else {
+    items = [line];
+  }
 
-  if (!rule || !rule.trim()) return output;
+  for (const item of items) {
+    const trimmed = item.trim();
+    if (!trimmed) continue;
+    const commaIndex = findRuleDelimiter(trimmed);
+    if (commaIndex > 0 && commaIndex < trimmed.length - 1) {
+      pairs.push({
+        source: unescapeRulePart(trimmed.substring(0, commaIndex)),
+        target: unescapeRulePart(trimmed.substring(commaIndex + 1))
+      });
+    }
+  }
+  return pairs;
+}
 
-  const lines = rule.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));
+function applyRulesToText(text, lines) {
+  let output = text;
 
   for (const line of lines) {
-    const replacements = [];
-    const pairs = line.trim().split(/\s+/);
-
-    for (const pair of pairs) {
-      const commaIndex = findRuleDelimiter(pair);
-      if (commaIndex > 0 && commaIndex < pair.length - 1) {
-        replacements.push({
-          source: unescapeRulePart(pair.substring(0, commaIndex)),
-          target: unescapeRulePart(pair.substring(commaIndex + 1))
-        });
-      }
-    }
-
+    const replacements = parseRuleLinePairs(line);
     if (!replacements.length) continue;
 
-    // Longest source first so e.g. ((d4)) wins over (d4), (cl1d1) over (cl1).
     replacements.sort((a, b) => b.source.length - a.source.length);
 
     let transformed = '';
@@ -184,11 +199,25 @@ function applyRuleTransforms(input, rule) {
         i += 1;
       }
     }
-
     output = transformed;
   }
 
   return output;
+}
+
+function applyRuleTransforms(input, rule) {
+  let output = input || '';
+
+  output = output.split('\n')
+    .filter(line => !line.trim().startsWith('//'))
+    .join('\n');
+
+  if (!rule || !rule.trim()) return output;
+
+  const lines = rule.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));
+  const rows = output.split(/\r?\n|``/);
+
+  return rows.map(row => applyRulesToText(row, lines)).join('\n');
 }
 
 // Italics transform function
@@ -251,9 +280,14 @@ function parseBytes(str) {
   const isHex = c => /[0-9a-fA-F]/.test(c);
   for (let i = 0; i < (str ? str.length : 0); i++) {
     const ch = str[i];
-    if (ch === '|') {
+    if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && str[i + 1] === '\n') i++;
+      out.push({newline: true});
+      continue;
+    }
+    if (ch === '`') {
       const next = str[i + 1];
-      if (next === '|') {
+      if (next === '`') {
         out.push({newline: true});
         i++;
       } else {
@@ -280,7 +314,7 @@ function parseBytes(str) {
 
 // Build drawing operations from parsed bytes  
 function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.floor(600/s), backgroundColor='#808080') {
-  const ROW_TOP_OVERHANG = 2;
+  const ROW_TOP_OVERHANG = 1;
   const rowTopBase = pad.top - ROW_TOP_OVERHANG;
   const snapToLineTop = (yi) => rowTopBase + 8 * Math.floor((yi - rowTopBase) / 8);
 

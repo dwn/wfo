@@ -221,7 +221,8 @@
         <li><strong>Bit layout matters.</strong> The byte splits into <code>a xxx b yyy</code>; the three-bit values <code>xxx</code>/<code>yyy</code> set horizontal/vertical offsets. Values 0–4 move forward, 5–7 wrap to −1, −2, −3.</li>
         <li><strong>Command bits pick the stroke.</strong> The outer bits <code>a</code> and <code>b</code> (written together as <code>ab</code>) choose the action: <code>00</code> draws a straight line, <code>01</code> and <code>10</code> draw quarter arcs when both axes move or half arcs when only one axis moves (vertical or horizontal bow), and <code>11</code> moves without drawing.</li>
         <li><strong>Zero moves are special.</strong> With no movement, <code>00</code> snaps to the row top, <code>01</code> plots a point, <code>10</code> draws a full circle, and <code>11</code> does nothing.</li>
-        <li><strong>Layout helpers keep things tidy.</strong> Use <code>||</code> to start a new grid row, a single <code>|</code> to delimit successive glyphs, and prefix lines with <code>//</code> for comments that the renderer ignores.</li>
+        <li><strong>Path notation in rules.</strong> Moves use compact letters: R/L/U/D plus optional count (default 1). <code>.r2u1</code> invisible, <code>|R2U1</code> line, <code>(R2U1</code> horizontal arc, <code>)R2U1</code> vertical arc. Special: <code>^</code> snap, <code>*</code> dot, <code>o</code> minicircle. Card 1.4 holds the shared path→hex vocabulary; glyph cards usually end with <code>{use_rule 1.4}</code>.</li>
+        <li><strong>Layout helpers keep things tidy.</strong> Use <code>``</code> (two backticks) to start a new word/row, a single <code>`</code> to delimit successive glyphs, and prefix lines with <code>//</code> for comments that the renderer ignores. Literal hyphens in text stay as <code>-</code>.</li>
         <li><strong>Rules transform the raw data.</strong> Add replacements like <code>13,24</code> (source,target) to the Rule box; pairs on the same line apply simultaneously, then later lines cascade before glyphs are drawn. Use <code>\,</code> for a literal comma source.</li>
         <li><strong>Pull in another card's rule or input.</strong> Tokens <code>{use_rule 1.2}</code> and <code>{use_input 1.2}</code> can appear anywhere in the Rule or Input box; each is replaced by that card's field, and nested tokens in the inserted text are expanded too. A cycle or missing card logs a warning and inserts nothing for that token.</li>
         <li><strong>SVG backgrounds from <code>public/svg</code>.</strong> In the SVG field use <code>{use_svg moon.svg}</code> or just <code>moon.svg</code> (files are served at <code>/svg/</code>). You can still paste full SVG markup or use a remote URL.</li>
@@ -240,7 +241,7 @@
 </div>
 </div>
 <script src="/static/cards.js?v=6"></script>
-<script src="/static/draw.js?v=8"></script>
+<script src="/static/draw.js?v=16"></script>
 <script src="/storage/cardStorage.js?v=5"></script>
 <script src="/static/wfo.js?v=6"></script>
 </body>
