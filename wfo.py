@@ -105,7 +105,11 @@ async def serve_wfo():
     html_file = STATIC / 'wfo.html'
     if not html_file.exists():
         return HTMLResponse('<h1>Error: static/wfo.html not found</h1>', status_code=404)
-    return FileResponse(str(html_file), media_type='text/html')
+    return FileResponse(
+        str(html_file),
+        media_type='text/html',
+        headers={'Cache-Control': 'no-store'},
+    )
 
 
 if __name__ == '__main__':

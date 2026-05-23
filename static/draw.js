@@ -285,7 +285,7 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
   const snapToLineTop = (yi) => rowTopBase + 8 * Math.floor((yi - rowTopBase) / 8);
 
   let xi = pad.left, yi = rowTopBase;
-  const ops = []; const visited = [{xi, yi}];
+  const ops = []; const visited = [{xi, yi}]; const pipes = [];
   
   const preMoveWrap = (xi, yi, dx) => {
     const maxX = gridX - pad.right;
@@ -301,6 +301,7 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
       continue;
     }
     if (item.pipe) {
+      pipes.push({xi, yi});
       continue;
     }
     if (item.text && item.byte === undefined) continue;
@@ -377,7 +378,18 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
     visited.push({xi, yi});
   }
   
-  return { ops, visited };
+  return { ops, visited, pipes };
+}
+
+function drawPipeMarker(ctx, op, s, italicsMode = false) {
+  const r = Math.max(s * 0.28, 3);
+  const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#FF00FF';
+  ctx.fill();
+  ctx.restore();
 }
 
 // Drawing functions

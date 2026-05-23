@@ -508,7 +508,7 @@ function updateEditorPreview() {
     const s = normalizeDrawingSize(document.getElementById('editorSize')?.value);
     const pad = { left: 3, top: 3, right: 3 };
     const gridX = Math.floor(canvas.width / s);
-    const { ops, visited } = buildOps(coloredItems, s, pad, gridX, bgColor);
+    const { ops, visited, pipes } = buildOps(coloredItems, s, pad, gridX, bgColor);
     
     const thickness = s / 10;
     
@@ -517,9 +517,12 @@ function updateEditorPreview() {
     
     // Always draw static preview in editor mode
     drawGridPoints(ctx, s, canvas.width, canvas.height, thickness, italicsMode);
-    // Editor mode: draw white text only, no outline
+    // Editor mode: draw white text only, no outline; pipe markers last so they stay visible
     for (const op of ops) {
       drawOp(ctx, op, s, thickness, italicsMode, bgColor, true);
+    }
+    for (const p of (pipes || [])) {
+      drawPipeMarker(ctx, p, s, italicsMode);
     }
   } catch (error) {
     ctx.fillStyle = '#ff0000';
