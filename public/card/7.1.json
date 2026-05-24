@@ -12,5 +12,5 @@
     }
   },
   "rule": "{use_rule 1.2}",
-  "input": "p`\ni`\nn"
+  "input": "p\ni\nb"
 }

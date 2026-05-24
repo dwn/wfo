@@ -416,7 +416,7 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
 }
 
 function drawPipeMarker(ctx, op, s, italicsMode = false) {
-  const r = Math.max(s * 0.28, 3);
+  const r = Math.max(s * 0.14, 1.5);
   const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
   ctx.save();
   ctx.beginPath();
