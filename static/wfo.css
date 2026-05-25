@@ -32,6 +32,9 @@ body{background:#1a1a1a;color:#ffffff;font-family:system-ui,-apple-system,sans-s
 .card-wrapper.empty-slot{cursor:default;background:#2a2a2a;border:1px dashed #666;z-index:0}
 .card-wrapper.empty-slot.drag-over{background:#3a3a3a;border-color:#4CAF50;cursor:grab}
 .individual-card-view{display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);z-index:1000;justify-content:center;align-items:center}
+.individual-card-label{position:fixed;top:20px;left:20px;color:#fff;font-size:18px;font-weight:bold;z-index:1001;pointer-events:none;opacity:0;text-shadow:0 1px 4px rgba(0,0,0,0.8)}
+.individual-card-label.show{animation:individual-card-label-fade 2s ease forwards}
+@keyframes individual-card-label-fade{from{opacity:1}to{opacity:0}}
 .individual-card{width:75vw;max-width:500px;height:auto;aspect-ratio:1/1.41421356;background:#333;border:none;border-radius:5%/3.5355339059%;overflow:hidden;position:relative;box-shadow:0 8px 30px rgba(0,0,0,0.5),0 0 60px rgba(255,255,255,0.15);margin:20px;display:block}
 .individual-card::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;border-radius:5%/3.5355339059%;box-shadow:inset 0 1px 4px rgba(0,0,0,0.6),inset 0 -1px 4px rgba(255,255,255,0.2);pointer-events:none;z-index:10}
 .individual-card canvas{width:100%;height:100%;display:block;position:absolute;top:0;left:0;z-index:2}

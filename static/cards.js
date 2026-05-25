@@ -177,28 +177,56 @@ function calculateSvgTextColor(backgroundColor, editorVisible) {
   const luminosity = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
   return luminosity > 0.5 ? '#000000' : '#ffffff';
 }
-async function showIndividualCard(setNumber, order, cardData) {
-  const individualView = document.getElementById('individualCardView');
-  const individualCard = document.getElementById('individualCard');
-  const gridContainer = document.getElementById('gridContainer');
-  if (gridContainer) {
-    gridContainer.remove();
+let currentIndividualCard = null;
+let individualCardNavOrders = [];
+
+function captureIndividualCardNavOrders(setNumber) {
+  const gridEl = document.getElementById('gridContainer');
+  if (gridEl) {
+    const wrappers = [...gridEl.querySelectorAll('.card-wrapper:not(.empty-slot)[data-order]')];
+    if (wrappers.length > 0) {
+      return wrappers
+        .map(w => ({
+          order: parseInt(w.getAttribute('data-order'), 10),
+          row: parseInt(w.style.gridRow, 10) || 0,
+          col: parseInt(w.style.gridColumn, 10) || 0,
+        }))
+        .sort((a, b) => a.row - b.row || a.col - b.col)
+        .map(c => c.order);
+    }
   }
+
+  const setCards = setInfo.get(setNumber)?.cards;
+  if (setCards && setCards.length > 0) {
+    return setCards.map(card => card.order);
+  }
+
+  return [];
+}
+
+function showIndividualCardLabel(setNumber, order) {
+  const label = document.getElementById('individualCardLabel');
+  if (!label) return;
+  label.textContent = `${setNumber}.${order}`;
+  label.classList.remove('show');
+  void label.offsetWidth;
+  label.classList.add('show');
+}
+
+async function renderIndividualCard(setNumber, order, cardData) {
+  const individualCard = document.getElementById('individualCard');
   individualCard.innerHTML = '';
-  
-  // Set the background gradient on the card container
+
   const { primaryColor, secondColor } = getCardColors(cardData);
   individualCard.style.background = generateGradientFromColor(primaryColor, secondColor);
-  
-  // Create transparent canvas for drawing text
+
   const canvas = document.createElement('canvas');
   canvas.width = 600;
   canvas.height = 848;
   individualCard.appendChild(canvas);
-  
-  // Draw card preview if drawing module is available
+
   if (typeof drawCardPreview === 'function') {
-    await drawCardPreview(canvas, cardData, true);  // true = individual view
+    await drawCardPreview(canvas, cardData, true);
   }
   if (cardData.options && cardData.options.svgBackground) {
     const svgContent = await loadSvgBackgroundContent(cardData.options.svgBackground);
@@ -209,12 +237,64 @@ async function showIndividualCard(setNumber, order, cardData) {
       individualCard.appendChild(svgContainer);
     }
   }
+
+  currentIndividualCard = { setNumber, order };
+  showIndividualCardLabel(setNumber, order);
+}
+
+async function showIndividualCard(setNumber, order, cardData) {
+  const individualView = document.getElementById('individualCardView');
+  const gridContainer = document.getElementById('gridContainer');
+  if (gridContainer) {
+    individualCardNavOrders = captureIndividualCardNavOrders(setNumber);
+    gridContainer.remove();
+  } else if (individualCardNavOrders.length === 0) {
+    individualCardNavOrders = captureIndividualCardNavOrders(setNumber);
+  }
+
+  await renderIndividualCard(setNumber, order, cardData);
   individualView.style.display = 'flex';
 }
+
+async function navigateIndividualCard(delta) {
+  if (!currentIndividualCard || individualCardNavOrders.length <= 1) return;
+
+  const { setNumber, order } = currentIndividualCard;
+  const currentIndex = individualCardNavOrders.indexOf(order);
+  if (currentIndex === -1) return;
+
+  const nextIndex = (currentIndex + delta + individualCardNavOrders.length) % individualCardNavOrders.length;
+  const nextOrder = individualCardNavOrders[nextIndex];
+  if (nextOrder === order) return;
+
+  const data = await loadCardDataCached(setNumber, nextOrder);
+  if (!data) return;
+
+  await renderIndividualCard(setNumber, nextOrder, data);
+}
+
+async function editIndividualCard() {
+  if (!currentIndividualCard) return;
+
+  const { setNumber, order } = currentIndividualCard;
+  const data = await loadCardDataCached(setNumber, order);
+  if (!data) return;
+
+  hideIndividualCard();
+  openCardEditor(setNumber, order, data);
+}
+
 function hideIndividualCard() {
   const individualView = document.getElementById('individualCardView');
   const gridContainer = document.getElementById('gridContainer');
+  const label = document.getElementById('individualCardLabel');
+  if (label) {
+    label.classList.remove('show');
+    label.textContent = '';
+  }
   individualView.style.display = 'none';
+  currentIndividualCard = null;
+  individualCardNavOrders = [];
   if (gridContainer) {
     gridContainer.style.display = 'grid';
   } else {

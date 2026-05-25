@@ -1003,7 +1003,7 @@ document.addEventListener('keydown', (e) => {
     }
   }
   
-  // Arrow keys to switch sets (only when no modals are open and no input is focused)
+  // Arrow keys: barrel-roll cards in closeup view, or switch sets on the grid
   if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
     const instructionsModal = document.getElementById('instructionsModal');
     const individualView = document.getElementById('individualCardView');
@@ -1015,18 +1015,41 @@ document.addEventListener('keydown', (e) => {
       document.activeElement.tagName === 'TEXTAREA' ||
       document.activeElement.tagName === 'SELECT'
     );
+
+    if (individualView.style.display === 'flex' && !isInputFocused) {
+      e.preventDefault();
+      if (e.key === 'ArrowLeft') {
+        navigateIndividualCard(-1);
+      } else if (e.key === 'ArrowRight') {
+        navigateIndividualCard(1);
+      }
+      return;
+    }
     
     if ((!instructionsModal || instructionsModal.style.display !== 'flex') &&
-        individualView.style.display !== 'flex' &&
         (!deleteSetModal || deleteSetModal.style.display !== 'flex') &&
         deleteModal.style.display !== 'flex' &&
         cardEditorModal.style.display !== 'flex' &&
         !isInputFocused) {
       if (e.key === 'ArrowLeft') {
         goToPreviousSet();
-      } else if (e.key === 'ArrowRight') {
+      } else       if (e.key === 'ArrowRight') {
         goToNextSet();
       }
+    }
+  }
+
+  if ((e.key === 'e' || e.key === 'E') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    const individualView = document.getElementById('individualCardView');
+    const isInputFocused = document.activeElement && (
+      document.activeElement.tagName === 'INPUT' ||
+      document.activeElement.tagName === 'TEXTAREA' ||
+      document.activeElement.tagName === 'SELECT'
+    );
+
+    if (individualView.style.display === 'flex' && !isInputFocused) {
+      e.preventDefault();
+      editIndividualCard();
     }
   }
 });
