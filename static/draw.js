@@ -220,6 +220,148 @@ function applyRuleTransforms(input, rule) {
   return rows.map(row => applyRulesToText(row, lines)).join('\n');
 }
 
+// Calligraphy constants (45° nib)
+const CALLIGRAPHY_NIB_ANGLE = Math.PI / 4;
+const CALLIGRAPHY_MIN_FACTOR = 0.12;
+const CALLIGRAPHY_SEGMENT_STEP = 1.5;
+
+function calligraphyWidthAtAngle(tangentAngle, thickness, layer = 'main') {
+  const factor = CALLIGRAPHY_MIN_FACTOR +
+    (1 - CALLIGRAPHY_MIN_FACTOR) * Math.abs(Math.sin(tangentAngle - CALLIGRAPHY_NIB_ANGLE));
+  const multiplier = layer === 'outline' ? THICKNESS_MULTIPLIERS.outline : THICKNESS_MULTIPLIERS.main;
+  return thickness * multiplier * factor;
+}
+
+function sampleLinePath(p1, p2, step = CALLIGRAPHY_SEGMENT_STEP) {
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 0.001) {
+    return [{ x: p1.x, y: p1.y, angle: 0 }];
+  }
+  const angle = Math.atan2(dy, dx);
+  const steps = Math.max(1, Math.ceil(len / step));
+  const samples = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    samples.push({ x: p1.x + dx * t, y: p1.y + dy * t, angle });
+  }
+  return samples;
+}
+
+function sampleArcPath(op, step = CALLIGRAPHY_SEGMENT_STEP, progress = 1) {
+  const samples = [];
+  const addSample = (t) => {
+    const x = op.cx + op.rx * Math.cos(t);
+    const y = op.cy + op.ry * Math.sin(t);
+    const tangent = Math.atan2(op.ry * Math.cos(t), -op.rx * Math.sin(t));
+    samples.push({ x, y, angle: tangent });
+  };
+
+  if (op.start === 0 && op.end === Math.PI * 2) {
+    const totalAngle = Math.PI * 2 * progress;
+    const steps = Math.max(8, Math.ceil(totalAngle * Math.max(op.rx, op.ry) / step));
+    for (let i = 0; i <= steps; i++) {
+      addSample((i / steps) * totalAngle);
+    }
+    return samples;
+  }
+
+  let angleDiff = op.acw ? op.start - op.end : op.end - op.start;
+  if (angleDiff <= 0) angleDiff += Math.PI * 2;
+  const span = angleDiff * progress;
+  const steps = Math.max(1, Math.ceil(span * Math.max(op.rx, op.ry) / step));
+  for (let i = 0; i <= steps; i++) {
+    const t = op.acw ? op.start - (span * i / steps) : op.start + (span * i / steps);
+    addSample(t);
+  }
+  return samples;
+}
+
+function applyItalicsToSamples(samples, s, italicsMode) {
+  if (!italicsMode) return samples;
+  const transformed = samples.map(p => applyItalicsTransform({ x: p.x, y: p.y }, s, italicsMode));
+  return transformed.map((p, i) => {
+    let angle;
+    if (i < transformed.length - 1) {
+      angle = Math.atan2(transformed[i + 1].y - p.y, transformed[i + 1].x - p.x);
+    } else if (transformed.length > 1) {
+      angle = Math.atan2(p.y - transformed[i - 1].y, p.x - transformed[i - 1].x);
+    } else {
+      angle = samples[i].angle;
+    }
+    return { x: p.x, y: p.y, angle };
+  });
+}
+
+function drawCalligraphySamples(ctx, samples, thickness, color, layer = 'main') {
+  if (!samples.length) return;
+
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  if (samples.length === 1) {
+    const w = calligraphyWidthAtAngle(samples[0].angle, thickness, layer);
+    ctx.beginPath();
+    ctx.arc(samples[0].x, samples[0].y, w * 0.5, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+    return;
+  }
+
+  for (let i = 0; i < samples.length - 1; i++) {
+    const a = samples[i];
+    const b = samples[i + 1];
+    const angle = Math.atan2(b.y - a.y, b.x - a.x);
+    ctx.lineWidth = calligraphyWidthAtAngle(angle, thickness, layer);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawCalligraphyPoint(ctx, c, thickness, color, layer = 'main') {
+  const wAlong = calligraphyWidthAtAngle(CALLIGRAPHY_NIB_ANGLE, thickness, layer);
+  const wPerp = calligraphyWidthAtAngle(CALLIGRAPHY_NIB_ANGLE + Math.PI / 2, thickness, layer);
+  const rx = Math.max(wAlong, wPerp) * 0.5;
+  const ry = Math.min(wAlong, wPerp) * 0.5;
+
+  ctx.save();
+  ctx.translate(c.x, c.y);
+  ctx.rotate(CALLIGRAPHY_NIB_ANGLE);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
+}
+
+function getCalligraphySamples(op, s, italicsMode, progress = 1) {
+  if (op.type === 'line') {
+    const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
+    const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
+    const fullLen = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    if (fullLen < 0.001) return sampleLinePath(p1, p2);
+    const end = {
+      x: p1.x + (p2.x - p1.x) * progress,
+      y: p1.y + (p2.y - p1.y) * progress
+    };
+    return sampleLinePath(p1, end);
+  }
+
+  if (op.type === 'arc') {
+    const raw = sampleArcPath(op, CALLIGRAPHY_SEGMENT_STEP, progress);
+    return applyItalicsToSamples(raw, s, italicsMode);
+  }
+
+  return [];
+}
+
 // Italics transform function
 function applyItalicsTransform(point, s=8, italicsMode=true) {
   if (!italicsMode) return point;
@@ -427,7 +569,23 @@ function drawPipeMarker(ctx, op, s, italicsMode = false) {
 }
 
 // Drawing functions
-function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false, backgroundColor='#808080', editorMode=false) {
+function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false, backgroundColor='#808080', editorMode=false, calligraphyMode=false) {
+  if (calligraphyMode) {
+    const layer = editorMode ? 'main' : 'outline';
+    const color = editorMode ? '#ffffff' : backgroundColor;
+
+    if (op.type === 'line' || op.type === 'arc') {
+      const samples = getCalligraphySamples(op, s, italicsMode);
+      drawCalligraphySamples(ctx, samples, thickness, color, layer);
+      return;
+    }
+    if (op.type === 'point') {
+      const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
+      drawCalligraphyPoint(ctx, c, thickness, color, layer);
+      return;
+    }
+  }
+
   if (editorMode) {
     // Editor mode: just draw white text, no outline
     const whiteColor = '#ffffff';
@@ -529,9 +687,20 @@ function drawOp(ctx, op, s=8, thickness=0.8, italicsMode=false, backgroundColor=
 }
 
 // Second pass to draw the colored insides after all outlines are done
-function drawOpInside(ctx, op, s=8, thickness=0.8, italicsMode=false, textColor=null) {
+function drawOpInside(ctx, op, s=8, thickness=0.8, italicsMode=false, textColor=null, calligraphyMode=false) {
   // Use provided textColor or fall back to op.color
   const strokeColor = textColor || op.color;
+
+  if (calligraphyMode) {
+    if (op.type === 'line' || op.type === 'arc') {
+      const samples = getCalligraphySamples(op, s, italicsMode);
+      drawCalligraphySamples(ctx, samples, thickness, strokeColor, 'main');
+    } else if (op.type === 'point') {
+      const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
+      drawCalligraphyPoint(ctx, c, thickness, strokeColor, 'main');
+    }
+    return;
+  }
   
   if (op.type === 'line') {
     const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
@@ -590,6 +759,7 @@ async function drawCardPreview(canvas, cardData, isIndividualView = false) {
     
     // Get italics setting from card data
     const italicsMode = cardData.options?.italics !== false;
+    const calligraphyMode = cardData.options?.calligraphy === true;
     
     // Get animation setting from card data - only animate in individual view
     const animateMode = isIndividualView && cardData.options?.animate === true;
@@ -611,15 +781,15 @@ async function drawCardPreview(canvas, cardData, isIndividualView = false) {
     
     if (animateMode) {
       // Use animation
-      animateDrawing(ctx, ops, s, pad, italicsMode, primaryColor);
+      animateDrawing(ctx, ops, s, pad, italicsMode, primaryColor, calligraphyMode);
     } else {
       // Static drawing - two passes: first outlines, then insides
       for (const op of ops) {
-        drawOp(ctx, op, s, thickness, italicsMode, primaryColor);
+        drawOp(ctx, op, s, thickness, italicsMode, primaryColor, false, calligraphyMode);
       }
       for (const op of ops) {
-        if (op.type !== 'point') {
-          drawOpInside(ctx, op, s, thickness, italicsMode, textColor);
+        if (op.type !== 'point' || calligraphyMode) {
+          drawOpInside(ctx, op, s, thickness, italicsMode, textColor, calligraphyMode);
         }
       }
     }
@@ -631,7 +801,7 @@ async function drawCardPreview(canvas, cardData, isIndividualView = false) {
     ctx.fillText(`Error: ${error.message}`, canvas.width / 2, canvas.height / 2);
   }
 }
-function animateDrawing(ctx, ops, s, pad, italicsMode=false, backgroundColor='#808080') {
+function animateDrawing(ctx, ops, s, pad, italicsMode=false, backgroundColor='#808080', calligraphyMode=false) {
   const STEP_DELAY_MS = 20;
   const DRAW_MS = STEP_DELAY_MS;
   const thickness = s / 10;
@@ -656,7 +826,7 @@ function animateDrawing(ctx, ops, s, pad, italicsMode=false, backgroundColor='#8
       const progress = Math.max(0, Math.min(1, (now - t0) / DRAW_MS));
       
       if (progress > 0) {
-        drawOpAnimatedOutline(ctx, op, s, thickness, progress, italicsMode, backgroundColor);
+        drawOpAnimatedOutline(ctx, op, s, thickness, progress, italicsMode, backgroundColor, calligraphyMode);
       }
     }
     
@@ -667,7 +837,7 @@ function animateDrawing(ctx, ops, s, pad, italicsMode=false, backgroundColor='#8
       const progress = Math.max(0, Math.min(1, (now - t0) / DRAW_MS));
       
       if (progress > 0) {
-        drawOpAnimatedInside(ctx, op, s, thickness, progress, italicsMode, textColor);
+        drawOpAnimatedInside(ctx, op, s, thickness, progress, italicsMode, textColor, calligraphyMode);
       }
     }
     
@@ -681,9 +851,20 @@ function animateDrawing(ctx, ops, s, pad, italicsMode=false, backgroundColor='#8
   requestAnimationFrame(drawFrame);
 }
 
-function drawOpAnimatedOutline(ctx, op, s, thickness, progress, italicsMode=false, backgroundColor='#808080') {
+function drawOpAnimatedOutline(ctx, op, s, thickness, progress, italicsMode=false, backgroundColor='#808080', calligraphyMode=false) {
   const outlineColor = backgroundColor;
-  
+
+  if (calligraphyMode) {
+    if (op.type === 'line' || op.type === 'arc') {
+      const samples = getCalligraphySamples(op, s, italicsMode, progress);
+      drawCalligraphySamples(ctx, samples, thickness, outlineColor, 'outline');
+    } else if (op.type === 'point') {
+      const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
+      drawCalligraphyPoint(ctx, c, thickness * progress, outlineColor, 'outline');
+    }
+    return;
+  }
+
   if (op.type === 'line') {
     const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
     const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
@@ -738,7 +919,18 @@ function drawOpAnimatedOutline(ctx, op, s, thickness, progress, italicsMode=fals
   }
 }
 
-function drawOpAnimatedInside(ctx, op, s, thickness, progress, italicsMode=false, textColor) {
+function drawOpAnimatedInside(ctx, op, s, thickness, progress, italicsMode=false, textColor, calligraphyMode=false) {
+  if (calligraphyMode) {
+    if (op.type === 'line' || op.type === 'arc') {
+      const samples = getCalligraphySamples(op, s, italicsMode, progress);
+      drawCalligraphySamples(ctx, samples, thickness, textColor, 'main');
+    } else if (op.type === 'point') {
+      const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
+      drawCalligraphyPoint(ctx, c, thickness * progress, textColor, 'main');
+    }
+    return;
+  }
+
   if (op.type === 'line') {
     const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
     const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);

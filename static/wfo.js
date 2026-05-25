@@ -424,6 +424,7 @@ function openCardEditor(setNumber, order, cardData) {
   document.getElementById('editorBackground2').value = cardData.options?.backgroundColor2 || '';
   document.getElementById('editorItalics').checked = cardData.options?.italics !== false;
   document.getElementById('animatePreview').checked = cardData.options?.animate === true;
+  document.getElementById('editorCalligraphy').checked = cardData.options?.calligraphy === true;
   document.getElementById('editorSvgColor').checked = cardData.options?.svgColor === true;
   document.getElementById('editorSvg').value = cardData.options?.svgBackground || '';
   
@@ -514,12 +515,14 @@ function updateEditorPreview() {
     
     const italicsCheckbox = document.getElementById('editorItalics');
     const italicsMode = italicsCheckbox ? italicsCheckbox.checked : false;
+    const calligraphyCheckbox = document.getElementById('editorCalligraphy');
+    const calligraphyMode = calligraphyCheckbox ? calligraphyCheckbox.checked : false;
     
     // Always draw static preview in editor mode
     drawGridPoints(ctx, s, canvas.width, canvas.height, thickness, italicsMode);
     // Editor mode: draw white text only, no outline; pipe markers last so they stay visible
     for (const op of ops) {
-      drawOp(ctx, op, s, thickness, italicsMode, bgColor, true);
+      drawOp(ctx, op, s, thickness, italicsMode, bgColor, true, calligraphyMode);
     }
     for (const p of (pipes || [])) {
       drawPipeMarker(ctx, p, s, italicsMode);
@@ -540,6 +543,7 @@ async function saveCard() {
     const backgroundColor2 = document.getElementById('editorBackground2').value;
     const italics = document.getElementById('editorItalics').checked;
     const animate = document.getElementById('animatePreview').checked;
+    const calligraphy = document.getElementById('editorCalligraphy').checked;
     const svgColor = document.getElementById('editorSvgColor').checked;
     const svgBackground = document.getElementById('editorSvg').value;
     const ruleEl = document.getElementById('editorRule');
@@ -559,6 +563,7 @@ async function saveCard() {
     }
     cardDataObj.options.italics = italics;
     cardDataObj.options.animate = animate;
+    cardDataObj.options.calligraphy = calligraphy;
     cardDataObj.options.svgColor = svgColor;
     if (svgBackground) {
       cardDataObj.options.svgBackground = svgBackground;
@@ -967,6 +972,7 @@ document.getElementById('editorSize').addEventListener('input', (e) => {
 document.getElementById('editorBackground').addEventListener('change', updateEditorPreview);
 document.getElementById('editorBackground2').addEventListener('change', updateEditorPreview);
 document.getElementById('editorItalics').addEventListener('change', updateEditorPreview);
+document.getElementById('editorCalligraphy').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvgColor').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvg').addEventListener('input', updateEditorPreview);
 document.getElementById('editorRule').addEventListener('input', () => {
