@@ -9,8 +9,9 @@
     "position": {
       "row": 4,
       "col": 3
-    }
+    },
+    "calligraphy": false
   },
   "rule": "{use_rule 1.2}",
-  "input": "d\ne\nd"
+  "input": "h\ne\nz"
 }

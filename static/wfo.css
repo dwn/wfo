@@ -97,7 +97,7 @@ body{background:#1a1a1a;color:#ffffff;font-family:system-ui,-apple-system,sans-s
 .preview-header h4{color:#fff;margin:0;font-size:16px}
 .preview-controls{display:flex;align-items:center;gap:12px}
 .preview-controls label{color:#ccc;font-size:14px;display:flex;align-items:center;gap:6px}
-.preview-container{flex:1;display:flex;justify-content:center;align-items:flex-start;background:#2a2a2a;border-radius:8px;padding:20px;overflow:auto}
+.preview-container{flex:1;display:flex;justify-content:center;align-items:flex-start;background:#2a2a2a;border-radius:8px;padding:0;overflow:auto}
 .preview-container canvas{border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3)}
 .editor-controls{display:flex;flex-direction:column;gap:20px;overflow-y:auto}
 .editor-section{background:#2a2a2a;border-radius:8px;padding:16px}
@@ -128,7 +128,7 @@ body{background:#1a1a1a;color:#ffffff;font-family:system-ui,-apple-system,sans-s
 .output-display{background:#2a2a2a;color:#ccc;cursor:default;min-height:100px}
 .svg-preview{margin-top:12px;padding:16px;background:#1a1a1a;border:1px solid #666;border-radius:6px}
 .svg-preview-content{background:linear-gradient(135deg,#f8f8f8 0%,#a0a0a0 100%);padding:20px;border-radius:4px;min-height:100px;display:flex;align-items:center;justify-content:center}
-@media (max-width:1200px){.editor-grid{grid-template-columns:1fr;gap:16px}.preview-container{max-height:400px}}
+@media (max-width:1200px){.editor-grid{grid-template-columns:1fr;gap:16px}.preview-container{max-height:360px}}
 @media (max-width:768px){.card-editor-header,.card-editor-body,.card-editor-footer{padding:16px}.form-grid{grid-template-columns:1fr;gap:12px}}
 .highlightable:empty::before {
   content: attr(placeholder);
