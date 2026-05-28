@@ -1,0 +1,15 @@
+{
+  "options": {
+    "size": 40,
+    "backgroundColor": "#000000",
+    "italics": true,
+    "animate": false,
+    "svgColor": false,
+    "position": {
+      "row": 5,
+      "col": 3
+    }
+  },
+  "rule": "{use_rule 1.1}",
+  "input": "6`Ce"
+}
