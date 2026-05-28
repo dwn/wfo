@@ -11,6 +11,6 @@
       "col": 1
     }
   },
-  "rule": "{use_rule 1.2}",
-  "input": "c\no\nd"
+  "rule": "{use_rule 1.1}",
+  "input": "Sr"
 }

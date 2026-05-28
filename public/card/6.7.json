@@ -9,8 +9,9 @@
     "position": {
       "row": 2,
       "col": 3
-    }
+    },
+    "calligraphy": false
   },
-  "rule": "{use_rule 1.1}",
-  "input": "Kr"
+  "rule": "{use_rule 1.2}",
+  "input": "fegr"
 }

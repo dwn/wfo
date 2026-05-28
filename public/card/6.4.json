@@ -9,8 +9,9 @@
     "position": {
       "row": 3,
       "col": 2
-    }
+    },
+    "calligraphy": false
   },
-  "rule": "{use_rule 1.1}",
-  "input": ""
+  "rule": "{use_rule 1.2}",
+  "input": "megr"
 }

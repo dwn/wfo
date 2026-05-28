@@ -10,11 +10,13 @@
 <div id="prevSetArea" class="nav-area nav-left" title="Previous Set"></div>
 <div id="setMenuRoot" class="set-menu-root">
 <div id="setToolbar" class="set-toolbar" role="menu" aria-label="Set actions">
+<button type="button" id="swapSetLeftButton" class="toolbar-btn" role="menuitem" title="Swap this set with the set to the left">Swap left</button>
+<button type="button" id="swapSetRightButton" class="toolbar-btn" role="menuitem" title="Swap this set with the set to the right">Swap right</button>
 <button type="button" id="copySetButton" class="toolbar-btn" role="menuitem" title="Duplicate this set into a new set after it, then open that set">Copy set</button>
 <button type="button" id="newBlankSetButton" class="toolbar-btn toolbar-btn-accent" role="menuitem" title="Insert empty set after this one (later sets shift up)">New set</button>
 <button type="button" id="deleteCurrentSetButton" class="toolbar-btn toolbar-btn-danger" role="menuitem" title="Delete this set and shift later sets down">Delete set</button>
 </div>
-<button type="button" id="setMenuToggle" class="set-menu-toggle" aria-expanded="false" aria-controls="setToolbar" title="Set actions (copy set, new set, delete set)">
+<button type="button" id="setMenuToggle" class="set-menu-toggle" aria-expanded="false" aria-controls="setToolbar" title="Set actions (swap, copy set, new set, delete set)">
 <span class="set-menu-toggle-lines" aria-hidden="true"><span></span><span></span><span></span></span>
 </button>
 </div>
@@ -246,7 +248,7 @@
 </div>
 <script src="/static/cards.js?v=6"></script>
 <script src="/static/draw.js?v=17"></script>
-<script src="/storage/cardStorage.js?v=5"></script>
-<script src="/static/wfo.js?v=6"></script>
+<script src="/storage/cardStorage.js?v=6"></script>
+<script src="/static/wfo.js?v=7"></script>
 </body>
 </html>

@@ -88,6 +88,19 @@ async def delete_set(body: dict = Body(...)):
     return JSONResponse({'ok': True})
 
 
+@app.post('/api/swap-sets')
+async def swap_sets(body: dict = Body(...)):
+    set_a = body.get('a')
+    set_b = body.get('b')
+    if not isinstance(set_a, int) or set_a < 1 or not isinstance(set_b, int) or set_b < 1:
+        return JSONResponse({'error': 'Body must include a and b (integers >= 1)'}, status_code=400)
+    try:
+        card_store.swap_sets(set_a, set_b)
+    except ValueError as e:
+        return JSONResponse({'error': str(e)}, status_code=400)
+    return JSONResponse({'ok': True})
+
+
 @app.get('/storage/cardStorage.js')
 async def serve_card_storage_js():
     path = ROOT / 'storage' / 'cardStorage.js'

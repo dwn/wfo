@@ -86,4 +86,17 @@ const cardStorage = {
     }
     return res.json();
   },
+
+  async swapSets(setA, setB) {
+    const res = await fetch('/api/swap-sets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ a: setA, b: setB }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `swap-sets ${res.status}`);
+    }
+    return res.json();
+  },
 };

@@ -777,6 +777,14 @@ function updateNavigationAreas() {
       nextArea.classList.add('disabled');
     }
   }
+  const swapLeftButton = document.getElementById('swapSetLeftButton');
+  const swapRightButton = document.getElementById('swapSetRightButton');
+  if (swapLeftButton) {
+    swapLeftButton.disabled = !canGoPrev;
+  }
+  if (swapRightButton) {
+    swapRightButton.disabled = !canGoNext;
+  }
   syncUrlFragment();
 }
 function goToNextSet() {
@@ -849,6 +857,37 @@ async function requestDeleteSet(setNum) {
     throw new Error(err.error || `delete-set ${res.status}`);
   }
   return res.json();
+}
+async function requestSwapSets(setA, setB) {
+  if (typeof cardStorage.swapSets === 'function') {
+    return cardStorage.swapSets(setA, setB);
+  }
+  const res = await fetch('/api/swap-sets', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ a: setA, b: setB }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `swap-sets ${res.status}`);
+  }
+  return res.json();
+}
+async function swapCurrentSetWithNeighbor(direction) {
+  const currentIndex = availableSets.indexOf(currentSetNumber);
+  const neighborIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+  if (neighborIndex < 0 || neighborIndex >= availableSets.length) {
+    return;
+  }
+  const neighborSet = availableSets[neighborIndex];
+  try {
+    await requestSwapSets(currentSetNumber, neighborSet);
+    cardData.clear();
+    await scanAllSets();
+    await displaySet(currentSetNumber);
+  } catch (error) {
+    console.error('Error swapping sets:', error);
+  }
 }
 function hideDeleteSetModal() {
   const el = document.getElementById('deleteSetModal');
@@ -927,6 +966,8 @@ function toggleSetMenu() {
 }
 document.getElementById('nextSetArea').addEventListener('click', goToNextSet);
 document.getElementById('prevSetArea').addEventListener('click', goToPreviousSet);
+document.getElementById('swapSetLeftButton').addEventListener('click', () => swapCurrentSetWithNeighbor('left'));
+document.getElementById('swapSetRightButton').addEventListener('click', () => swapCurrentSetWithNeighbor('right'));
 document.getElementById('newBlankSetButton').addEventListener('click', insertBlankSetAfterCurrent);
 document.getElementById('copySetButton').addEventListener('click', insertSetCopyAfterCurrent);
 document.getElementById('deleteCurrentSetButton').addEventListener('click', onDeleteCurrentSetClick);

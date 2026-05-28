@@ -9,8 +9,9 @@
     "position": {
       "row": 3,
       "col": 3
-    }
+    },
+    "calligraphy": false
   },
-  "rule": "{use_rule 1.1}",
-  "input": "Cs"
+  "rule": "{use_rule 1.2}",
+  "input": "pegr"
 }

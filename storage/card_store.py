@@ -54,6 +54,10 @@ class CardStore(Protocol):
         """Remove all cards in ``set_num`` and renumber sets ``set_num + 1`` and above down by one."""
         ...
 
+    def swap_sets(self, set_a: int, set_b: int) -> None:
+        """Exchange all cards between ``set_a`` and ``set_b``."""
+        ...
+
 
 class LocalCardStore:
     """Filesystem storage under a single directory (``public/card``)."""
@@ -169,6 +173,35 @@ class LocalCardStore:
         for s, order, path in to_shift:
             new_name = f'{s - 1}.{order}.json'
             path.rename(self._dir / new_name)
+
+    def swap_sets(self, set_a: int, set_b: int) -> None:
+        if set_a < 1 or set_b < 1:
+            raise ValueError('set numbers must be >= 1')
+        if set_a == set_b:
+            return
+        self._dir.mkdir(parents=True, exist_ok=True)
+        by_set: dict[int, list[tuple[str, Path]]] = {}
+        max_set = 0
+        for path in list(self._dir.iterdir()):
+            if not path.is_file() or not CARD_NAME_RE.match(path.name):
+                continue
+            base = path.name.removesuffix('.json')
+            set_part, order = base.split('.', 1)
+            s = int(set_part, 10)
+            max_set = max(max_set, s)
+            by_set.setdefault(s, []).append((order, path))
+        files_a = by_set.get(set_a, [])
+        files_b = by_set.get(set_b, [])
+        temp = max(max_set, set_a, set_b) + 1
+        temp_paths: list[tuple[str, Path]] = []
+        for order, path in files_a:
+            new_path = self._dir / f'{temp}.{order}.json'
+            path.rename(new_path)
+            temp_paths.append((order, new_path))
+        for order, path in files_b:
+            path.rename(self._dir / f'{set_a}.{order}.json')
+        for order, path in temp_paths:
+            path.rename(self._dir / f'{set_b}.{order}.json')
 
 
 def get_card_store() -> CardStore:
