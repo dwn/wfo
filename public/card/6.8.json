@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 30,
+    "size": 20,
     "backgroundColor": "#000000",
     "italics": true,
     "animate": false,
@@ -9,9 +9,8 @@
     "position": {
       "row": 4,
       "col": 1
-    },
-    "calligraphy": false
+    }
   },
-  "rule": "{use_rule 1.2}",
-  "input": "xegr"
+  "rule": "{use_rule 1.1}",
+  "input": "G`0"
 }

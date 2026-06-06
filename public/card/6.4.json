@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 30,
+    "size": 20,
     "backgroundColor": "#008EFF",
     "italics": true,
     "animate": false,
@@ -9,9 +9,8 @@
     "position": {
       "row": 3,
       "col": 2
-    },
-    "calligraphy": false
+    }
   },
-  "rule": "{use_rule 1.2}",
-  "input": "megr"
+  "rule": "{use_rule 1.1}",
+  "input": "πO`.14"
 }

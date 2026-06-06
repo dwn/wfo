@@ -9,8 +9,9 @@
     "position": {
       "row": 2,
       "col": 1
-    }
+    },
+    "calligraphy": false
   },
   "rule": "{use_rule 1.1}",
-  "input": "Mn\nTc\nRe"
+  "input": "H`1"
 }

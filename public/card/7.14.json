@@ -1,16 +1,16 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#6600CC",
+    "backgroundColor": "#00FFF5",
     "italics": true,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 5,
-      "col": 1
+      "row": 1,
+      "col": 3
     }
   },
-  "rule": "{use_rule 1.2}",
-  "input": "d`d`d"
+  "rule": "{use_rule 1.1}",
+  "input": "B\nAl\nGa"
 }

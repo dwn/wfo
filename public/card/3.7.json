@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 20,
+    "size": 30,
     "backgroundColor": "#FFFFFF",
     "italics": true,
     "animate": false,
@@ -9,8 +9,9 @@
     "position": {
       "row": 2,
       "col": 3
-    }
+    },
+    "calligraphy": false
   },
-  "rule": "{use_rule 1.1}",
-  "input": "γ`0"
+  "rule": "{use_rule 1.2}",
+  "input": "fegr"
 }

@@ -1,16 +1,16 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#00FFF5",
+    "backgroundColor": "#B00000",
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
+    "svgBackground": "{use_svg mars.svg}",
     "position": {
       "row": 1,
-      "col": 3
+      "col": 2
     }
   },
-  "rule": "{use_rule 1.1}",
-  "input": "P`15"
+  "rule": "{use_rule 1.1}\n          ",
+  "input": "Ma"
 }

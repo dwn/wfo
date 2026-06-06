@@ -4,6 +4,9 @@
 <meta charset="utf-8"/>
 <title>Wfo</title>
 <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'><rect x='7' y='5' width='18' height='22' rx='3' stroke='%23000' stroke-width='2'/><circle cx='16' cy='16' r='4' fill='%23000'/></svg>" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mono:wght@400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/wfo.css">
 </head>
 <body>
@@ -61,7 +64,7 @@
 <div class="editor-controls">
 <div class="editor-section accordion collapsed">
 <div class="accordion-header" onclick="toggleAccordion(this)">
-<h4>Card Settings</h4>
+<h4>Card</h4>
 <span class="accordion-icon">▶</span>
 </div>
 <div class="accordion-content">
@@ -165,6 +168,12 @@
 </div>
 </div>
 <div class="editor-section">
+<h4>Keyboard</h4>
+<div class="form-group">
+<select id="editorUnicodeKeymap" aria-label="Keyboard remap"></select>
+</div>
+</div>
+<div class="editor-section">
 <h4>Rule</h4>
 <div class="form-group">
 <textarea id="editorRule" class="code-editor" placeholder="Enter rule code..." rows="4"></textarea>
@@ -248,7 +257,8 @@
 </div>
 <script src="/static/cards.js?v=6"></script>
 <script src="/static/draw.js?v=17"></script>
+<script src="/static/unicodeKeymap.js?v=19"></script>
 <script src="/storage/cardStorage.js?v=6"></script>
-<script src="/static/wfo.js?v=7"></script>
+<script src="/static/wfo.js?v=8"></script>
 </body>
 </html>

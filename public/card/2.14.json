@@ -5,12 +5,12 @@
     "italics": true,
     "animate": false,
     "svgColor": true,
+    "svgBackground": " ",
     "position": {
       "row": 5,
       "col": 1
-    },
-    "svgBackground": "{use_svg callisto.svg}"
+    }
   },
-  "rule": "{use_rule 1.1}",
-  "input": "Ca"
+  "rule": "{use_rule 1.2}",
+  "input": "d`d`d"
 }

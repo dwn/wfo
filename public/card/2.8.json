@@ -5,12 +5,13 @@
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg ceres.svg}",
+    "svgBackground": " ",
     "position": {
       "row": 4,
       "col": 1
-    }
+    },
+    "calligraphy": false
   },
-  "rule": "{use_rule 1.1}",
-  "input": "Ce"
+  "rule": "{use_rule 1.2}",
+  "input": "r\nw\nx"
 }

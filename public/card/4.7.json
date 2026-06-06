@@ -5,12 +5,12 @@
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
+    "svgBackground": "{use_svg sun.svg}",
     "position": {
       "row": 2,
       "col": 3
     }
   },
-  "rule": "{use_rule 1.1}",
-  "input": "Mg`12"
+  "rule": "{use_rule 1.1}\n          ",
+  "input": "So"
 }

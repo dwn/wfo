@@ -5,12 +5,12 @@
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
+    "svgBackground": "{use_svg neptune.svg}",
     "position": {
       "row": 2,
       "col": 2
     }
   },
   "rule": "{use_rule 1.1}",
-  "input": "N`7"
+  "input": "Ne"
 }

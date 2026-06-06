@@ -1,15 +1,16 @@
 {
   "options": {
-    "size": 40,
-    "backgroundColor": "#700000",
+    "size": 30,
+    "backgroundColor": "#6600CC",
     "italics": true,
     "animate": false,
-    "svgColor": false,
+    "svgColor": true,
+    "svgBackground": " ",
     "position": {
-      "row": 4,
-      "col": 2
+      "row": 5,
+      "col": 1
     }
   },
   "rule": "{use_rule 1.1}",
-  "input": "π"
+  "input": "Ar"
 }

@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 30,
+    "size": 20,
     "backgroundColor": "#808080",
     "italics": true,
     "animate": false,
@@ -9,9 +9,8 @@
     "position": {
       "row": 4,
       "col": 3
-    },
-    "calligraphy": false
+    }
   },
-  "rule": "{use_rule 1.2}",
-  "input": "hegr"
+  "rule": "{use_rule 1.1}",
+  "input": "W``80"
 }

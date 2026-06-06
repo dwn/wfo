@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 30,
+    "size": 5,
     "backgroundColor": "#6600CC",
     "italics": true,
     "animate": false,
@@ -11,6 +11,6 @@
       "col": 1
     }
   },
-  "rule": "{use_rule 1.2}",
-  "input": "d`d`d"
+  "rule": "{use_rule 1.1}",
+  "input": ""
 }

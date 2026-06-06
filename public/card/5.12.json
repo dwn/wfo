@@ -1,16 +1,16 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#DC0000",
+    "backgroundColor": "#808080",
     "italics": true,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 1,
-      "col": 1
+      "row": 4,
+      "col": 3
     }
   },
   "rule": "{use_rule 1.1}",
-  "input": "Bi\nPo\nAt"
+  "input": "Ca`20"
 }

@@ -100,9 +100,12 @@ body{background:#1a1a1a;color:#ffffff;font-family:system-ui,-apple-system,sans-s
 .preview-container{flex:1;display:flex;justify-content:center;align-items:flex-start;background:#2a2a2a;border-radius:8px;padding:0;overflow:auto}
 .preview-container canvas{border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3)}
 .editor-controls{display:flex;flex-direction:column;gap:20px;overflow-y:auto}
+.editor-controls #editorUnicodeKeymap,
+.editor-controls .code-editor{font-family:'Noto Sans Mono',Menlo,Consolas,'Courier New',ui-monospace,monospace;font-weight:400;font-variant-ligatures:none;font-size:13px;line-height:1.4;tab-size:2}
 .editor-section{background:#2a2a2a;border-radius:8px;padding:16px}
 .editor-section h4{color:#fff;margin:0 0 16px 0;font-size:16px;border-bottom:1px solid #555;padding-bottom:8px}
-.accordion-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:12px 0;border-bottom:1px solid #555;transition:background-color 0.2s ease}
+.accordion-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:12px 0;transition:background-color 0.2s ease,border-color 0.2s ease}
+.accordion:not(.collapsed) .accordion-header{border-bottom:1px solid #555}
 .accordion-header:hover{background-color:rgba(255,255,255,0.05)}
 .accordion-header h4{margin:0;color:#fff;font-size:16px;border:none;padding:0}
 .accordion-icon{color:#ccc;font-size:12px;transition:transform 0.2s ease}
@@ -123,7 +126,7 @@ body{background:#1a1a1a;color:#ffffff;font-family:system-ui,-apple-system,sans-s
 .form-group textarea{resize:vertical;min-height:80px}
 .form-group input[type="checkbox"]{width:16px;height:16px;accent-color:#4CAF50}
 .position-display{background:#444;border:1px solid #666;border-radius:6px;color:#ccc;padding:8px 12px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;font-size:14px}
-.code-editor{background:#1a1a1a;border:1px solid #666;border-radius:6px;color:#fff;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;font-size:13px;line-height:1.4;white-space:pre-wrap;word-break:break-word;resize:vertical}
+.code-editor{background:#1a1a1a;border:1px solid #666;border-radius:6px;color:#fff;padding:12px;white-space:pre-wrap;word-break:break-word;resize:vertical}
 .code-editor:focus{outline:none;border-color:#4CAF50;box-shadow:0 0 0 2px rgba(76,175,80,0.2)}
 .output-display{background:#2a2a2a;color:#ccc;cursor:default;min-height:100px}
 .svg-preview{margin-top:12px;padding:16px;background:#1a1a1a;border:1px solid #666;border-radius:6px}

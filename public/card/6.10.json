@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 30,
+    "size": 20,
     "backgroundColor": "#36FF00",
     "italics": true,
     "animate": false,
@@ -9,9 +9,8 @@
     "position": {
       "row": 5,
       "col": 2
-    },
-    "calligraphy": false
+    }
   },
-  "rule": "{use_rule 1.2}",
-  "input": "kegr"
+  "rule": "{use_rule 1.1}",
+  "input": "π``.14"
 }

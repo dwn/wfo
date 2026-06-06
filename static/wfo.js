@@ -1133,4 +1133,7 @@ window.addEventListener('hashchange', () => {
     syncUrlFragment();
   }
 });
+if (typeof unicodeKeymap !== 'undefined' && unicodeKeymap.initUnicodeKeymap) {
+  unicodeKeymap.initUnicodeKeymap();
+}
 initialize();
