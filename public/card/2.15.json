@@ -2,16 +2,15 @@
   "options": {
     "size": 30,
     "backgroundColor": "#B00000",
-    "italics": false,
+    "italics": true,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
       "row": 1,
       "col": 2
-    },
-    "calligraphy": false
+    }
   },
-  "rule": "{use_rule 1.2}",
-  "input": "j\n$\n"
+  "rule": "{use_rule 0.2}",
+  "input": "d\nA\nd"
 }

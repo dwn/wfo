@@ -1,16 +1,17 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#A6FF00",
-    "italics": true,
+    "backgroundColor": "#000000",
+    "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 5,
-      "col": 3
-    }
+      "row": 4,
+      "col": 1
+    },
+    "calligraphy": false
   },
   "rule": "{use_rule 0.2}",
-  "input": "d⌇d⌇d"
+  "input": "x\nw\nr"
 }

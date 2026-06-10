@@ -1,16 +1,16 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#808080",
+    "backgroundColor": "#4B0080",
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg moon.svg}",
+    "svgBackground": " ",
     "position": {
       "row": 4,
-      "col": 3
+      "col": 2
     }
   },
-  "rule": "{use_rule 1.1}",
-  "input": "Lu"
+  "rule": "{use_rule 0.1}",
+  "input": "K⌇19"
 }

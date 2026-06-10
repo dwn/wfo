@@ -1,15 +1,17 @@
 {
   "options": {
-    "size": 10,
-    "backgroundColor": "#000000",
-    "italics": true,
+    "size": 30,
+    "backgroundColor": "#A6FF00",
+    "italics": false,
     "animate": false,
     "svgColor": true,
+    "svgBackground": " ",
     "position": {
       "row": 5,
       "col": 3
-    }
+    },
+    "calligraphy": false
   },
-  "rule": "",
-  "input": "May sends no warning before she tears the music from the stand, before the dogs of hesychasm sway through the hall past cameras and lasers. Every breath swells and tips the pier, each heartbeat cracks the planks that hover above the churn. On it I am small and confused, my true proportions. At this scale DNA rearranges the future, tiny antennae fold up in Casimir spaces, under the thunderous cannonade of her seashell eyes, clear island pools wrapped in pastel light below a seagull brow. Have we passed Utnapishtim's station? Where was salvation? Lord Jesus Christ, have mercy on me, a sinner."
+  "rule": "{use_rule 0.2}",
+  "input": ""
 }

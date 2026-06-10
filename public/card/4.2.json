@@ -5,12 +5,12 @@
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg jupiter.svg}",
+    "svgBackground": " ",
     "position": {
       "row": 3,
       "col": 1
     }
   },
-  "rule": "{use_rule 1.1}",
-  "input": "Ju"
+  "rule": "{use_rule 0.1}",
+  "input": "Na⌇11"
 }

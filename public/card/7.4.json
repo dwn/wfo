@@ -1,16 +1,15 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#008EFF",
+    "size": 40,
+    "backgroundColor": "#36FF00",
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
     "position": {
-      "row": 3,
-      "col": 2
+      "row": 1,
+      "col": 1
     }
   },
-  "rule": "{use_rule 1.1}",
-  "input": "Zn\nCd\nHg"
+  "rule": "{use_rule 0.1}",
+  "input": "2⌇Ea"
 }

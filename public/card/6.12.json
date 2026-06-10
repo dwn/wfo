@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 5,
+    "size": 30,
     "backgroundColor": "#DC0000",
     "italics": true,
     "animate": false,
@@ -11,6 +11,6 @@
       "col": 1
     }
   },
-  "rule": "{use_rule 1.1}",
-  "input": ""
+  "rule": "{use_rule 0.1}",
+  "input": "Bi\nPo\nAt"
 }

@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 20,
+    "size": 30,
     "backgroundColor": "#B00000",
     "italics": true,
     "animate": false,
@@ -11,6 +11,6 @@
       "col": 2
     }
   },
-  "rule": "{use_rule 1.1}",
-  "input": "Z⌇91"
+  "rule": "{use_rule 0.1}",
+  "input": "Fe\nRu\nOs"
 }

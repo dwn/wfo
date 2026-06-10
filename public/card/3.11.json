@@ -5,12 +5,12 @@
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
     "position": {
       "row": 1,
       "col": 3
-    }
+    },
+    "svgBackground": "{use_svg europa.svg}"
   },
-  "rule": "{use_rule 1.2}",
-  "input": "d⌇d⌇d"
+  "rule": "{use_rule 0.1}\n          ",
+  "input": "Eu"
 }

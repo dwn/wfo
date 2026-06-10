@@ -134,11 +134,11 @@ function setupDragAndDrop(setNumber) {
             } else {
               let newSetNumber;
               if (availableSets.length === 0) {
-                newSetNumber = direction === 'next' ? 2 : 1;
+                newSetNumber = direction === 'next' ? 1 : 0;
               } else {
                 newSetNumber = direction === 'next' ? Math.max(...availableSets) + 1 : Math.min(...availableSets) - 1;
               }
-              if (newSetNumber > 0) {
+              if (newSetNumber >= 0) {
                 const draggedOrder = parseInt(draggedCard.getAttribute('data-order'));
                 moveCardToSet(currentSetNumber, draggedOrder, newSetNumber);
               } else {
@@ -363,7 +363,7 @@ function applyCardIndexList(filenames, options = {}) {
   }
   const maxSet = Math.max(maxSetFound, extendThrough);
   availableSets = [];
-  for (let setNum = 1; setNum <= maxSet; setNum++) {
+  for (let setNum = 0; setNum <= maxSet; setNum++) {
     const cards = sets.get(setNum) || [];
     const sortedCards = cards.sort((a, b) => a.order - b.order);
     setInfo.set(setNum, {
@@ -773,7 +773,7 @@ function parseSetFromHash(hash) {
     return null;
   }
   const n = parseInt(m[1], 10);
-  return n >= 1 ? n : null;
+  return n >= 0 ? n : null;
 }
 function syncUrlFragment() {
   const fragment = `#${currentSetNumber}`;
@@ -951,7 +951,7 @@ async function runDeleteCurrentSet() {
     cardData.clear();
     await scanAllSets();
     if (availableSets.length === 0) {
-      currentSetNumber = 1;
+      currentSetNumber = 0;
       await displaySet(1);
     } else {
       const maxSet = Math.max(...availableSets);
@@ -1150,15 +1150,16 @@ async function initialize() {
   await scanAllSets();
   const fromHash = parseSetFromHash(location.hash);
   if (availableSets.length > 0) {
-    const maxSet = Math.max(...availableSets);
-    if (fromHash !== null && fromHash >= 1) {
-      currentSetNumber = Math.min(fromHash, maxSet);
+    if (fromHash !== null && fromHash >= 0 && availableSets.includes(fromHash)) {
+      currentSetNumber = fromHash;
+    } else if (availableSets.includes(1)) {
+      currentSetNumber = 1;
     } else {
       currentSetNumber = availableSets[0];
     }
     await displaySet(currentSetNumber);
   } else {
-    currentSetNumber = 1;
+    currentSetNumber = 0;
     syncUrlFragment();
   }
 }
@@ -1168,8 +1169,7 @@ window.addEventListener('hashchange', () => {
     syncUrlFragment();
     return;
   }
-  const maxSet = Math.max(...availableSets);
-  const n = Math.min(Math.max(1, raw), maxSet);
+  const n = availableSets.includes(raw) ? raw : (availableSets.includes(1) ? 1 : availableSets[0]);
   if (n !== currentSetNumber) {
     currentSetNumber = n;
     displaySet(currentSetNumber);

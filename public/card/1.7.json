@@ -2,15 +2,16 @@
   "options": {
     "size": 30,
     "backgroundColor": "#FFFFFF",
-    "italics": true,
+    "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
       "row": 2,
       "col": 3
-    }
+    },
+    "calligraphy": false
   },
-  "rule": "{use_rule 1.1}",
-  "input": "Kr"
+  "rule": "{use_rule 0.2}",
+  "input": "z\ny\nf"
 }

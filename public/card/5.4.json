@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 30,
+    "size": 20,
     "backgroundColor": "#008EFF",
     "italics": true,
     "animate": false,
@@ -11,6 +11,6 @@
       "col": 2
     }
   },
-  "rule": "{use_rule 1.1}",
-  "input": "O⌇8"
+  "rule": "{use_rule 0.1}",
+  "input": "πO⌇.14"
 }

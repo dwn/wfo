@@ -94,8 +94,8 @@ class LocalCardStore:
         path.unlink()
 
     def insert_blank_set_after(self, after_set: int) -> int:
-        if after_set < 1:
-            raise ValueError('after_set must be >= 1')
+        if after_set < 0:
+            raise ValueError('after_set must be >= 0')
         inserted = after_set + 1
         self._dir.mkdir(parents=True, exist_ok=True)
         max_set = 0
@@ -117,15 +117,15 @@ class LocalCardStore:
         return inserted
 
     def insert_set_copy_after(self, after_set: int) -> int:
-        if after_set < 1:
-            raise ValueError('after_set must be >= 1')
+        if after_set < 0:
+            raise ValueError('after_set must be >= 0')
         inserted = self.insert_blank_set_after(after_set)
         self.copy_set_into(after_set, inserted)
         return inserted
 
     def copy_set_into(self, from_set: int, to_set: int) -> None:
-        if from_set < 1 or to_set < 1:
-            raise ValueError('set numbers must be >= 1')
+        if from_set < 0 or to_set < 0:
+            raise ValueError('set numbers must be >= 0')
         if from_set == to_set:
             raise ValueError('from and to must differ')
         self._dir.mkdir(parents=True, exist_ok=True)
@@ -147,8 +147,8 @@ class LocalCardStore:
             self.put(f'{to_set}.{order}.json', data)
 
     def delete_set_and_close_gap(self, set_num: int) -> None:
-        if set_num < 1:
-            raise ValueError('set_num must be >= 1')
+        if set_num < 0:
+            raise ValueError('set_num must be >= 0')
         self._dir.mkdir(parents=True, exist_ok=True)
         paths = [
             f
@@ -175,8 +175,8 @@ class LocalCardStore:
             path.rename(self._dir / new_name)
 
     def swap_sets(self, set_a: int, set_b: int) -> None:
-        if set_a < 1 or set_b < 1:
-            raise ValueError('set numbers must be >= 1')
+        if set_a < 0 or set_b < 0:
+            raise ValueError('set numbers must be >= 0')
         if set_a == set_b:
             return
         self._dir.mkdir(parents=True, exist_ok=True)

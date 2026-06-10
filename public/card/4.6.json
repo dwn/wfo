@@ -5,12 +5,12 @@
     "italics": true,
     "animate": false,
     "svgColor": true,
+    "svgBackground": " ",
     "position": {
       "row": 5,
       "col": 3
-    },
-    "svgBackground": "{use_svg ganymede.svg}"
+    }
   },
-  "rule": "{use_rule 1.1}\n          ",
-  "input": "Ga"
+  "rule": "{use_rule 0.1}",
+  "input": "F⌇9"
 }

@@ -52,8 +52,8 @@ async def card_delete(filename: str):
 @app.post('/api/insert-blank-set')
 async def insert_blank_set(body: dict = Body(...)):
     after = body.get('after')
-    if not isinstance(after, int) or after < 1:
-        return JSONResponse({'error': 'Body must include after (integer >= 1)'}, status_code=400)
+    if not isinstance(after, int) or after < 0:
+        return JSONResponse({'error': 'Body must include after (integer >= 0)'}, status_code=400)
     try:
         inserted = card_store.insert_blank_set_after(after)
     except ValueError as e:
@@ -64,9 +64,9 @@ async def insert_blank_set(body: dict = Body(...)):
 @app.post('/api/insert-set-copy')
 async def insert_set_copy(body: dict = Body(...)):
     after = body.get('after')
-    if not isinstance(after, int) or after < 1:
+    if not isinstance(after, int) or after < 0:
         return JSONResponse(
-            {'error': 'Body must include after (integer >= 1; duplicates that set into a new set after it)'},
+            {'error': 'Body must include after (integer >= 0; duplicates that set into a new set after it)'},
             status_code=400,
         )
     try:
@@ -79,8 +79,8 @@ async def insert_set_copy(body: dict = Body(...)):
 @app.post('/api/delete-set')
 async def delete_set(body: dict = Body(...)):
     set_num = body.get('set')
-    if not isinstance(set_num, int) or set_num < 1:
-        return JSONResponse({'error': 'Body must include set (integer >= 1)'}, status_code=400)
+    if not isinstance(set_num, int) or set_num < 0:
+        return JSONResponse({'error': 'Body must include set (integer >= 0)'}, status_code=400)
     try:
         card_store.delete_set_and_close_gap(set_num)
     except ValueError as e:
@@ -92,8 +92,8 @@ async def delete_set(body: dict = Body(...)):
 async def swap_sets(body: dict = Body(...)):
     set_a = body.get('a')
     set_b = body.get('b')
-    if not isinstance(set_a, int) or set_a < 1 or not isinstance(set_b, int) or set_b < 1:
-        return JSONResponse({'error': 'Body must include a and b (integers >= 1)'}, status_code=400)
+    if not isinstance(set_a, int) or set_a < 0 or not isinstance(set_b, int) or set_b < 0:
+        return JSONResponse({'error': 'Body must include a and b (integers >= 0)'}, status_code=400)
     try:
         card_store.swap_sets(set_a, set_b)
     except ValueError as e:

@@ -1,16 +1,16 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#DC0000",
+    "backgroundColor": "#808080",
     "italics": true,
     "animate": false,
     "svgColor": true,
+    "svgBackground": " ",
     "position": {
-      "row": 1,
-      "col": 1
-    },
-    "svgBackground": "{use_svg io.svg}"
+      "row": 4,
+      "col": 3
+    }
   },
-  "rule": "{use_rule 1.1}\n          ",
-  "input": "Io"
+  "rule": "{use_rule 0.1}",
+  "input": "Ca⌇20"
 }

@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 20,
+    "size": 30,
     "backgroundColor": "#FFF200",
     "italics": true,
     "animate": false,
@@ -11,6 +11,6 @@
       "col": 3
     }
   },
-  "rule": "{use_rule 1.1}",
-  "input": "ν⌇ε~0"
+  "rule": "{use_rule 0.1}",
+  "input": "Cu\nAg\nAu"
 }

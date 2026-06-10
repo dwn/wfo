@@ -1,15 +1,16 @@
 {
   "options": {
-    "size": 40,
-    "backgroundColor": "#4B0080",
+    "size": 30,
+    "backgroundColor": "#36FF00",
     "italics": true,
     "animate": false,
-    "svgColor": false,
+    "svgColor": true,
+    "svgBackground": " ",
     "position": {
-      "row": 1,
-      "col": 3
+      "row": 5,
+      "col": 2
     }
   },
-  "rule": "{use_rule 1.1}",
-  "input": "2⌇Ve"
+  "rule": "{use_rule 0.1}",
+  "input": "B"
 }

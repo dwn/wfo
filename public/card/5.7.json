@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 30,
+    "size": 20,
     "backgroundColor": "#FFFFFF",
     "italics": true,
     "animate": false,
@@ -11,6 +11,6 @@
       "col": 3
     }
   },
-  "rule": "{use_rule 1.1}",
-  "input": "Mg⌇12"
+  "rule": "{use_rule 0.1}",
+  "input": "γ⌇0"
 }

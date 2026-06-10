@@ -5,13 +5,12 @@
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
+    "svgBackground": "{use_svg moon.svg}",
     "position": {
       "row": 4,
       "col": 3
-    },
-    "calligraphy": false
+    }
   },
-  "rule": "{use_rule 1.2}",
-  "input": "hegr"
+  "rule": "{use_rule 0.1}",
+  "input": "Lu"
 }

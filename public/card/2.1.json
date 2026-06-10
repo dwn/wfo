@@ -2,7 +2,7 @@
   "options": {
     "size": 30,
     "backgroundColor": "#FFF200",
-    "italics": false,
+    "italics": true,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
@@ -12,6 +12,6 @@
     },
     "calligraphy": false
   },
-  "rule": "{use_rule 1.2}",
-  "input": "p\ni\nb"
+  "rule": "{use_rule 0.2}",
+  "input": "pegr"
 }

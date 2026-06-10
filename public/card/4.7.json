@@ -5,12 +5,12 @@
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg sun.svg}",
+    "svgBackground": " ",
     "position": {
       "row": 2,
       "col": 3
     }
   },
-  "rule": "{use_rule 1.1}\n          ",
-  "input": "So"
+  "rule": "{use_rule 0.1}",
+  "input": "Mg⌇12"
 }

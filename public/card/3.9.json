@@ -5,13 +5,12 @@
     "italics": true,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
+    "svgBackground": "{use_svg mercury.svg}",
     "position": {
       "row": 2,
       "col": 1
-    },
-    "calligraphy": false
+    }
   },
-  "rule": "{use_rule 1.2}",
-  "input": "cegr"
+  "rule": "{use_rule 0.1}",
+  "input": "Me"
 }
