@@ -113,7 +113,7 @@ function convertGlyphLine(line) {
 
 function buildRule14(oldRule) {
   const header =
-    '// Path notation → hex. ⮞２⮝１ invisible — ←２⎹↓１ line segments — ←２↑１ diagonal — ◖→２↑１ arc h — ◗→２↑１ arc v';
+    '// Path notation → hex. ⮞𝟮⮝𝟭 invisible — ←𝟮⎹↓𝟭 line segments — ←𝟮↑𝟭 diagonal — ◖→𝟮↑𝟭 arc h — ◗→𝟮↑𝟭 arc v';
   const seen = new Map();
   const items = [];
 

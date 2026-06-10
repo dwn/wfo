@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Normalize path move counts to fullwidth digits ０–９ after arrows.
+ * Normalize path move counts to sans-serif bold digits 𝟬–𝟵 after arrows.
  * Hex targets, {use_rule 1.4}, and non-path rules (e.g. 13,24) are unchanged.
  */
 const fs = require('fs');

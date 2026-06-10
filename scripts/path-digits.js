@@ -1,15 +1,21 @@
 /**
- * Path move counts use fullwidth digits ０–９ (U+FF10–U+FF19) so they render in
- * Noto Sans Mono and stay distinct from ASCII hex digits.
+ * Path move counts use mathematical sans-serif bold digits 𝟬–𝟵 (U+1D7ED–U+1D7F6)
+ * so they stay distinct from ASCII hex digits.
  */
-const PATH_DIGIT_BASE = 0xFF10;
+const PATH_DIGIT_BASE = 0x1D7ED;
 const PATH_DIR = '←→↑↓⮜⮞⮝⮟';
+
+function pathDigitLen(cp) {
+  return cp > 0xffff ? 2 : 1;
+}
 
 function readPathDigitAt(str, i) {
   const cp = str.codePointAt(i);
   if (cp >= 0x30 && cp <= 0x39) return { value: cp - 0x30, len: 1 };
-  if (cp >= 0x1D7CE && cp <= 0x1D7D7) return { value: cp - 0x1D7CE, len: cp > 0xffff ? 2 : 1 };
-  if (cp >= 0xFF10 && cp <= 0xFF19) return { value: cp - 0xFF10, len: cp > 0xffff ? 2 : 1 };
+  if (cp >= 0x1D7ED && cp <= 0x1D7F6) return { value: cp - 0x1D7ED, len: pathDigitLen(cp) };
+  if (cp >= 0x2080 && cp <= 0x2089) return { value: cp - 0x2080, len: 1 };
+  if (cp >= 0x1D7CE && cp <= 0x1D7D7) return { value: cp - 0x1D7CE, len: pathDigitLen(cp) };
+  if (cp >= 0xFF10 && cp <= 0xFF19) return { value: cp - 0xFF10, len: 1 };
   return null;
 }
 
