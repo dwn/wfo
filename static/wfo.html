@@ -176,7 +176,6 @@
 <div class="form-group">
 <select id="editorUnicodeKeymap" aria-label="Keyboard remap"></select>
 </div>
-<div id="editorPathSymbols" class="path-symbol-palette" aria-label="Path notation symbols"></div>
 </div>
 </div>
 <div class="editor-section editor-section-rule" id="editorRuleSection">
@@ -236,56 +235,20 @@
 <div id="instructionsModal" class="instructions-modal" style="display: none;">
   <div class="instructions-content" role="dialog" aria-modal="true" aria-labelledby="instructionsTitle">
     <div class="instructions-header">
-      <h3 id="instructionsTitle">Card Editor Guide</h3>
+      <h3 id="instructionsTitle">Digit Pair Instructions</h3>
     </div>
     <div class="instructions-body">
-      <section class="instructions-section">
-        <h4>Drawing with hex bytes</h4>
-        <ul>
-          <li><strong>Digit pairs drive drawing.</strong> Treat every two hexadecimal characters (for example <code>4F</code>) as a single command on the 8×8 grid.</li>
-          <li><strong>Bit layout matters.</strong> The byte splits into <code>a xxx b yyy</code>; the three-bit values <code>xxx</code>/<code>yyy</code> set horizontal/vertical offsets. Values 0–4 move forward, 5–7 wrap to −1, −2, −3.</li>
-          <li><strong>Command bits pick the stroke.</strong> The outer bits <code>a</code> and <code>b</code> (written together as <code>ab</code>) choose the action: <code>00</code> draws a straight line, <code>01</code> and <code>10</code> draw quarter arcs when both axes move or half arcs when only one axis moves (vertical or horizontal bow), and <code>11</code> moves without drawing.</li>
-          <li><strong>Zero moves are special.</strong> With no movement, <code>00</code> snaps to the row top, <code>01</code> plots a point, <code>10</code> draws a full circle, and <code>11</code> does nothing.</li>
-        </ul>
-      </section>
-
-      <section class="instructions-section">
-        <h4>Path notation</h4>
-        <p class="instructions-lead">Rules can describe strokes with arrow symbols instead of raw hex. Use the Keyboard palette to insert characters.</p>
-        <ul>
-          <li><strong>Counts.</strong> Optional move lengths use sans-serif bold digits <code>𝟬</code>–<code>𝟵</code> (default 1) so they never clash with hex bytes — e.g. <code>←𝟮</code>, <code>↓𝟰</code>.</li>
-          <li><strong>Visible moves.</strong> <code>←</code> left, <code>→</code> right, <code>↑</code> up, <code>↓</code> down.</li>
-          <li><strong>Chaining &amp; diagonals.</strong> Join segments with <code>⎹</code> (e.g. <code>←𝟮⎹↓𝟰</code>). Combine axes in one token for diagonals (e.g. <code>←𝟮↑𝟯</code> or <code>←𝟵↑𝟵</code>).</li>
-          <li><strong>Invisible moves.</strong> <code>⮜</code> <code>⮞</code> <code>⮝</code> <code>⮟</code> — same counts as visible arrows (e.g. <code>⮞𝟯⎹⮝𝟭</code>).</li>
-          <li><strong>Arcs.</strong> <code>◖→𝟮↑𝟯</code> horizontal bow, <code>◗→𝟮↑𝟯</code> vertical bow.</li>
-          <li><strong>Special marks.</strong> <code>⯭</code> snap, <code>∗</code> dot, <code>⍛</code> minicircle.</li>
-          <li><strong>Shared vocabulary.</strong> Card 1.1 maps path tokens to hex; glyph cards usually end with <code>{use_rule 1.1}</code>.</li>
-        </ul>
-      </section>
-
-      <section class="instructions-section">
-        <h4>Layout in rules &amp; input</h4>
-        <ul>
-          <li><strong>New row.</strong> <code>⌇⌇</code> (two ⌇) starts a new word or row.</li>
-          <li><strong>Glyph delimiter.</strong> A single <code>⌇</code> separates successive glyphs in a rule or hex stream.</li>
-          <li><strong>Comments.</strong> Prefix a line with <code>//</code>; the renderer ignores it. Literal hyphens in text stay as <code>-</code>.</li>
-        </ul>
-      </section>
-
-      <section class="instructions-section">
-        <h4>Rules &amp; includes</h4>
-        <ul>
-          <li><strong>Replacements.</strong> Add pairs like <code>13,24</code> (source,target) in the Rule box. Pairs on the same line apply simultaneously; later lines cascade before glyphs are drawn. Use <code>\,</code> for a literal comma source.</li>
-          <li><strong>Pull in another card.</strong> <code>{use_rule 1.2}</code> and <code>{use_input 1.2}</code> can appear anywhere in Rule or Input; nested tokens in the inserted text expand too. A cycle or missing card logs a warning and inserts nothing for that token.</li>
-        </ul>
-      </section>
-
-      <section class="instructions-section">
-        <h4>SVG backgrounds</h4>
-        <ul>
-          <li>In the SVG field use <code>{use_svg moon.svg}</code> or just <code>moon.svg</code> (files live in <code>public/svg</code>, served at <code>/svg/</code>). You can also paste full SVG markup or use a remote URL.</li>
-        </ul>
-      </section>
+      <ul>
+        <li><strong>Digit pairs drive drawing.</strong> Treat every two hexadecimal characters (for example <code>4F</code>) as a single command on the 8×8 grid.</li>
+        <li><strong>Bit layout matters.</strong> The byte splits into <code>a xxx b yyy</code>; the three-bit values <code>xxx</code>/<code>yyy</code> set horizontal/vertical offsets. Values 0–4 move forward, 5–7 wrap to −1, −2, −3.</li>
+        <li><strong>Command bits pick the stroke.</strong> The outer bits <code>a</code> and <code>b</code> (written together as <code>ab</code>) choose the action: <code>00</code> draws a straight line, <code>01</code> and <code>10</code> draw quarter arcs when both axes move or half arcs when only one axis moves (vertical or horizontal bow), and <code>11</code> moves without drawing.</li>
+        <li><strong>Zero moves are special.</strong> With no movement, <code>00</code> snaps to the row top, <code>01</code> plots a point, <code>10</code> draws a full circle, and <code>11</code> does nothing.</li>
+        <li><strong>Path notation in rules.</strong> Visible lines use arrows with optional count (default 1), using sans-serif bold digits <code>𝟬</code>–<code>𝟵</code> so counts never clash with hex: <code>←𝟮</code> left, <code>→𝟯</code> right, <code>↑𝟭</code> up, <code>↓𝟰</code> down (counts <code>𝟭</code>–<code>𝟵</code> supported). Chain segments with <code>⎹</code> (e.g. <code>←𝟮⎹↓𝟰</code>). Diagonal strokes combine axes in one token (e.g. <code>←𝟮↑𝟯</code> or <code>←𝟵↑𝟵</code>). Invisible moves use <code>⮜𝟮</code>, <code>⮞𝟯</code>, <code>⮝𝟭</code>, <code>⮟𝟰</code> (e.g. <code>⮞𝟯⎹⮝𝟭</code>). Arcs: <code>◖→𝟮↑𝟯</code> horizontal bow, <code>◗→𝟮↑𝟯</code> vertical bow. Special: <code>⯭</code> snap, <code>∗</code> dot, <code>⍛</code> minicircle. Card 1.4 holds the shared path→hex vocabulary; glyph cards usually end with <code>{use_rule 1.4}</code>.</li>
+        <li><strong>Layout helpers keep things tidy.</strong> Use <code>⌇⌇</code> (two ⌇) to start a new word/row, a single <code>⌇</code> to delimit successive glyphs, and prefix lines with <code>//</code> for comments that the renderer ignores. Literal hyphens in text stay as <code>-</code>.</li>
+        <li><strong>Rules transform the raw data.</strong> Add replacements like <code>13,24</code> (source,target) to the Rule box; pairs on the same line apply simultaneously, then later lines cascade before glyphs are drawn. Use <code>\,</code> for a literal comma source.</li>
+        <li><strong>Pull in another card's rule or input.</strong> Tokens <code>{use_rule 1.2}</code> and <code>{use_input 1.2}</code> can appear anywhere in the Rule or Input box; each is replaced by that card's field, and nested tokens in the inserted text are expanded too. A cycle or missing card logs a warning and inserts nothing for that token.</li>
+        <li><strong>SVG backgrounds from <code>public/svg</code>.</strong> In the SVG field use <code>{use_svg moon.svg}</code> or just <code>moon.svg</code> (files are served at <code>/svg/</code>). You can still paste full SVG markup or use a remote URL.</li>
+      </ul>
     </div>
     <div class="instructions-footer">
       <button id="ackInstructions" class="btn btn-primary" type="button">Got it</button>
@@ -302,7 +265,7 @@
 </div>
 <script src="/static/cards.js?v=6"></script>
 <script src="/static/draw.js?v=17"></script>
-<script src="/static/unicodeKeymap.js?v=20"></script>
+<script src="/static/unicodeKeymap.js?v=19"></script>
 <script src="/storage/cardStorage.js?v=6"></script>
 <script src="/static/wfo.js?v=8"></script>
 </body>

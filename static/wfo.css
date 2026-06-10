@@ -88,13 +88,8 @@ body{background:#1a1a1a;color:#ffffff;font-family:system-ui,-apple-system,sans-s
 .instructions-header{display:flex;align-items:center;justify-content:center;padding:20px 24px;border-bottom:1px solid #555}
 .instructions-header h3{margin:0;font-size:20px;color:#fff}
 .instructions-body{padding:20px 24px;color:#ddd;overflow-y:auto;line-height:1.6}
-.instructions-section{margin-bottom:24px}
-.instructions-section:last-child{margin-bottom:0}
-.instructions-section h4{color:#fff;margin:0 0 10px 0;font-size:15px;font-weight:600;border-bottom:1px solid #444;padding-bottom:6px}
-.instructions-lead{margin:0 0 10px 0;color:#aaa;font-size:14px}
-.instructions-body ul{padding-left:20px;margin:0}
+.instructions-body ul{padding-left:20px;margin:12px 0}
 .instructions-body li{margin-bottom:8px}
-.instructions-body li:last-child{margin-bottom:0}
 .instructions-footer{display:flex;justify-content:flex-end;padding:16px 24px;border-top:1px solid #555;gap:12px}
 .editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;height:100%}
 .editor-preview{display:flex;flex-direction:column}
@@ -107,12 +102,6 @@ body{background:#1a1a1a;color:#ffffff;font-family:system-ui,-apple-system,sans-s
 .editor-controls{display:flex;flex-direction:column;gap:20px;overflow-y:auto}
 .editor-controls #editorUnicodeKeymap,
 .editor-controls .code-editor{font-family:'Noto Sans Mono',Menlo,Consolas,'Courier New',ui-monospace,monospace;font-weight:400;font-variant-ligatures:none;font-size:13px;line-height:1.4;tab-size:2}
-.path-symbol-palette{display:flex;flex-direction:column;gap:10px;margin-top:4px}
-.path-symbol-group{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
-.path-symbol-group-label{flex:0 0 100%;color:#888;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.4px;margin:0}
-.path-symbol-btn{min-width:28px;height:28px;padding:0 6px;border:1px solid #555;border-radius:4px;background:#3a3a3a;color:#fff;font-family:'Noto Sans Mono',Menlo,Consolas,'Courier New',ui-monospace,monospace;font-size:14px;line-height:1;cursor:pointer;transition:background 0.15s ease,border-color 0.15s ease,color 0.15s ease}
-.path-symbol-btn:hover{border-color:#888;background:#444;color:#fff}
-.path-symbol-btn:active{border-color:#4CAF50;background:#2a3a2a}
 .editor-section{background:#2a2a2a;border-radius:8px;padding:16px}
 .editor-section-header{display:flex;justify-content:space-between;align-items:center;margin:0 0 16px 0;padding-bottom:8px;border-bottom:1px solid #555}
 .editor-section-header h4{color:#fff;margin:0;font-size:16px;border:none;padding:0}
