@@ -2,7 +2,7 @@
   "options": {
     "size": 30,
     "backgroundColor": "#808080",
-    "italics": true,
+    "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
@@ -13,5 +13,5 @@
     "calligraphy": false
   },
   "rule": "{use_rule 1.2}",
-  "input": "h\ne\nz"
+  "input": "g\ne\nJ"
 }

@@ -150,7 +150,7 @@ function isPathVocabLine(line) {
     const commaIndex = findRuleDelimiter(part);
     if (commaIndex <= 0) return false;
     const source = part.substring(0, commaIndex);
-    return /^[.*^o|()]/.test(source) || source.startsWith('.');
+    return /^[.*⯭⍛⎹◖◗\u2190-\u2193\u2B9C-\u2B9F]/.test(source);
   });
 }
 
@@ -215,7 +215,7 @@ function applyRuleTransforms(input, rule) {
   if (!rule || !rule.trim()) return output;
 
   const lines = rule.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));
-  const rows = output.split(/\r?\n|``/);
+  const rows = output.split(/\r?\n|⌇⌇/);
 
   return rows.map(row => applyRulesToText(row, lines)).join('\n');
 }
@@ -427,9 +427,9 @@ function parseBytes(str) {
       out.push({newline: true});
       continue;
     }
-    if (ch === '`') {
+    if (ch === '⌇') {
       const next = str[i + 1];
-      if (next === '`') {
+      if (next === '⌇') {
         out.push({newline: true});
         i++;
       } else {

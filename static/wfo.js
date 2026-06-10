@@ -1086,6 +1086,25 @@ document.addEventListener('keydown', (e) => {
     }
   }
 
+  // Up/down: switch sets while viewing an individual card
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    const individualView = document.getElementById('individualCardView');
+    const isInputFocused = document.activeElement && (
+      document.activeElement.tagName === 'INPUT' ||
+      document.activeElement.tagName === 'TEXTAREA' ||
+      document.activeElement.tagName === 'SELECT'
+    );
+
+    if (individualView.style.display === 'flex' && !isInputFocused) {
+      e.preventDefault();
+      if (e.key === 'ArrowUp') {
+        navigateIndividualSet(-1);
+      } else {
+        navigateIndividualSet(1);
+      }
+    }
+  }
+
   if ((e.key === 'e' || e.key === 'E') && !e.ctrlKey && !e.metaKey && !e.altKey) {
     const individualView = document.getElementById('individualCardView');
     const isInputFocused = document.activeElement && (

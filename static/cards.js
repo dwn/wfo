@@ -273,6 +273,53 @@ async function navigateIndividualCard(delta) {
   await renderIndividualCard(setNumber, nextOrder, data);
 }
 
+async function navigateIndividualSet(delta) {
+  if (!currentIndividualCard) return;
+
+  const { setNumber, order } = currentIndividualCard;
+  const currentSetIndex = availableSets.indexOf(setNumber);
+  if (currentSetIndex === -1) return;
+
+  const nextSetIndex = currentSetIndex + delta;
+  if (nextSetIndex < 0 || nextSetIndex >= availableSets.length) return;
+
+  const nextSetNumber = availableSets[nextSetIndex];
+  const currentNavOrders = individualCardNavOrders.length
+    ? individualCardNavOrders
+    : captureIndividualCardNavOrders(setNumber);
+  const currentIndex = currentNavOrders.indexOf(order);
+  const nextNavOrders = captureIndividualCardNavOrders(nextSetNumber);
+  if (nextNavOrders.length === 0) return;
+
+  let nextOrder;
+  if (nextNavOrders.includes(order)) {
+    nextOrder = order;
+  } else if (currentIndex >= 0 && currentIndex < nextNavOrders.length) {
+    nextOrder = nextNavOrders[currentIndex];
+  } else {
+    nextOrder = nextNavOrders[0];
+  }
+
+  let data = await loadCardDataCached(nextSetNumber, nextOrder);
+  if (!data) {
+    for (const candidate of nextNavOrders) {
+      if (candidate === nextOrder) continue;
+      data = await loadCardDataCached(nextSetNumber, candidate);
+      if (data) {
+        nextOrder = candidate;
+        break;
+      }
+    }
+  }
+  if (!data) return;
+
+  currentSetNumber = nextSetNumber;
+  syncUrlFragment();
+  updateNavigationAreas();
+  individualCardNavOrders = nextNavOrders;
+  await renderIndividualCard(nextSetNumber, nextOrder, data);
+}
+
 async function editIndividualCard() {
   if (!currentIndividualCard) return;
 

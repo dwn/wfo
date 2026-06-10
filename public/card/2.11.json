@@ -2,15 +2,16 @@
   "options": {
     "size": 30,
     "backgroundColor": "#00FFF5",
-    "italics": true,
+    "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
       "row": 1,
       "col": 3
-    }
+    },
+    "calligraphy": false
   },
   "rule": "{use_rule 1.2}",
-  "input": "d`d`d"
+  "input": ""
 }

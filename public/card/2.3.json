@@ -2,14 +2,15 @@
   "options": {
     "size": 30,
     "backgroundColor": "#0060FF",
-    "italics": true,
+    "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
       "row": 2,
       "col": 2
-    }
+    },
+    "calligraphy": false
   },
   "rule": "{use_rule 1.2}",
   "input": "l\n&\nv"
