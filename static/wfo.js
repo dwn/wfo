@@ -414,7 +414,32 @@ function toggleAccordion(header) {
   const accordion = header.parentElement;
   accordion.classList.toggle('collapsed');
 }
+function resetRuleFocus() {
+  const grid = document.querySelector('#cardEditorModal .editor-grid');
+  const btn = document.getElementById('editorRuleFocusBtn');
+  if (grid) grid.classList.remove('rule-focused');
+  if (btn) {
+    btn.setAttribute('aria-pressed', 'false');
+    btn.title = 'Expand Rule';
+    btn.setAttribute('aria-label', 'Expand Rule');
+    btn.textContent = '⛶';
+  }
+}
+function toggleRuleFocus() {
+  const grid = document.querySelector('#cardEditorModal .editor-grid');
+  const btn = document.getElementById('editorRuleFocusBtn');
+  const ruleEl = document.getElementById('editorRule');
+  if (!grid || !btn) return;
+  const focused = !grid.classList.contains('rule-focused');
+  grid.classList.toggle('rule-focused', focused);
+  btn.setAttribute('aria-pressed', focused ? 'true' : 'false');
+  btn.title = focused ? 'Show all sections' : 'Expand Rule';
+  btn.setAttribute('aria-label', btn.title);
+  btn.textContent = focused ? '⤡' : '⛶';
+  if (focused && ruleEl) ruleEl.focus();
+}
 function openCardEditor(setNumber, order, cardData) {
+  resetRuleFocus();
   currentEditingCard = { setNumber, order, cardData };
   hideInstructionsModal();
   document.getElementById('editorOrder').value = order || '';
@@ -448,6 +473,7 @@ function openCardEditor(setNumber, order, cardData) {
   document.getElementById('cardEditorModal').style.display = 'flex';
 }
 function closeCardEditor() {
+  resetRuleFocus();
   document.getElementById('cardEditorModal').style.display = 'none';
   hideInstructionsModal();
   currentEditingCard = null;
@@ -1016,6 +1042,7 @@ document.getElementById('editorItalics').addEventListener('change', updateEditor
 document.getElementById('editorCalligraphy').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvgColor').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvg').addEventListener('input', updateEditorPreview);
+document.getElementById('editorRuleFocusBtn').addEventListener('click', toggleRuleFocus);
 document.getElementById('editorRule').addEventListener('input', () => {
   // Rule field is a plain textarea, no highlighting needed
   updateEditorOutput().then(() => updateEditorPreview());

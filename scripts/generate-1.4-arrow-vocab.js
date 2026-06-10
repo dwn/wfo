@@ -152,7 +152,7 @@ const pairs = [...pairMap.entries()]
 
 const header =
   '// Path notation → hex. ⮞２⮝１ invisible — ←２⎹↓１ line segments — ←２↑１ diagonal — ←９↑９ long moves — ◖→２↑１ arc h — ◗→２↑１ arc v';
-const rule = `${header}\n${pairs.join(' ')} *,08 ⯭,00 ⍛,80`;
+const rule = `${header}\n${pairs.join(' ')} ∗,08 ⯭,00 ⍛,80`;
 
 const cardPath = path.join(__dirname, '../public/card/1.4.json');
 const card = JSON.parse(fs.readFileSync(cardPath, 'utf8'));

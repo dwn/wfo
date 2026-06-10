@@ -173,8 +173,11 @@
 <select id="editorUnicodeKeymap" aria-label="Keyboard remap"></select>
 </div>
 </div>
-<div class="editor-section">
+<div class="editor-section editor-section-rule" id="editorRuleSection">
+<div class="editor-section-header">
 <h4>Rule</h4>
+<button type="button" class="rule-focus-btn" id="editorRuleFocusBtn" title="Expand Rule" aria-label="Expand Rule" aria-pressed="false">⛶</button>
+</div>
 <div class="form-group">
 <textarea id="editorRule" class="code-editor" placeholder="Enter rule code..." rows="4"></textarea>
 </div>
@@ -235,7 +238,7 @@
         <li><strong>Bit layout matters.</strong> The byte splits into <code>a xxx b yyy</code>; the three-bit values <code>xxx</code>/<code>yyy</code> set horizontal/vertical offsets. Values 0–4 move forward, 5–7 wrap to −1, −2, −3.</li>
         <li><strong>Command bits pick the stroke.</strong> The outer bits <code>a</code> and <code>b</code> (written together as <code>ab</code>) choose the action: <code>00</code> draws a straight line, <code>01</code> and <code>10</code> draw quarter arcs when both axes move or half arcs when only one axis moves (vertical or horizontal bow), and <code>11</code> moves without drawing.</li>
         <li><strong>Zero moves are special.</strong> With no movement, <code>00</code> snaps to the row top, <code>01</code> plots a point, <code>10</code> draws a full circle, and <code>11</code> does nothing.</li>
-        <li><strong>Path notation in rules.</strong> Visible lines use arrows with optional count (default 1), using fullwidth digits <code>０</code>–<code>９</code> so counts never clash with hex: <code>←２</code> left, <code>→３</code> right, <code>↑１</code> up, <code>↓４</code> down (counts <code>１</code>–<code>９</code> supported). Chain segments with <code>⎹</code> (e.g. <code>←２⎹↓４</code>). Diagonal strokes combine axes in one token (e.g. <code>←２↑３</code> or <code>←９↑９</code>). Invisible moves use <code>⮜２</code>, <code>⮞３</code>, <code>⮝１</code>, <code>⮟４</code> (e.g. <code>⮞３⎹⮝１</code>). Arcs: <code>◖→２↑３</code> horizontal bow, <code>◗→２↑３</code> vertical bow. Special: <code>⯭</code> snap, <code>*</code> dot, <code>⍛</code> minicircle. Card 1.4 holds the shared path→hex vocabulary; glyph cards usually end with <code>{use_rule 1.4}</code>.</li>
+        <li><strong>Path notation in rules.</strong> Visible lines use arrows with optional count (default 1), using fullwidth digits <code>０</code>–<code>９</code> so counts never clash with hex: <code>←２</code> left, <code>→３</code> right, <code>↑１</code> up, <code>↓４</code> down (counts <code>１</code>–<code>９</code> supported). Chain segments with <code>⎹</code> (e.g. <code>←２⎹↓４</code>). Diagonal strokes combine axes in one token (e.g. <code>←２↑３</code> or <code>←９↑９</code>). Invisible moves use <code>⮜２</code>, <code>⮞３</code>, <code>⮝１</code>, <code>⮟４</code> (e.g. <code>⮞３⎹⮝１</code>). Arcs: <code>◖→２↑３</code> horizontal bow, <code>◗→２↑３</code> vertical bow. Special: <code>⯭</code> snap, <code>∗</code> dot, <code>⍛</code> minicircle. Card 1.4 holds the shared path→hex vocabulary; glyph cards usually end with <code>{use_rule 1.4}</code>.</li>
         <li><strong>Layout helpers keep things tidy.</strong> Use <code>⌇⌇</code> (two ⌇) to start a new word/row, a single <code>⌇</code> to delimit successive glyphs, and prefix lines with <code>//</code> for comments that the renderer ignores. Literal hyphens in text stay as <code>-</code>.</li>
         <li><strong>Rules transform the raw data.</strong> Add replacements like <code>13,24</code> (source,target) to the Rule box; pairs on the same line apply simultaneously, then later lines cascade before glyphs are drawn. Use <code>\,</code> for a literal comma source.</li>
         <li><strong>Pull in another card's rule or input.</strong> Tokens <code>{use_rule 1.2}</code> and <code>{use_input 1.2}</code> can appear anywhere in the Rule or Input box; each is replaced by that card's field, and nested tokens in the inserted text are expanded too. A cycle or missing card logs a warning and inserts nothing for that token.</li>

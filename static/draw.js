@@ -150,7 +150,7 @@ function isPathVocabLine(line) {
     const commaIndex = findRuleDelimiter(part);
     if (commaIndex <= 0) return false;
     const source = part.substring(0, commaIndex);
-    return /^[.*⯭⍛⎹◖◗\u2190-\u2193\u2B9C-\u2B9F]/.test(source);
+    return /^[∗⯭⍛⎹◖◗\u2190-\u2193\u2B9C-\u2B9F]/.test(source);
   });
 }
 

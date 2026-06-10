@@ -103,6 +103,16 @@ body{background:#1a1a1a;color:#ffffff;font-family:system-ui,-apple-system,sans-s
 .editor-controls #editorUnicodeKeymap,
 .editor-controls .code-editor{font-family:'Noto Sans Mono',Menlo,Consolas,'Courier New',ui-monospace,monospace;font-weight:400;font-variant-ligatures:none;font-size:13px;line-height:1.4;tab-size:2}
 .editor-section{background:#2a2a2a;border-radius:8px;padding:16px}
+.editor-section-header{display:flex;justify-content:space-between;align-items:center;margin:0 0 16px 0;padding-bottom:8px;border-bottom:1px solid #555}
+.editor-section-header h4{color:#fff;margin:0;font-size:16px;border:none;padding:0}
+.rule-focus-btn{background:transparent;border:1px solid #666;border-radius:4px;color:#ccc;cursor:pointer;font-size:14px;line-height:1;padding:4px 8px;transition:all 0.2s ease}
+.rule-focus-btn:hover{border-color:#888;color:#fff}
+.rule-focus-btn[aria-pressed="true"]{border-color:#4CAF50;color:#4CAF50;background:rgba(76,175,80,0.1)}
+.editor-grid.rule-focused .editor-controls>.accordion,.editor-grid.rule-focused .editor-controls>.editor-section:not(.editor-section-rule){display:none}
+.editor-grid.rule-focused .editor-controls{display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.editor-grid.rule-focused .editor-section-rule{flex:1;min-height:0;display:flex;flex-direction:column;margin-bottom:0}
+.editor-grid.rule-focused .editor-section-rule .form-group{flex:1;min-height:0;display:flex;flex-direction:column;margin-bottom:0}
+.editor-grid.rule-focused #editorRule{flex:1;min-height:240px;resize:none}
 .editor-section h4{color:#fff;margin:0 0 16px 0;font-size:16px;border-bottom:1px solid #555;padding-bottom:8px}
 .accordion-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:12px 0;transition:background-color 0.2s ease,border-color 0.2s ease}
 .accordion:not(.collapsed) .accordion-header{border-bottom:1px solid #555}

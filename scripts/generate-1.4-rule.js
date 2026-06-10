@@ -120,7 +120,7 @@ pairs.sort((a, b) => b.split(',')[0].length - a.split(',')[0].length);
 const rule = [
   '// Path notation → hex. .r2u1 invisible | |R2U1 line | (R2U1 arc h | )R2U1 arc v',
   pairs.join(' '),
-  '*,08 ^,00 o,80',
+  '∗,08 ^,00 o,80',
 ].join('\n');
 
 const cardPath = path.join(__dirname, '../public/card/1.4.json');

@@ -66,8 +66,8 @@ function convertPathString(pathStr) {
       continue;
     }
 
-    if ('⯭^*Oo'.includes(c)) {
-      out += c === '^' ? '⯭' : (c === 'O' || c === 'o' ? '⍛' : c);
+    if ('⯭^*∗Oo'.includes(c)) {
+      out += c === '^' ? '⯭' : (c === '*' || c === '∗' ? '∗' : (c === 'O' || c === 'o' ? '⍛' : c));
       i++;
       needLineSep = false;
       needInvSep = false;

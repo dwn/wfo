@@ -15,7 +15,7 @@ function isPathVocabLine(line) {
   return parts.every((part) => {
     const comma = part.indexOf(',');
     if (comma <= 0) return false;
-    return /^[.*⯭⍛⎹◖◗←→↑↓⮜⮞⮝⮟]/.test(part.slice(0, comma));
+    return /^[∗⯭⍛⎹◖◗←→↑↓⮜⮞⮝⮟]/.test(part.slice(0, comma));
   });
 }
 
