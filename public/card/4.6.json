@@ -11,6 +11,6 @@
     },
     "svgBackground": "{use_svg ganymede.svg}"
   },
-  "rule": "{use_rule 1.1}\n          ",
+  "rule": "{use_rule 1.3}\n          ",
   "input": "Ga"
 }

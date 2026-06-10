@@ -222,6 +222,90 @@
     select.value = activeMode;
   }
 
+  const PATH_DIGIT_BASE = 0x1d7ed;
+
+  const PATH_SYMBOL_GROUPS = [
+    {
+      label: 'Counts',
+      symbols: Array.from({ length: 10 }, (_, i) => ({
+        ch: cp(PATH_DIGIT_BASE + i),
+        title: `Count ${i}`,
+      })),
+    },
+    {
+      label: 'Arrows',
+      symbols: [
+        { ch: '←', title: 'Left' },
+        { ch: '→', title: 'Right' },
+        { ch: '↑', title: 'Up' },
+        { ch: '↓', title: 'Down' },
+      ],
+    },
+    {
+      label: 'Invisible',
+      symbols: [
+        { ch: '⮜', title: 'Invisible left' },
+        { ch: '⮞', title: 'Invisible right' },
+        { ch: '⮝', title: 'Invisible up' },
+        { ch: '⮟', title: 'Invisible down' },
+      ],
+    },
+    {
+      label: 'Layout',
+      symbols: [
+        { ch: '⎹', title: 'Chain segment' },
+        { ch: '◖', title: 'Arc horizontal' },
+        { ch: '◗', title: 'Arc vertical' },
+        { ch: '⯭', title: 'Snap' },
+        { ch: '∗', title: 'Dot' },
+        { ch: '⍛', title: 'Minicircle' },
+        { ch: '⌇', title: 'Glyph delimiter' },
+      ],
+    },
+  ];
+
+  let lastCodeEditor = null;
+
+  function getInsertTarget(ruleEl, inputEl) {
+    const active = document.activeElement;
+    if (active instanceof HTMLTextAreaElement && active.classList.contains('code-editor')) {
+      return active;
+    }
+    return lastCodeEditor || ruleEl || inputEl;
+  }
+
+  function initPathSymbolPalette(ruleEl, inputEl) {
+    const container = document.getElementById('editorPathSymbols');
+    if (!container) return;
+
+    container.innerHTML = '';
+    for (const group of PATH_SYMBOL_GROUPS) {
+      const groupEl = document.createElement('div');
+      groupEl.className = 'path-symbol-group';
+
+      const label = document.createElement('span');
+      label.className = 'path-symbol-group-label';
+      label.textContent = group.label;
+      groupEl.appendChild(label);
+
+      for (const { ch, title } of group.symbols) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'path-symbol-btn';
+        btn.textContent = ch;
+        btn.title = title;
+        btn.setAttribute('aria-label', `Insert ${title}: ${ch}`);
+        btn.addEventListener('click', () => {
+          const target = getInsertTarget(ruleEl, inputEl);
+          if (target) insertAtCursor(target, ch);
+        });
+        groupEl.appendChild(btn);
+      }
+
+      container.appendChild(groupEl);
+    }
+  }
+
   function initUnicodeKeymap() {
     activeMode = getStoredMode();
     const select = document.getElementById('editorUnicodeKeymap');
@@ -234,15 +318,22 @@
 
     for (const el of [ruleEl, inputEl]) {
       el.addEventListener('beforeinput', onBeforeInput);
+      el.addEventListener('focus', () => {
+        lastCodeEditor = el;
+      });
     }
+    lastCodeEditor = ruleEl;
 
+    initPathSymbolPalette(ruleEl, inputEl);
     setMode(activeMode);
   }
 
   global.unicodeKeymap = {
     MODES,
+    PATH_SYMBOL_GROUPS,
     mapChar,
     mapString,
+    insertAtCursor,
     setMode,
     initUnicodeKeymap,
   };

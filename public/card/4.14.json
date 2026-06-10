@@ -11,6 +11,6 @@
     },
     "svgBackground": "{use_svg callisto.svg}"
   },
-  "rule": "{use_rule 1.1}",
+  "rule": "{use_rule 1.3}",
   "input": "Ca"
 }

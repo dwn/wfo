@@ -11,6 +11,6 @@
     },
     "svgBackground": "{use_svg io.svg}"
   },
-  "rule": "{use_rule 1.1}\n          ",
+  "rule": "{use_rule 1.3}\n          ",
   "input": "Io"
 }

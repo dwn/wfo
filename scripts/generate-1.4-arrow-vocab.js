@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Regenerate public/card/1.4.json path→hex vocabulary for counts 1–9.
+ * Regenerate public/card/1.1.json path→hex vocabulary for counts 1–9.
  * Moves beyond 4 grid units decompose into multiple bytes.
  */
 const fs = require('fs');
@@ -154,7 +154,7 @@ const header =
   '// Path notation → hex. ⮞𝟮⮝𝟭 invisible — ←𝟮⎹↓𝟭 line segments — ←𝟮↑𝟭 diagonal — ←𝟵↑𝟵 long moves — ◖→𝟮↑𝟭 arc h — ◗→𝟮↑𝟭 arc v';
 const rule = `${header}\n${pairs.join(' ')} ∗,08 ⯭,00 ⍛,80`;
 
-const cardPath = path.join(__dirname, '../public/card/1.4.json');
+const cardPath = path.join(__dirname, '../public/card/1.1.json');
 const card = JSON.parse(fs.readFileSync(cardPath, 'utf8'));
 card.rule = rule;
 fs.writeFileSync(cardPath, JSON.stringify(card, null, 2) + '\n');
