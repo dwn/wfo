@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Convert path notation in card 1.4 (vocabulary) and glyph rules (1.1, 1.2, 1.5).
+ * Convert path notation in card 0.4 (vocabulary) and glyph rules (0.1, 0.2, 0.5).
  * |L# → ←#, .r# → ⇢#; ( → ◖, ) → ◗ arc prefixes.
  */
 const fs = require('fs');
@@ -143,13 +143,13 @@ function updateCard(filename) {
   fs.writeFileSync(filePath, JSON.stringify(card, null, 2) + '\n');
 }
 
-const card14Path = path.join(ROOT, 'public/card/1.4.json');
-const card14 = JSON.parse(fs.readFileSync(card14Path, 'utf8'));
-card14.rule = buildRule14(card14.rule);
-fs.writeFileSync(card14Path, JSON.stringify(card14, null, 2) + '\n');
-console.log('Updated public/card/1.4.json');
+const card04Path = path.join(ROOT, 'public/card/0.4.json');
+const card04 = JSON.parse(fs.readFileSync(card04Path, 'utf8'));
+card04.rule = buildRule14(card04.rule);
+fs.writeFileSync(card04Path, JSON.stringify(card04, null, 2) + '\n');
+console.log('Updated public/card/0.4.json');
 
-for (const f of ['public/card/1.2.json', 'public/card/1.1.json', 'public/card/1.5.json']) {
+for (const f of ['public/card/0.2.json', 'public/card/0.1.json', 'public/card/0.5.json']) {
   updateCard(f);
   console.log('Updated', f);
 }
