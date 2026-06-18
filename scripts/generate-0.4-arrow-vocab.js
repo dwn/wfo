@@ -6,7 +6,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { toPathDigits } = require('./path-digits');
+const { toPathDigits, formatPathCount, withExplicitUnitCounts } = require('./path-digits');
 
 const MAX_COUNT = 9;
 
@@ -121,7 +121,7 @@ function arrowVariants(dx, dy, invisible) {
   const parts = movementParts(dx, dy, invisible);
   const variants = new Set();
   for (const order of permuteParts(parts)) {
-    variants.add(order.map((p) => p.arrow + toPathDigits(String(p.count))).join(''));
+    variants.add(order.map((p) => p.arrow + formatPathCount(p.count)).join(''));
   }
   return [...variants];
 }
@@ -141,7 +141,10 @@ for (let dx = -MAX_COUNT; dx <= MAX_COUNT; dx++) {
       const hex = hexForMovement(kind, dx, dy);
       if (!hex) continue;
       for (const mov of arrowVariants(dx, dy, invisible)) {
-        pairMap.set(`${prefix}${mov}`, hex);
+        const key = `${prefix}${mov}`;
+        pairMap.set(key, hex);
+        const explicit = withExplicitUnitCounts(key);
+        if (explicit !== key) pairMap.set(explicit, hex);
       }
     }
   }
@@ -152,7 +155,7 @@ const pairs = [...pairMap.entries()]
   .sort((a, b) => b.split(',')[0].length - a.split(',')[0].length);
 
 const header =
-  '// Path notation → hex. ⮞𝟭⮝𝟬 invisible — ←𝟭⎹↓𝟬 line segments — ←𝟭↑𝟬 diagonal — ←𝟵↑𝟵 long moves — ◖→𝟭↑𝟬 arc h — ◗→𝟭↑𝟬 arc v';
+  '// Path notation → hex. Count 1: arrow only (→ ≡ →𝟭). ⮞⮝ invisible — ←⎹↓ line — ←↑ diagonal — ←𝟵↑𝟵 long — ◖→↑ arc h — ◗→↑ arc v';
 const rule = `${header}\n${pairs.join(' ')} ∗,08 ⯭,00 ⍛,80`;
 
 const cardPath = path.join(__dirname, '../public/card/0.4.json');

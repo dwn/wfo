@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const { toPathDigits } = require('./path-digits');
+const { toPathDigits, formatPathCount } = require('./path-digits');
 const VISIBLE = { L: '←', R: '→', U: '↑', D: '↓' };
 const INVISIBLE = { L: '⮜', R: '⮞', U: '⮝', D: '⮟' };
 
@@ -20,7 +20,7 @@ function lrudToSymbols(move, map) {
     i++;
     let num = '';
     while (i < move.length && /\d/.test(move[i])) num += move[i++];
-    out += map[dir] + toPathDigits(num || '1');
+    out += map[dir] + formatPathCount(parseInt(num || '1', 10));
   }
   return out;
 }

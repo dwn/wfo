@@ -42,6 +42,66 @@ function toPathDigits(asciiDigits) {
   return asciiDigits.replace(/[0-9]/g, (ch) => toPathDigit(ch));
 }
 
+/** Omit digit when count is 1 (default step). */
+function formatPathCount(count) {
+  return count === 1 ? '' : toPathDigits(String(count));
+}
+
+/** Drop explicit 1-step counts; leave 2+ and 0. */
+function stripUnitPathCounts(pathStr) {
+  let out = '';
+  let i = 0;
+  while (i < pathStr.length) {
+    const cp = pathStr.codePointAt(i);
+    const c = String.fromCodePoint(cp);
+    const clen = cp > 0xffff ? 2 : 1;
+    if (PATH_DIR.includes(c)) {
+      out += c;
+      i += clen;
+      let j = i;
+      let ascii = '';
+      while (j < pathStr.length) {
+        const d = readPathDigitAt(pathStr, j);
+        if (!d) break;
+        ascii += String(d.value);
+        j += d.len;
+      }
+      if (ascii && ascii !== '1') out += toPathDigits(ascii);
+      i = j;
+      continue;
+    }
+    out += c;
+    i += clen;
+  }
+  return out;
+}
+
+/** Alias for rules that still spell out 1-step counts. */
+function withExplicitUnitCounts(pathStr) {
+  let out = '';
+  let i = 0;
+  while (i < pathStr.length) {
+    const cp = pathStr.codePointAt(i);
+    const c = String.fromCodePoint(cp);
+    const clen = cp > 0xffff ? 2 : 1;
+    out += c;
+    i += clen;
+    if (PATH_DIR.includes(c)) {
+      const d = readPathDigitAt(pathStr, i);
+      if (!d) out += toPathDigit('1');
+      else {
+        while (i < pathStr.length) {
+          const dd = readPathDigitAt(pathStr, i);
+          if (!dd) break;
+          out += pathStr.slice(i, i + dd.len);
+          i += dd.len;
+        }
+      }
+    }
+  }
+  return out;
+}
+
 function convertPathDigits(pathStr) {
   let out = '';
   let i = 0;
@@ -101,6 +161,9 @@ module.exports = {
   PATH_DIR,
   toPathDigit,
   toPathDigits,
+  formatPathCount,
   convertPathDigits,
+  stripUnitPathCounts,
+  withExplicitUnitCounts,
   remapLegacyPathDigits,
 };
