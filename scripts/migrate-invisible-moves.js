@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const { toPathDigits } = require('./path-digits');
+const { toPathDigits, PATH_SEP } = require('./path-digits');
 const INVISIBLE = { l: '⮜', r: '⮞', u: '⮝', d: '⮟', L: '⮜', R: '⮞', U: '⮝', D: '⮟' };
 
 function lrudToSymbols(move, map) {
@@ -39,14 +39,14 @@ function migratePathString(pathStr) {
         move += pathStr[i++];
         while (i < pathStr.length && /\d/.test(pathStr[i])) move += pathStr[i++];
       }
-      if (needInvSep) out += '⎹';
+      if (needInvSep) out += PATH_SEP;
       out += lrudToSymbols(move, INVISIBLE);
       needInvSep = true;
       needLineSep = false;
       continue;
     }
 
-    if (c === '⎹' || c === '|') {
+    if (c === '⋅' || c === '⎹' || c === '|') {
       i++;
       needLineSep = true;
       needInvSep = true;
@@ -66,7 +66,7 @@ function migratePathString(pathStr) {
     }
 
     if ('←→↑↓'.includes(c)) {
-      if (needLineSep) out += '⎹';
+      if (needLineSep) out += PATH_SEP;
       needLineSep = false;
       needInvSep = false;
       while (i < pathStr.length && '←→↑↓'.includes(pathStr[i])) {
@@ -77,7 +77,7 @@ function migratePathString(pathStr) {
     }
 
     if ('⮜⮞⮝⮟'.includes(c)) {
-      if (needInvSep) out += '⎹';
+      if (needInvSep) out += PATH_SEP;
       needInvSep = false;
       needLineSep = false;
       while (i < pathStr.length && '⮜⮞⮝⮟'.includes(pathStr[i])) {
@@ -132,7 +132,7 @@ function migrateGlyphLine(line) {
 
 function migrateRule14(rule) {
   const header =
-    '// Path notation → hex. ⮞𝟮⮝𝟭 invisible — ←𝟮⎹↓𝟭 line segments — ←𝟮↑𝟭 diagonal — ◖→𝟮↑𝟭 arc h — ◗→𝟮↑𝟭 arc v';
+    '// Path notation → hex. ⮞𝟮⮝𝟭 invisible — ←𝟮⋅↓𝟭 sequential — ←𝟮↑𝟭 diagonal — ◖→𝟮↑𝟭 arc h — ◗→𝟮↑𝟭 arc v';
   const seen = new Map();
   const items = [];
 

@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const { toPathDigits, formatPathCount } = require('./path-digits');
+const { toPathDigits, formatPathCount, PATH_SEP } = require('./path-digits');
 const VISIBLE = { L: '←', R: '→', U: '↑', D: '↓' };
 const INVISIBLE = { L: '⮜', R: '⮞', U: '⮝', D: '⮟' };
 
@@ -45,12 +45,12 @@ function convertPathString(pathStr) {
         } else break;
       }
       if (type === '.') {
-        if (needInvSep) out += '⎹';
+        if (needInvSep) out += PATH_SEP;
         out += lrudToSymbols(move, INVISIBLE);
         needInvSep = true;
         needLineSep = false;
       } else if (type === '|') {
-        if (needLineSep) out += '⎹';
+        if (needLineSep) out += PATH_SEP;
         out += lrudToSymbols(move, VISIBLE);
         needLineSep = true;
         needInvSep = false;
@@ -113,7 +113,7 @@ function convertGlyphLine(line) {
 
 function buildRule14(oldRule) {
   const header =
-    '// Path notation → hex. ⮞𝟮⮝𝟭 invisible — ←𝟮⎹↓𝟭 line segments — ←𝟮↑𝟭 diagonal — ◖→𝟮↑𝟭 arc h — ◗→𝟮↑𝟭 arc v';
+    '// Path notation → hex. ⮞𝟮⮝𝟭 invisible — ←𝟮⋅↓𝟭 sequential — ←𝟮↑𝟭 diagonal — ◖→𝟮↑𝟭 arc h — ◗→𝟮↑𝟭 arc v';
   const seen = new Map();
   const items = [];
 

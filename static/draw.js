@@ -150,7 +150,7 @@ function isPathVocabLine(line) {
     const commaIndex = findRuleDelimiter(part);
     if (commaIndex <= 0) return false;
     const source = part.substring(0, commaIndex);
-    return /^[∗⯭⍛⎹◖◗\u2190-\u2193\u2B9C-\u2B9F]/.test(source);
+    return /^[∗⯭⍛⋅⎹◖◗\u2190-\u2193\u2B9C-\u2B9F]/.test(source);
   });
 }
 
@@ -205,6 +205,10 @@ function applyRulesToText(text, lines) {
   return output;
 }
 
+function normalizePathSeparators(str) {
+  return str.replace(/\u23B9/g, '\u22C5');
+}
+
 function applyRuleTransforms(input, rule) {
   let output = input || '';
 
@@ -214,10 +218,12 @@ function applyRuleTransforms(input, rule) {
 
   if (!rule || !rule.trim()) return output;
 
+  rule = normalizePathSeparators(rule);
+
   const lines = rule.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));
   const rows = output.split(/\r?\n|⌇⌇/);
 
-  return rows.map(row => applyRulesToText(row, lines)).join('\n');
+  return rows.map(row => applyRulesToText(normalizePathSeparators(row), lines)).join('\n');
 }
 
 // Calligraphy constants (45° nib)

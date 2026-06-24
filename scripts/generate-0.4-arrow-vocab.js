@@ -155,7 +155,7 @@ const pairs = [...pairMap.entries()]
   .sort((a, b) => b.split(',')[0].length - a.split(',')[0].length);
 
 const header =
-  '// Path notation → hex. Count 1: arrow only (→ ≡ →𝟭). ⮞⮝ invisible — ←⎹↓ line — ←↑ diagonal — ←𝟵↑𝟵 long — ◖→↑ arc h — ◗→↑ arc v';
+  '// Path notation → hex. Count 1: arrow only (→ ≡ →𝟭). ⮞⮝ invisible — ←⋅↑ sequential, ←↑ diagonal — ◖→↑ arc h — ◗→↑ arc v';
 const rule = `${header}\n${pairs.join(' ')} ∗,08 ⯭,00 ⍛,80`;
 
 const cardPath = path.join(__dirname, '../public/card/0.4.json');

@@ -16,7 +16,7 @@ function remapLine(line) {
   const parts = line.trim().split(/\s+/);
   if (parts.every((p) => {
     const comma = p.indexOf(',');
-    return comma > 0 && /^[∗⯭⍛⎹◖◗←→↑↓⮜⮞⮝⮟]/.test(p.slice(0, comma));
+    return comma > 0 && /^[∗⯭⍛⋅◖◗←→↑↓⮜⮞⮝⮟]/.test(p.slice(0, comma));
   })) {
     return parts
       .map((item) => {

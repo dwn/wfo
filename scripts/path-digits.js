@@ -5,6 +5,12 @@
  */
 const PATH_DIGIT_BASE = 0x1D7ED;
 const PATH_DIR = '←→↑↓⮜⮞⮝⮟';
+/** Stroke separator: adjacent arrows = one compound move; ⋅ = next stroke. */
+const PATH_SEP = '⋅';
+
+function normalizePathSeparators(pathStr) {
+  return pathStr.replace(/⎹/g, PATH_SEP);
+}
 
 function pathDigitLen(cp) {
   return cp > 0xffff ? 2 : 1;
@@ -159,6 +165,8 @@ function remapLegacyPathDigits(pathStr) {
 module.exports = {
   PATH_DIGIT_BASE,
   PATH_DIR,
+  PATH_SEP,
+  normalizePathSeparators,
   toPathDigit,
   toPathDigits,
   formatPathCount,
