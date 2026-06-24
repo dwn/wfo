@@ -1,15 +1,16 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#700000",
+    "backgroundColor": "#FFFFFF",
     "italics": true,
     "animate": false,
     "svgColor": true,
     "svgBackground": "{use_svg mercury.svg}",
     "position": {
       "row": 2,
-      "col": 1
-    }
+      "col": 3
+    },
+    "calligraphy": false
   },
   "rule": "{use_rule 0.1}",
   "input": "Me"
