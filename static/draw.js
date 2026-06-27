@@ -433,6 +433,10 @@ function parseBytes(str) {
       out.push({newline: true});
       continue;
     }
+    if (ch === '⌈') {
+      out.push({startAnchor: true});
+      continue;
+    }
     if (ch === '⌇') {
       const next = str[i + 1];
       if (next === '⌇') {
@@ -467,7 +471,7 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
   const snapToLineTop = (yi) => rowTopBase + 8 * Math.floor((yi - rowTopBase) / 8);
 
   let xi = pad.left, yi = rowTopBase;
-  const ops = []; const visited = [{xi, yi}]; const pipes = [];
+  const ops = []; const visited = [{xi, yi}]; const pipes = []; const starts = [];
   
   const preMoveWrap = (xi, yi, dx) => {
     const maxX = gridX - pad.right;
@@ -480,6 +484,10 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
       yi = rowTopBase + 8 * (Math.floor((yi - rowTopBase) / 8) + 1);
       xi = pad.left;
       visited.push({xi, yi});
+      continue;
+    }
+    if (item.startAnchor) {
+      starts.push({xi, yi});
       continue;
     }
     if (item.pipe) {
@@ -560,18 +568,45 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
     visited.push({xi, yi});
   }
   
-  return { ops, visited, pipes };
+  return { ops, visited, pipes, starts };
 }
 
-function drawPipeMarker(ctx, op, s, italicsMode = false) {
-  const r = Math.max(s * 0.14, 1.5);
-  const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
+function sameGridPoint(a, b) {
+  return a.xi === b.xi && a.yi === b.yi;
+}
+
+function drawAnchorDot(ctx, center, radius, color) {
   ctx.save();
   ctx.beginPath();
-  ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
-  ctx.fillStyle = '#FF00FF';
+  ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = color;
   ctx.fill();
   ctx.restore();
+}
+
+function drawEditorAnchorMarkers(ctx, starts, pipes, s, italicsMode = false) {
+  const r = Math.max(s * 0.22, 2.5);
+  const offset = Math.max(s * 0.18, 1.8);
+  const startList = starts || [];
+  const pipeList = pipes || [];
+
+  for (const anchor of startList) {
+    const overlap = pipeList.some((pipe) => sameGridPoint(pipe, anchor));
+    let center = applyItalicsTransform(toCanvas(anchor, s), s, italicsMode);
+    if (overlap) {
+      center = { x: center.x - offset, y: center.y - offset };
+    }
+    drawAnchorDot(ctx, center, r, '#00DDFF');
+  }
+
+  for (const anchor of pipeList) {
+    const overlap = startList.some((start) => sameGridPoint(start, anchor));
+    let center = applyItalicsTransform(toCanvas(anchor, s), s, italicsMode);
+    if (overlap) {
+      center = { x: center.x + offset, y: center.y + offset };
+    }
+    drawAnchorDot(ctx, center, r, '#FF00FF');
+  }
 }
 
 // Drawing functions
