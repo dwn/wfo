@@ -637,57 +637,107 @@ function isDrawableSegmentStart(coloredItems, index) {
   return false;
 }
 
-function applyRowCentering(ops, pipes, starts, pad, gridX, s) {
-  const maxX = gridX - pad.right;
-  const rowBounds = new Map();
-
-  const includeBounds = (rowKey, minXi, maxXi) => {
-    if (rowKey == null) return;
-    if (!rowBounds.has(rowKey)) rowBounds.set(rowKey, { minXi: Infinity, maxXi: -Infinity });
-    const bounds = rowBounds.get(rowKey);
-    bounds.minXi = Math.min(bounds.minXi, minXi);
-    bounds.maxXi = Math.max(bounds.maxXi, maxXi);
+function getArcCanvasXBounds(op, s, halfStroke, italicsMode) {
+  const center = applyItalicsTransform({ x: op.cx, y: op.cy }, s, italicsMode);
+  let minX = Infinity;
+  let maxX = -Infinity;
+  const includeX = (x) => {
+    minX = Math.min(minX, x - halfStroke);
+    maxX = Math.max(maxX, x + halfStroke);
   };
 
-  for (const op of ops) {
-    if (op.type === 'line') {
-      includeBounds(op.rowKey, op.from.xi, op.from.xi);
-      includeBounds(op.rowKey, op.to.xi, op.to.xi);
-    } else if (op.type === 'point') {
-      includeBounds(op.rowKey, op.xi, op.xi);
-    } else if (op.type === 'arc') {
-      includeBounds(op.rowKey, Math.floor((op.cx - op.rx) / s), Math.ceil((op.cx + op.rx) / s));
-    }
+  if (op.start === 0 && op.end === Math.PI * 2) {
+    includeX(center.x - op.rx);
+    includeX(center.x + op.rx);
+    return { minX, maxX };
   }
-  for (const anchor of pipes) includeBounds(anchor.rowKey, anchor.xi, anchor.xi);
-  for (const anchor of starts) includeBounds(anchor.rowKey, anchor.xi, anchor.xi);
+
+  const addAngle = (angle) => includeX(center.x + op.rx * Math.cos(angle));
+  addAngle(op.start);
+  addAngle(op.end);
+  let span = op.acw ? op.start - op.end : op.end - op.start;
+  if (span <= 0) span += Math.PI * 2;
+  const steps = 16;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const angle = op.acw ? op.start - span * t : op.start + span * t;
+    addAngle(angle);
+  }
+  return { minX, maxX };
+}
+
+function getOpVisualCanvasXBounds(op, s, halfStroke, italicsMode) {
+  if (op.type === 'line') {
+    const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
+    const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
+    return {
+      minX: Math.min(p1.x, p2.x) - halfStroke,
+      maxX: Math.max(p1.x, p2.x) + halfStroke,
+    };
+  }
+  if (op.type === 'point') {
+    const radius = halfStroke;
+    const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
+    return { minX: c.x - radius, maxX: c.x + radius };
+  }
+  if (op.type === 'arc') {
+    return getArcCanvasXBounds(op, s, halfStroke, italicsMode);
+  }
+  return null;
+}
+
+function shiftDrawOpCanvasX(op, shiftCanvas, s) {
+  if (shiftCanvas === 0) return;
+  if (op.type === 'line') {
+    op.from.xi += shiftCanvas / s;
+    op.to.xi += shiftCanvas / s;
+  } else if (op.type === 'point') {
+    op.xi += shiftCanvas / s;
+  } else if (op.type === 'arc') {
+    op.cx += shiftCanvas;
+  }
+}
+
+function shiftGridAnchorX(anchor, shiftCanvas, s) {
+  if (shiftCanvas === 0) return;
+  anchor.xi += shiftCanvas / s;
+}
+
+function applyRowCentering(ops, pipes, starts, pad, gridX, s, layoutOptions = {}) {
+  const italicsMode = layoutOptions.italics !== false;
+  const thickness = layoutOptions.thickness ?? s / 10;
+  const strokeLayer = layoutOptions.strokeLayer ?? 'outline';
+  const multiplier = strokeLayer === 'main'
+    ? THICKNESS_MULTIPLIERS.main
+    : THICKNESS_MULTIPLIERS.outline;
+  const halfStroke = thickness * multiplier / 2;
+  const maxX = gridX - pad.right;
+  const drawableCenterCanvas = (pad.left + maxX) * s / 2;
+  const rowBounds = new Map();
+
+  for (const op of ops) {
+    const bounds = getOpVisualCanvasXBounds(op, s, halfStroke, italicsMode);
+    if (!bounds) continue;
+    if (!rowBounds.has(op.rowKey)) rowBounds.set(op.rowKey, { minX: Infinity, maxX: -Infinity });
+    const row = rowBounds.get(op.rowKey);
+    row.minX = Math.min(row.minX, bounds.minX);
+    row.maxX = Math.max(row.maxX, bounds.maxX);
+  }
 
   const rowShifts = new Map();
   for (const [rowKey, bounds] of rowBounds) {
-    const drawableCenter = (pad.left + maxX) / 2;
-    const contentCenter = (bounds.minXi + bounds.maxXi) / 2;
-    rowShifts.set(rowKey, Math.round(drawableCenter - contentCenter));
+    const contentCenterCanvas = (bounds.minX + bounds.maxX) / 2;
+    rowShifts.set(rowKey, drawableCenterCanvas - contentCenterCanvas);
   }
-
-  const shiftGridX = (rowKey, xi) => xi + (rowShifts.get(rowKey) || 0);
 
   for (const op of ops) {
-    const shift = rowShifts.get(op.rowKey) || 0;
-    if (shift === 0) continue;
-    if (op.type === 'line') {
-      op.from.xi += shift;
-      op.to.xi += shift;
-    } else if (op.type === 'point') {
-      op.xi += shift;
-    } else if (op.type === 'arc') {
-      op.cx += shift * s;
-    }
+    shiftDrawOpCanvasX(op, rowShifts.get(op.rowKey) || 0, s);
   }
   for (const anchor of pipes) {
-    anchor.xi = shiftGridX(anchor.rowKey, anchor.xi);
+    shiftGridAnchorX(anchor, rowShifts.get(anchor.rowKey) || 0, s);
   }
   for (const anchor of starts) {
-    anchor.xi = shiftGridX(anchor.rowKey, anchor.xi);
+    shiftGridAnchorX(anchor, rowShifts.get(anchor.rowKey) || 0, s);
   }
 }
 
@@ -749,7 +799,7 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
   }
 
   if (centerMode) {
-    applyRowCentering(ops, pipes, starts, pad, gridX, s);
+    applyRowCentering(ops, pipes, starts, pad, gridX, s, layoutOptions);
   }
 
   return { ops, visited, pipes, starts };
@@ -995,7 +1045,13 @@ async function drawCardPreview(canvas, cardData, isIndividualView = false) {
     const s = normalizeDrawingSize(cardData.options?.size);
     const pad = { left: 3, top: 3, right: 3 };
     const gridX = Math.floor(canvas.width / s);
-    const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor, { center: centerMode });
+    const thickness = s / 10;
+    const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor, {
+      center: centerMode,
+      italics: italicsMode,
+      thickness,
+      strokeLayer: 'outline',
+    });
     
     // Calculate text color (62% blend between white/black and background)
     const rgb = hexToRgb(primaryColor);
@@ -1004,7 +1060,6 @@ async function drawCardPreview(canvas, cardData, isIndividualView = false) {
     const textColor = blendColors(baseColor, primaryColor, 0.62);
     
     // Draw all operations - two passes: first outlines, then insides
-    const thickness = s / 10;
     
     if (animateMode) {
       // Use animation

@@ -537,14 +537,17 @@ function updateEditorPreview() {
     const pad = { left: 3, top: 3, right: 3 };
     const gridX = Math.floor(canvas.width / s);
     const centerMode = document.getElementById('editorCenter')?.checked === true;
-    const { ops, visited, pipes, starts } = buildOps(coloredItems, s, pad, gridX, bgColor, { center: centerMode });
-    
-    const thickness = s / 10;
-    
     const italicsCheckbox = document.getElementById('editorItalics');
     const italicsMode = italicsCheckbox ? italicsCheckbox.checked : false;
     const calligraphyCheckbox = document.getElementById('editorCalligraphy');
     const calligraphyMode = calligraphyCheckbox ? calligraphyCheckbox.checked : false;
+    const thickness = s / 10;
+    const { ops, visited, pipes, starts } = buildOps(coloredItems, s, pad, gridX, bgColor, {
+      center: centerMode,
+      italics: italicsMode,
+      thickness,
+      strokeLayer: 'main',
+    });
     
     // Always draw static preview in editor mode
     drawGridPoints(ctx, s, canvas.width, canvas.height, thickness, italicsMode);
