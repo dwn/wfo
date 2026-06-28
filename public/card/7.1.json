@@ -1,15 +1,16 @@
 {
   "options": {
-    "size": 40,
+    "size": 36,
     "backgroundColor": "#808080",
-    "italics": true,
+    "italics": false,
     "animate": false,
     "svgColor": false,
     "position": {
       "row": 3,
       "col": 1
     },
-    "center": true
+    "center": true,
+    "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
   "input": "2"

@@ -451,6 +451,7 @@ function openCardEditor(setNumber, order, cardData) {
   document.getElementById('animatePreview').checked = cardData.options?.animate === true;
   document.getElementById('editorCalligraphy').checked = cardData.options?.calligraphy === true;
   document.getElementById('editorCenter').checked = cardData.options?.center === true;
+  document.getElementById('editorCenterVertical').checked = cardData.options?.centerVertical === true;
   document.getElementById('editorSvgColor').checked = cardData.options?.svgColor === true;
   document.getElementById('editorSvg').value = cardData.options?.svgBackground || '';
   
@@ -537,6 +538,7 @@ function updateEditorPreview() {
     const pad = { left: 3, top: 3, right: 3 };
     const gridX = Math.floor(canvas.width / s);
     const centerMode = document.getElementById('editorCenter')?.checked === true;
+    const centerVerticalMode = document.getElementById('editorCenterVertical')?.checked === true;
     const italicsCheckbox = document.getElementById('editorItalics');
     const italicsMode = italicsCheckbox ? italicsCheckbox.checked : false;
     const calligraphyCheckbox = document.getElementById('editorCalligraphy');
@@ -544,6 +546,8 @@ function updateEditorPreview() {
     const thickness = s / 10;
     const { ops, visited, pipes, starts } = buildOps(coloredItems, s, pad, gridX, bgColor, {
       center: centerMode,
+      centerVertical: centerVerticalMode,
+      canvasHeight: canvas.height,
       italics: italicsMode,
       thickness,
       strokeLayer: 'main',
@@ -574,6 +578,7 @@ async function saveCard() {
     const animate = document.getElementById('animatePreview').checked;
     const calligraphy = document.getElementById('editorCalligraphy').checked;
     const center = document.getElementById('editorCenter').checked;
+    const centerVertical = document.getElementById('editorCenterVertical').checked;
     const svgColor = document.getElementById('editorSvgColor').checked;
     const svgBackground = document.getElementById('editorSvg').value;
     const ruleEl = document.getElementById('editorRule');
@@ -595,6 +600,7 @@ async function saveCard() {
     cardDataObj.options.animate = animate;
     cardDataObj.options.calligraphy = calligraphy;
     cardDataObj.options.center = center;
+    cardDataObj.options.centerVertical = centerVertical;
     cardDataObj.options.svgColor = svgColor;
     if (svgBackground) {
       cardDataObj.options.svgBackground = svgBackground;
@@ -1046,6 +1052,7 @@ document.getElementById('editorBackground2').addEventListener('change', updateEd
 document.getElementById('editorItalics').addEventListener('change', updateEditorPreview);
 document.getElementById('editorCalligraphy').addEventListener('change', updateEditorPreview);
 document.getElementById('editorCenter').addEventListener('change', updateEditorPreview);
+document.getElementById('editorCenterVertical').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvgColor').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvg').addEventListener('input', updateEditorPreview);
 document.getElementById('editorRuleFocusBtn').addEventListener('click', toggleRuleFocus);

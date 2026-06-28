@@ -11,7 +11,8 @@
       "col": 2
     },
     "calligraphy": false,
-    "center": true
+    "center": true,
+    "centerVertical": true
   },
   "rule": "{use_rule 0.2}",
   "input": "t\n^\n*"

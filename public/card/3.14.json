@@ -2,7 +2,7 @@
   "options": {
     "size": 30,
     "backgroundColor": "#6600CC",
-    "italics": true,
+    "italics": false,
     "animate": false,
     "svgColor": true,
     "position": {
@@ -10,7 +10,8 @@
       "col": 1
     },
     "svgBackground": "{use_svg callisto.svg}",
-    "center": true
+    "center": true,
+    "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
   "input": "Ca"

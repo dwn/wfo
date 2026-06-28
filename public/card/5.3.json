@@ -2,7 +2,7 @@
   "options": {
     "size": 18,
     "backgroundColor": "#0060FF",
-    "italics": true,
+    "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
@@ -11,7 +11,8 @@
       "col": 2
     },
     "calligraphy": false,
-    "center": true
+    "center": true,
+    "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
   "input": "e-⌇.0005"

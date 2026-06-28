@@ -2,7 +2,7 @@
   "options": {
     "size": 30,
     "backgroundColor": "#FFF200",
-    "italics": true,
+    "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": "{use_svg saturn.svg}",
@@ -10,7 +10,8 @@
       "row": 3,
       "col": 3
     },
-    "center": true
+    "center": true,
+    "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
   "input": "Sa"

@@ -637,53 +637,75 @@ function isDrawableSegmentStart(coloredItems, index) {
   return false;
 }
 
-function getArcCanvasXBounds(op, s, halfStroke, italicsMode) {
+function getArcCanvasBounds(op, s, halfStroke, italicsMode) {
   const center = applyItalicsTransform({ x: op.cx, y: op.cy }, s, italicsMode);
   let minX = Infinity;
   let maxX = -Infinity;
-  const includeX = (x) => {
+  let minY = Infinity;
+  let maxY = -Infinity;
+  const includeAngle = (angle) => {
+    const x = center.x + op.rx * Math.cos(angle);
+    const y = center.y + op.ry * Math.sin(angle);
     minX = Math.min(minX, x - halfStroke);
     maxX = Math.max(maxX, x + halfStroke);
+    minY = Math.min(minY, y - halfStroke);
+    maxY = Math.max(maxY, y + halfStroke);
   };
 
   if (op.start === 0 && op.end === Math.PI * 2) {
-    includeX(center.x - op.rx);
-    includeX(center.x + op.rx);
-    return { minX, maxX };
+    includeAngle(0);
+    includeAngle(Math.PI / 2);
+    includeAngle(Math.PI);
+    includeAngle(Math.PI * 1.5);
+    return { minX, maxX, minY, maxY };
   }
 
-  const addAngle = (angle) => includeX(center.x + op.rx * Math.cos(angle));
-  addAngle(op.start);
-  addAngle(op.end);
+  includeAngle(op.start);
+  includeAngle(op.end);
   let span = op.acw ? op.start - op.end : op.end - op.start;
   if (span <= 0) span += Math.PI * 2;
   const steps = 16;
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
     const angle = op.acw ? op.start - span * t : op.start + span * t;
-    addAngle(angle);
+    includeAngle(angle);
   }
-  return { minX, maxX };
+  return { minX, maxX, minY, maxY };
 }
 
-function getOpVisualCanvasXBounds(op, s, halfStroke, italicsMode) {
+function getOpVisualCanvasBounds(op, s, halfStroke, italicsMode) {
   if (op.type === 'line') {
     const p1 = applyItalicsTransform(toCanvas(op.from, s), s, italicsMode);
     const p2 = applyItalicsTransform(toCanvas(op.to, s), s, italicsMode);
     return {
       minX: Math.min(p1.x, p2.x) - halfStroke,
       maxX: Math.max(p1.x, p2.x) + halfStroke,
+      minY: Math.min(p1.y, p2.y) - halfStroke,
+      maxY: Math.max(p1.y, p2.y) + halfStroke,
     };
   }
   if (op.type === 'point') {
-    const radius = halfStroke;
     const c = applyItalicsTransform(toCanvas(op, s), s, italicsMode);
-    return { minX: c.x - radius, maxX: c.x + radius };
+    return {
+      minX: c.x - halfStroke,
+      maxX: c.x + halfStroke,
+      minY: c.y - halfStroke,
+      maxY: c.y + halfStroke,
+    };
   }
   if (op.type === 'arc') {
-    return getArcCanvasXBounds(op, s, halfStroke, italicsMode);
+    return getArcCanvasBounds(op, s, halfStroke, italicsMode);
   }
   return null;
+}
+
+function getLayoutHalfStroke(layoutOptions, s) {
+  const thickness = layoutOptions.thickness ?? s / 10;
+  const strokeLayer = layoutOptions.strokeLayer ?? 'outline';
+  const multiplier = strokeLayer === 'main'
+    ? THICKNESS_MULTIPLIERS.main
+    : THICKNESS_MULTIPLIERS.outline;
+  return thickness * multiplier / 2;
 }
 
 function shiftDrawOpCanvasX(op, shiftCanvas, s) {
@@ -698,25 +720,37 @@ function shiftDrawOpCanvasX(op, shiftCanvas, s) {
   }
 }
 
+function shiftDrawOpCanvasY(op, shiftCanvas, s) {
+  if (shiftCanvas === 0) return;
+  if (op.type === 'line') {
+    op.from.yi += shiftCanvas / s;
+    op.to.yi += shiftCanvas / s;
+  } else if (op.type === 'point') {
+    op.yi += shiftCanvas / s;
+  } else if (op.type === 'arc') {
+    op.cy += shiftCanvas;
+  }
+}
+
 function shiftGridAnchorX(anchor, shiftCanvas, s) {
   if (shiftCanvas === 0) return;
   anchor.xi += shiftCanvas / s;
 }
 
+function shiftGridAnchorY(anchor, shiftCanvas, s) {
+  if (shiftCanvas === 0) return;
+  anchor.yi += shiftCanvas / s;
+}
+
 function applyRowCentering(ops, pipes, starts, pad, gridX, s, layoutOptions = {}) {
   const italicsMode = layoutOptions.italics !== false;
-  const thickness = layoutOptions.thickness ?? s / 10;
-  const strokeLayer = layoutOptions.strokeLayer ?? 'outline';
-  const multiplier = strokeLayer === 'main'
-    ? THICKNESS_MULTIPLIERS.main
-    : THICKNESS_MULTIPLIERS.outline;
-  const halfStroke = thickness * multiplier / 2;
+  const halfStroke = getLayoutHalfStroke(layoutOptions, s);
   const maxX = gridX - pad.right;
   const drawableCenterCanvas = (pad.left + maxX) * s / 2;
   const rowBounds = new Map();
 
   for (const op of ops) {
-    const bounds = getOpVisualCanvasXBounds(op, s, halfStroke, italicsMode);
+    const bounds = getOpVisualCanvasBounds(op, s, halfStroke, italicsMode);
     if (!bounds) continue;
     if (!rowBounds.has(op.rowKey)) rowBounds.set(op.rowKey, { minX: Infinity, maxX: -Infinity });
     const row = rowBounds.get(op.rowKey);
@@ -741,9 +775,40 @@ function applyRowCentering(ops, pipes, starts, pad, gridX, s, layoutOptions = {}
   }
 }
 
+function applyVerticalCentering(ops, pipes, starts, pad, canvasHeight, s, layoutOptions = {}) {
+  const italicsMode = layoutOptions.italics !== false;
+  const halfStroke = getLayoutHalfStroke(layoutOptions, s);
+  const drawableTop = pad.top * s;
+  const drawableBottom = canvasHeight - pad.top * s;
+  const drawableCenterCanvas = (drawableTop + drawableBottom) / 2;
+  let minY = Infinity;
+  let maxY = -Infinity;
+
+  for (const op of ops) {
+    const bounds = getOpVisualCanvasBounds(op, s, halfStroke, italicsMode);
+    if (!bounds) continue;
+    minY = Math.min(minY, bounds.minY);
+    maxY = Math.max(maxY, bounds.maxY);
+  }
+
+  if (!Number.isFinite(minY) || !Number.isFinite(maxY)) return;
+
+  const shiftCanvas = drawableCenterCanvas - (minY + maxY) / 2;
+  for (const op of ops) {
+    shiftDrawOpCanvasY(op, shiftCanvas, s);
+  }
+  for (const anchor of pipes) {
+    shiftGridAnchorY(anchor, shiftCanvas, s);
+  }
+  for (const anchor of starts) {
+    shiftGridAnchorY(anchor, shiftCanvas, s);
+  }
+}
+
 // Build drawing operations from parsed bytes  
 function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.floor(600/s), backgroundColor='#808080', layoutOptions={}) {
-  const centerMode = layoutOptions.center === true;
+  const centerHorizontal = layoutOptions.center === true;
+  const centerVertical = layoutOptions.centerVertical === true;
   const ROW_TOP_OVERHANG = 1;
   const rowTopBase = pad.top - ROW_TOP_OVERHANG;
   const snapToLineTop = (yi) => rowTopBase + 8 * Math.floor((yi - rowTopBase) / 8);
@@ -798,8 +863,11 @@ function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.fl
     yi = state.yi;
   }
 
-  if (centerMode) {
+  if (centerHorizontal) {
     applyRowCentering(ops, pipes, starts, pad, gridX, s, layoutOptions);
+  }
+  if (centerVertical && layoutOptions.canvasHeight) {
+    applyVerticalCentering(ops, pipes, starts, pad, layoutOptions.canvasHeight, s, layoutOptions);
   }
 
   return { ops, visited, pipes, starts };
@@ -1040,6 +1108,7 @@ async function drawCardPreview(canvas, cardData, isIndividualView = false) {
     const animateMode = isIndividualView && cardData.options?.animate === true;
     
     const centerMode = cardData.options?.center === true;
+    const centerVerticalMode = cardData.options?.centerVertical === true;
     
     // Build drawing operations
     const s = normalizeDrawingSize(cardData.options?.size);
@@ -1048,6 +1117,8 @@ async function drawCardPreview(canvas, cardData, isIndividualView = false) {
     const thickness = s / 10;
     const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor, {
       center: centerMode,
+      centerVertical: centerVerticalMode,
+      canvasHeight: canvas.height,
       italics: italicsMode,
       thickness,
       strokeLayer: 'outline',

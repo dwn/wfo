@@ -2,7 +2,7 @@
   "options": {
     "size": 30,
     "backgroundColor": "#36FF00",
-    "italics": true,
+    "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
@@ -10,7 +10,8 @@
       "row": 5,
       "col": 2
     },
-    "center": true
+    "center": true,
+    "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
   "input": "B"
