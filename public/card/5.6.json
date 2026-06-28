@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 5,
+    "size": 18,
     "backgroundColor": "#A6FF00",
     "italics": true,
     "animate": false,
@@ -9,7 +9,8 @@
     "position": {
       "row": 5,
       "col": 3
-    }
+    },
+    "center": true
   },
   "rule": "{use_rule 0.1}",
   "input": ""

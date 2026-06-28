@@ -10,7 +10,8 @@
       "row": 2,
       "col": 1
     },
-    "calligraphy": false
+    "calligraphy": false,
+    "center": true
   },
   "rule": "{use_rule 0.1}",
   "input": "Ve"

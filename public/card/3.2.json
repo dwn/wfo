@@ -9,7 +9,8 @@
     "position": {
       "row": 3,
       "col": 1
-    }
+    },
+    "center": true
   },
   "rule": "{use_rule 0.1}",
   "input": "Ju"

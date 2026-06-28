@@ -9,7 +9,8 @@
     "position": {
       "row": 2,
       "col": 3
-    }
+    },
+    "center": true
   },
   "rule": "{use_rule 0.1}",
   "input": "Ni\nPd\nPt"

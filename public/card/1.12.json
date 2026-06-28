@@ -11,7 +11,7 @@
       "col": 1
     },
     "calligraphy": false,
-    "center": false
+    "center": true
   },
   "rule": "{use_rule 0.2}",
   "input": ""

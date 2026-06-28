@@ -9,7 +9,8 @@
       "row": 1,
       "col": 1
     },
-    "svgBackground": "{use_svg io.svg}"
+    "svgBackground": "{use_svg io.svg}",
+    "center": true
   },
   "rule": "{use_rule 0.1}\n          ",
   "input": "Io"

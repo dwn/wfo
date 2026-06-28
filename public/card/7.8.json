@@ -9,7 +9,8 @@
       "row": 1,
       "col": 2
     },
-    "backgroundColor2": "#4B0080"
+    "backgroundColor2": "#4B0080",
+    "center": true
   },
   "rule": "{use_rule 0.1}",
   "input": "7⌇EV"

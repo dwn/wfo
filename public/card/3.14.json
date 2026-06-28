@@ -9,7 +9,8 @@
       "row": 5,
       "col": 1
     },
-    "svgBackground": "{use_svg callisto.svg}"
+    "svgBackground": "{use_svg callisto.svg}",
+    "center": true
   },
   "rule": "{use_rule 0.1}",
   "input": "Ca"

@@ -9,7 +9,8 @@
     "position": {
       "row": 1,
       "col": 2
-    }
+    },
+    "center": true
   },
   "rule": "{use_rule 0.1}",
   "input": "Fe\nRu\nOs"
