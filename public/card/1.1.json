@@ -10,7 +10,8 @@
       "row": 3,
       "col": 3
     },
-    "calligraphy": false
+    "calligraphy": false,
+    "center": true
   },
   "rule": "{use_rule 0.2}",
   "input": "p\ni\nJ"

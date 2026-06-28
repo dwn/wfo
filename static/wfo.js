@@ -450,6 +450,7 @@ function openCardEditor(setNumber, order, cardData) {
   document.getElementById('editorItalics').checked = cardData.options?.italics !== false;
   document.getElementById('animatePreview').checked = cardData.options?.animate === true;
   document.getElementById('editorCalligraphy').checked = cardData.options?.calligraphy === true;
+  document.getElementById('editorCenter').checked = cardData.options?.center === true;
   document.getElementById('editorSvgColor').checked = cardData.options?.svgColor === true;
   document.getElementById('editorSvg').value = cardData.options?.svgBackground || '';
   
@@ -535,7 +536,8 @@ function updateEditorPreview() {
     const s = normalizeDrawingSize(document.getElementById('editorSize')?.value);
     const pad = { left: 3, top: 3, right: 3 };
     const gridX = Math.floor(canvas.width / s);
-    const { ops, visited, pipes, starts } = buildOps(coloredItems, s, pad, gridX, bgColor);
+    const centerMode = document.getElementById('editorCenter')?.checked === true;
+    const { ops, visited, pipes, starts } = buildOps(coloredItems, s, pad, gridX, bgColor, { center: centerMode });
     
     const thickness = s / 10;
     
@@ -568,6 +570,7 @@ async function saveCard() {
     const italics = document.getElementById('editorItalics').checked;
     const animate = document.getElementById('animatePreview').checked;
     const calligraphy = document.getElementById('editorCalligraphy').checked;
+    const center = document.getElementById('editorCenter').checked;
     const svgColor = document.getElementById('editorSvgColor').checked;
     const svgBackground = document.getElementById('editorSvg').value;
     const ruleEl = document.getElementById('editorRule');
@@ -588,6 +591,7 @@ async function saveCard() {
     cardDataObj.options.italics = italics;
     cardDataObj.options.animate = animate;
     cardDataObj.options.calligraphy = calligraphy;
+    cardDataObj.options.center = center;
     cardDataObj.options.svgColor = svgColor;
     if (svgBackground) {
       cardDataObj.options.svgBackground = svgBackground;
@@ -1038,6 +1042,7 @@ document.getElementById('editorBackground').addEventListener('change', updateEdi
 document.getElementById('editorBackground2').addEventListener('change', updateEditorPreview);
 document.getElementById('editorItalics').addEventListener('change', updateEditorPreview);
 document.getElementById('editorCalligraphy').addEventListener('change', updateEditorPreview);
+document.getElementById('editorCenter').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvgColor').addEventListener('change', updateEditorPreview);
 document.getElementById('editorSvg').addEventListener('input', updateEditorPreview);
 document.getElementById('editorRuleFocusBtn').addEventListener('click', toggleRuleFocus);

@@ -464,110 +464,294 @@ function parseBytes(str) {
   return out;
 }
 
+function textRowKey(yi, rowTopBase) {
+  return rowTopBase + 8 * Math.floor((yi - rowTopBase) / 8);
+}
+
+function nextTextRowYi(yi, rowTopBase) {
+  return rowTopBase + 8 * (Math.floor((yi - rowTopBase) / 8) + 1);
+}
+
+function updateHorizontalBounds(state, xi, arcMinGrid, arcMaxGrid) {
+  state.minXi = Math.min(state.minXi, xi);
+  state.maxXi = Math.max(state.maxXi, xi);
+  if (arcMinGrid != null) state.minXi = Math.min(state.minXi, arcMinGrid);
+  if (arcMaxGrid != null) state.maxXi = Math.max(state.maxXi, arcMaxGrid);
+}
+
+function processDrawItem(item, state, s, rowTopBase, snapToLineTop, textColor, mode, out) {
+  if (item.startAnchor) {
+    updateHorizontalBounds(state, state.xi);
+    if (mode === 'build') {
+      out.starts.push({ xi: state.xi, yi: state.yi, rowKey: state.rowKey });
+    }
+    return true;
+  }
+  if (item.text && item.byte === undefined) return false;
+
+  const b = item.byte;
+  const a = (b >> 7) & 1;
+  const xxx = (b >> 4) & 0b111;
+  const bitB = (b >> 3) & 1;
+  const yyy = b & 0b111;
+  const isZero = (xxx === 0 && yyy === 0);
+  const ab = (a << 1) | bitB;
+
+  if (isZero) {
+    if (ab === 0b00) { state.yi = snapToLineTop(state.yi); }
+    else if (ab === 0b01) {
+      updateHorizontalBounds(state, state.xi);
+      if (mode === 'build') {
+        out.ops.push({ type: 'point', xi: state.xi, yi: state.yi, color: textColor, rowKey: state.rowKey });
+      }
+    } else if (ab === 0b10) {
+      const cx = toCanvas({ xi: state.xi, yi: state.yi }, s).x;
+      const rx = s * 0.5;
+      updateHorizontalBounds(state, state.xi, Math.floor((cx - rx) / s), Math.ceil((cx + rx) / s));
+      if (mode === 'build') {
+        out.ops.push({
+          type: 'arc',
+          cx,
+          cy: toCanvas({ xi: state.xi, yi: state.yi }, s).y,
+          rx,
+          ry: s * 0.5,
+          start: 0,
+          end: Math.PI * 2,
+          acw: false,
+          color: textColor,
+          rowKey: state.rowKey,
+        });
+      }
+    }
+    if (mode === 'build') out.visited.push({ xi: state.xi, yi: state.yi });
+    return true;
+  }
+
+  const dx = triBitsToSigned(xxx);
+  const dy = triBitsToSigned(yyy);
+  const from = { xi: state.xi, yi: state.yi };
+  const to = { xi: state.xi + dx, yi: state.yi + dy };
+
+  if (ab === 0b11) {
+    state.xi = to.xi;
+    state.yi = to.yi;
+    updateHorizontalBounds(state, state.xi);
+    if (mode === 'build') out.visited.push({ xi: state.xi, yi: state.yi });
+    return true;
+  }
+
+  let arcMinGrid = null;
+  let arcMaxGrid = null;
+  if (ab === 0b00) {
+    updateHorizontalBounds(state, from.xi, null, null);
+    updateHorizontalBounds(state, to.xi, null, null);
+    if (mode === 'build') {
+      out.ops.push({ type: 'line', from, to, color: textColor, rowKey: state.rowKey });
+    }
+  } else {
+    const p0 = toCanvas(from, s);
+    const p1 = toCanvas(to, s);
+    let cx, cy, rx, ry, a0, a1;
+    if (dx !== 0 && dy !== 0) {
+      rx = Math.abs(dx) * s;
+      ry = Math.abs(dy) * s;
+      if (ab === 0b01) { cx = p0.x; cy = p0.y + dy * s; }
+      else { cx = p0.x + dx * s; cy = p0.y; }
+      a0 = angleOnEllipse(cx, cy, rx, ry, p0.x, p0.y);
+      a1 = angleOnEllipse(cx, cy, rx, ry, p1.x, p1.y);
+      a0 = normAngle(a0);
+      a1 = normAngle(a1);
+      const acw = anticlockwiseForShortest(a0, a1);
+      arcMinGrid = Math.floor((cx - rx) / s);
+      arcMaxGrid = Math.ceil((cx + rx) / s);
+      updateHorizontalBounds(state, from.xi, arcMinGrid, arcMaxGrid);
+      updateHorizontalBounds(state, to.xi, arcMinGrid, arcMaxGrid);
+      if (mode === 'build') {
+        out.ops.push({ type: 'arc', cx, cy, rx, ry, start: a0, end: a1, acw, color: textColor, rowKey: state.rowKey });
+      }
+    } else if (dx !== 0 || dy !== 0) {
+      let flipSemi = false;
+      if (dy === 0) {
+        rx = ry = Math.abs(dx) * s * 0.5;
+        cx = p0.x + dx * s * 0.5;
+        cy = p0.y;
+        flipSemi = ab === 0b01;
+      } else {
+        rx = ry = Math.abs(dy) * s * 0.5;
+        cy = p0.y + dy * s * 0.5;
+        cx = p0.x;
+        flipSemi = ab === 0b10;
+      }
+      a0 = angleOnEllipse(cx, cy, rx, ry, p0.x, p0.y);
+      a1 = angleOnEllipse(cx, cy, rx, ry, p1.x, p1.y);
+      a0 = normAngle(a0);
+      a1 = normAngle(a1);
+      let acw = anticlockwiseForShortest(a0, a1);
+      if (flipSemi) acw = !acw;
+      arcMinGrid = Math.floor((cx - rx) / s);
+      arcMaxGrid = Math.ceil((cx + rx) / s);
+      updateHorizontalBounds(state, from.xi, arcMinGrid, arcMaxGrid);
+      updateHorizontalBounds(state, to.xi, arcMinGrid, arcMaxGrid);
+      if (mode === 'build') {
+        out.ops.push({ type: 'arc', cx, cy, rx, ry, start: a0, end: a1, acw, color: textColor, rowKey: state.rowKey });
+      }
+    }
+  }
+
+  state.xi = to.xi;
+  state.yi = to.yi;
+  if (mode === 'build') out.visited.push({ xi: state.xi, yi: state.yi });
+  return true;
+}
+
+function measureGlyphSegment(coloredItems, startIdx, startXi, startYi, s, rowTopBase, snapToLineTop, textColor) {
+  const state = {
+    xi: startXi,
+    yi: startYi,
+    minXi: startXi,
+    maxXi: startXi,
+    rowKey: textRowKey(startYi, rowTopBase),
+  };
+  let i = startIdx;
+  while (i < coloredItems.length) {
+    const item = coloredItems[i];
+    if (item.newline || item.pipe) break;
+    processDrawItem(item, state, s, rowTopBase, snapToLineTop, textColor, 'measure', null);
+    i++;
+  }
+  return state;
+}
+
+function isDrawableSegmentStart(coloredItems, index) {
+  while (index < coloredItems.length) {
+    const item = coloredItems[index];
+    if (item.newline || item.pipe) return false;
+    if (item.startAnchor) return true;
+    if (item.text && item.byte === undefined) {
+      index++;
+      continue;
+    }
+    if (item.byte !== undefined) return true;
+    index++;
+  }
+  return false;
+}
+
+function applyRowCentering(ops, pipes, starts, pad, gridX, s) {
+  const maxX = gridX - pad.right;
+  const rowBounds = new Map();
+
+  const includeBounds = (rowKey, minXi, maxXi) => {
+    if (rowKey == null) return;
+    if (!rowBounds.has(rowKey)) rowBounds.set(rowKey, { minXi: Infinity, maxXi: -Infinity });
+    const bounds = rowBounds.get(rowKey);
+    bounds.minXi = Math.min(bounds.minXi, minXi);
+    bounds.maxXi = Math.max(bounds.maxXi, maxXi);
+  };
+
+  for (const op of ops) {
+    if (op.type === 'line') {
+      includeBounds(op.rowKey, op.from.xi, op.from.xi);
+      includeBounds(op.rowKey, op.to.xi, op.to.xi);
+    } else if (op.type === 'point') {
+      includeBounds(op.rowKey, op.xi, op.xi);
+    } else if (op.type === 'arc') {
+      includeBounds(op.rowKey, Math.floor((op.cx - op.rx) / s), Math.ceil((op.cx + op.rx) / s));
+    }
+  }
+  for (const anchor of pipes) includeBounds(anchor.rowKey, anchor.xi, anchor.xi);
+  for (const anchor of starts) includeBounds(anchor.rowKey, anchor.xi, anchor.xi);
+
+  const rowShifts = new Map();
+  for (const [rowKey, bounds] of rowBounds) {
+    const drawableCenter = (pad.left + maxX) / 2;
+    const contentCenter = (bounds.minXi + bounds.maxXi) / 2;
+    rowShifts.set(rowKey, Math.round(drawableCenter - contentCenter));
+  }
+
+  const shiftGridX = (rowKey, xi) => xi + (rowShifts.get(rowKey) || 0);
+
+  for (const op of ops) {
+    const shift = rowShifts.get(op.rowKey) || 0;
+    if (shift === 0) continue;
+    if (op.type === 'line') {
+      op.from.xi += shift;
+      op.to.xi += shift;
+    } else if (op.type === 'point') {
+      op.xi += shift;
+    } else if (op.type === 'arc') {
+      op.cx += shift * s;
+    }
+  }
+  for (const anchor of pipes) {
+    anchor.xi = shiftGridX(anchor.rowKey, anchor.xi);
+  }
+  for (const anchor of starts) {
+    anchor.xi = shiftGridX(anchor.rowKey, anchor.xi);
+  }
+}
+
 // Build drawing operations from parsed bytes  
-function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.floor(600/s), backgroundColor='#808080') {
+function buildOps(coloredItems, s=8, pad={left:1, top:1, right:1}, gridX=Math.floor(600/s), backgroundColor='#808080', layoutOptions={}) {
+  const centerMode = layoutOptions.center === true;
   const ROW_TOP_OVERHANG = 1;
   const rowTopBase = pad.top - ROW_TOP_OVERHANG;
   const snapToLineTop = (yi) => rowTopBase + 8 * Math.floor((yi - rowTopBase) / 8);
+  const maxX = gridX - pad.right;
 
-  let xi = pad.left, yi = rowTopBase;
-  const ops = []; const visited = [{xi, yi}]; const pipes = []; const starts = [];
-  
-  const preMoveWrap = (xi, yi, dx) => {
-    const maxX = gridX - pad.right;
-    if (dx > 0 && (xi + dx) > maxX) { xi = pad.left; yi += 8; }
-    return { xi, yi };
-  };
-  
-  for (const item of coloredItems) {
+  const rgb = hexToRgb(backgroundColor);
+  const luminosity = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  const textColor = luminosity > 0.5 ? '#000000' : '#ffffff';
+
+  let xi = pad.left;
+  let yi = rowTopBase;
+  let rowStartYi = yi;
+  const ops = [];
+  const visited = [{ xi, yi }];
+  const pipes = [];
+  const starts = [];
+  const out = { ops, visited, pipes, starts };
+  let pendingGlyphFit = isDrawableSegmentStart(coloredItems, 0);
+
+  for (let i = 0; i < coloredItems.length; i++) {
+    const item = coloredItems[i];
+
     if (item.newline) {
-      yi = rowTopBase + 8 * (Math.floor((yi - rowTopBase) / 8) + 1);
+      yi = nextTextRowYi(yi, rowTopBase);
       xi = pad.left;
-      visited.push({xi, yi});
+      rowStartYi = yi;
+      visited.push({ xi, yi });
+      pendingGlyphFit = isDrawableSegmentStart(coloredItems, i + 1);
       continue;
     }
-    if (item.startAnchor) {
-      starts.push({xi, yi});
-      continue;
-    }
+
     if (item.pipe) {
-      pipes.push({xi, yi});
+      pipes.push({ xi, yi, rowKey: rowStartYi });
+      pendingGlyphFit = isDrawableSegmentStart(coloredItems, i + 1);
       continue;
     }
-    if (item.text && item.byte === undefined) continue;
-    
-    const b = item.byte;
-    const rgb = hexToRgb(backgroundColor);
-    const luminosity = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
-    const textColor = luminosity > 0.5 ? '#000000' : '#ffffff';
-    
-    const a = (b >> 7) & 1;
-    const xxx = (b >> 4) & 0b111;
-    const bitB = (b >> 3) & 1;
-    const yyy = b & 0b111;
-    const isZero = (xxx === 0 && yyy === 0);
-    const ab = (a << 1) | bitB;
-    const isInvisibleMove = ab === 0b11;
-    
-    if (isZero) {
-      if (ab === 0b00) { yi = snapToLineTop(yi); }
-      else if (ab === 0b01) { ops.push({type: 'point', xi, yi, color: textColor}); }
-      else if (ab === 0b10) { ops.push({type: 'arc', cx: toCanvas({xi, yi}, s).x, cy: toCanvas({xi, yi}, s).y, rx: s*0.5, ry: s*0.5, start: 0, end: Math.PI*2, acw: false, color: textColor}); }
-      visited.push({xi, yi});
-      continue;
-    }
-    
-    const dx = triBitsToSigned(xxx), dy = triBitsToSigned(yyy);
-    ({xi, yi} = preMoveWrap(xi, yi, Math.max(0, dx)));
-    const from = {xi, yi};
-    const to = {xi: xi + dx, yi: yi + dy};
-    
-    if (ab === 0b11) {
-      xi = to.xi; yi = to.yi;
-      visited.push({xi, yi});
-      continue;
-    }
-    
-    if (ab === 0b00) {
-      ops.push({type: 'line', from, to, color: textColor});
-    } else {
-      const p0 = toCanvas(from, s), p1 = toCanvas(to, s);
-      let cx, cy, rx, ry, a0, a1;
-      if (dx !== 0 && dy !== 0) {
-        rx = Math.abs(dx)*s; ry = Math.abs(dy)*s;
-        if (ab === 0b01) { cx = p0.x; cy = p0.y + dy*s; }
-        else { cx = p0.x + dx*s; cy = p0.y; }
-        a0 = angleOnEllipse(cx, cy, rx, ry, p0.x, p0.y);
-        a1 = angleOnEllipse(cx, cy, rx, ry, p1.x, p1.y);
-        a0 = normAngle(a0); a1 = normAngle(a1);
-        const acw = anticlockwiseForShortest(a0, a1);
-        ops.push({type: 'arc', cx, cy, rx, ry, start: a0, end: a1, acw, color: textColor});
-      } else if (dx !== 0 || dy !== 0) {
-        let flipSemi = false;
-        if (dy === 0) {
-          rx = ry = Math.abs(dx)*s*0.5;
-          cx = p0.x + dx*s*0.5;
-          cy = p0.y;
-          flipSemi = ab === 0b01;
-        } else {
-          rx = ry = Math.abs(dy)*s*0.5;
-          cy = p0.y + dy*s*0.5;
-          cx = p0.x;
-          flipSemi = ab === 0b10;
-        }
-        a0 = angleOnEllipse(cx, cy, rx, ry, p0.x, p0.y);
-        a1 = angleOnEllipse(cx, cy, rx, ry, p1.x, p1.y);
-        a0 = normAngle(a0); a1 = normAngle(a1);
-        let acw = anticlockwiseForShortest(a0, a1);
-        if (flipSemi) acw = !acw;
-        ops.push({type: 'arc', cx, cy, rx, ry, start: a0, end: a1, acw, color: textColor});
+
+    if (pendingGlyphFit && isDrawableSegmentStart(coloredItems, i)) {
+      let segment = measureGlyphSegment(coloredItems, i, xi, yi, s, rowTopBase, snapToLineTop, textColor);
+      if (segment.maxXi > maxX && xi > pad.left) {
+        yi = nextTextRowYi(yi, rowTopBase);
+        xi = pad.left;
+        rowStartYi = yi;
+        segment = measureGlyphSegment(coloredItems, i, xi, yi, s, rowTopBase, snapToLineTop, textColor);
       }
+      pendingGlyphFit = false;
     }
-    
-    xi = to.xi; yi = to.yi;
-    visited.push({xi, yi});
+
+    const state = { xi, yi, minXi: xi, maxXi: xi, rowKey: rowStartYi };
+    processDrawItem(item, state, s, rowTopBase, snapToLineTop, textColor, 'build', out);
+    xi = state.xi;
+    yi = state.yi;
   }
-  
+
+  if (centerMode) {
+    applyRowCentering(ops, pipes, starts, pad, gridX, s);
+  }
+
   return { ops, visited, pipes, starts };
 }
 
@@ -805,11 +989,13 @@ async function drawCardPreview(canvas, cardData, isIndividualView = false) {
     // Get animation setting from card data - only animate in individual view
     const animateMode = isIndividualView && cardData.options?.animate === true;
     
+    const centerMode = cardData.options?.center === true;
+    
     // Build drawing operations
     const s = normalizeDrawingSize(cardData.options?.size);
     const pad = { left: 3, top: 3, right: 3 };
     const gridX = Math.floor(canvas.width / s);
-    const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor);
+    const { ops, visited } = buildOps(coloredItems, s, pad, gridX, primaryColor, { center: centerMode });
     
     // Calculate text color (62% blend between white/black and background)
     const rgb = hexToRgb(primaryColor);
