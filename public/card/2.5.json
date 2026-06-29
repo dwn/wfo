@@ -5,15 +5,14 @@
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
+    "svgBackground": "{use_svg moon.svg}",
     "position": {
       "row": 4,
       "col": 3
     },
-    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.2}",
-  "input": "hegr"
+  "rule": "{use_rule 0.1}",
+  "input": "Lu"
 }

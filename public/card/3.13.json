@@ -1,18 +1,18 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#008EFF",
+    "backgroundColor": "#6600CC",
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg uranus.svg}",
+    "svgBackground": " ",
     "position": {
-      "row": 3,
-      "col": 2
+      "row": 5,
+      "col": 1
     },
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "Ur"
+  "input": "I⌇53"
 }

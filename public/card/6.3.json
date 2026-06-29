@@ -10,9 +10,10 @@
       "row": 2,
       "col": 2
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "Co\nRh\nIr"
+  "rule": "{use_rule 0.2}",
+  "input": "l_e_z_r"
 }

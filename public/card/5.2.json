@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 18,
+    "size": 30,
     "backgroundColor": "#FF7B00",
     "italics": false,
     "animate": false,
@@ -14,5 +14,5 @@
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "e+⌇.0005"
+  "input": "Si\nGe\nSn"
 }

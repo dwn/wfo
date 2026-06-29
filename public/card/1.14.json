@@ -5,7 +5,7 @@
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
+    "svgBackground": "{use_svg tree.svg}",
     "position": {
       "row": 5,
       "col": 1

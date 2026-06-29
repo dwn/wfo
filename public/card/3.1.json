@@ -5,7 +5,7 @@
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg saturn.svg}",
+    "svgBackground": " ",
     "position": {
       "row": 3,
       "col": 3
@@ -14,5 +14,5 @@
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "Sa"
+  "input": "S⌇16"
 }

@@ -1,19 +1,19 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#FFFFFF",
+    "backgroundColor": "#700000",
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg mercury.svg}",
+    "svgBackground": " ",
     "position": {
       "row": 2,
-      "col": 3
+      "col": 1
     },
     "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "Me"
+  "input": "H⌇1"
 }

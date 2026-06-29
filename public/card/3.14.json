@@ -1,18 +1,19 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#6600CC",
+    "backgroundColor": "#B00000",
     "italics": false,
     "animate": false,
     "svgColor": true,
+    "svgBackground": " ",
     "position": {
-      "row": 5,
-      "col": 1
+      "row": 1,
+      "col": 2
     },
-    "svgBackground": "{use_svg callisto.svg}",
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "Ca"
+  "input": "Br⌇35"
 }

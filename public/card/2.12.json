@@ -5,14 +5,14 @@
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
     "position": {
       "row": 1,
       "col": 1
     },
+    "svgBackground": "{use_svg io.svg}",
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.2}",
-  "input": "d⌇d⌇d"
+  "rule": "{use_rule 0.1}\n          ",
+  "input": "Io"
 }

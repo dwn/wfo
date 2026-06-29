@@ -10,9 +10,10 @@
       "row": 3,
       "col": 1
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "Si\nGe\nSn"
+  "rule": "{use_rule 0.2}",
+  "input": "J_e_z_r"
 }

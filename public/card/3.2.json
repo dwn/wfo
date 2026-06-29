@@ -5,7 +5,7 @@
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg jupiter.svg}",
+    "svgBackground": " ",
     "position": {
       "row": 3,
       "col": 1
@@ -14,5 +14,5 @@
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "Ju"
+  "input": "Na⌇11"
 }

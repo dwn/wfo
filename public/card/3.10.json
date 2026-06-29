@@ -5,7 +5,7 @@
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg earth.svg}",
+    "svgBackground": " ",
     "position": {
       "row": 5,
       "col": 2
@@ -13,6 +13,6 @@
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}\n          ",
-  "input": "Ea"
+  "rule": "{use_rule 0.1}",
+  "input": "Cl⌇17"
 }

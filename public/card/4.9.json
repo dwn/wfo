@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 30,
+    "size": 18,
     "backgroundColor": "#700000",
     "italics": false,
     "animate": false,
@@ -10,10 +10,9 @@
       "row": 2,
       "col": 1
     },
-    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "H⌇1"
+  "input": "p⌇.94"
 }

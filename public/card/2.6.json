@@ -5,14 +5,14 @@
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
     "position": {
       "row": 5,
       "col": 3
     },
+    "svgBackground": "{use_svg ganymede.svg}",
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.2}",
-  "input": "d⌇d⌇d"
+  "rule": "{use_rule 0.1}\n          ",
+  "input": "Ga"
 }
