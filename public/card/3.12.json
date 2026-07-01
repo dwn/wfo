@@ -1,11 +1,10 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#808080",
+    "size": 36,
+    "backgroundColor": "#000000",
     "italics": false,
     "animate": false,
-    "svgColor": true,
-    "svgBackground": " ",
+    "svgColor": false,
     "position": {
       "row": 4,
       "col": 3
@@ -14,5 +13,5 @@
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "Ca⌇20"
+  "input": "5"
 }

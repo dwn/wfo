@@ -10,10 +10,9 @@
       "row": 2,
       "col": 3
     },
-    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.2}",
-  "input": "f_e_z_r"
+  "rule": "{use_rule 0.1}",
+  "input": "Ni\nPd\nPt"
 }

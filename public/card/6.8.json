@@ -10,10 +10,9 @@
       "row": 4,
       "col": 1
     },
-    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.2}",
-  "input": "x_e_z_r"
+  "rule": "{use_rule 0.1}",
+  "input": "Cr\nMo\nW"
 }

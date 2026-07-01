@@ -10,10 +10,9 @@
       "row": 3,
       "col": 3
     },
-    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.2}",
-  "input": "p_e_z_r"
+  "rule": "{use_rule 0.1}",
+  "input": "Cu\nAg\nAu"
 }

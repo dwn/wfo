@@ -5,10 +5,10 @@
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg tree.svg}",
+    "svgBackground": "{use_svg bottle.svg}",
     "position": {
       "row": 5,
-      "col": 1
+      "col": 3
     },
     "calligraphy": false,
     "center": true,

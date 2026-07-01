@@ -1,17 +1,18 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#A6FF00",
+    "backgroundColor": "#00FFF5",
     "italics": false,
     "animate": false,
     "svgColor": true,
     "position": {
-      "row": 5,
+      "row": 1,
       "col": 3
     },
     "svgBackground": "{use_svg ganymede.svg}",
     "center": true,
-    "centerVertical": true
+    "centerVertical": true,
+    "calligraphy": false
   },
   "rule": "{use_rule 0.1}\n          ",
   "input": "Ga"

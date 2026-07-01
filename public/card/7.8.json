@@ -1,19 +1,19 @@
 {
   "options": {
-    "size": 36,
-    "backgroundColor": "#36FF00",
+    "size": 30,
+    "backgroundColor": "#000000",
     "italics": false,
     "animate": false,
-    "svgColor": false,
+    "svgColor": true,
+    "svgBackground": " ",
     "position": {
-      "row": 1,
-      "col": 2
+      "row": 4,
+      "col": 1
     },
-    "backgroundColor2": "#4B0080",
+    "calligraphy": false,
     "center": true,
-    "centerVertical": true,
-    "calligraphy": false
+    "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "7⌇EV"
+  "rule": "{use_rule 0.2}",
+  "input": "x_e_z_r"
 }

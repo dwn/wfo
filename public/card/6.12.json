@@ -13,6 +13,6 @@
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.2}",
-  "input": "d⌇d⌇d"
+  "rule": "{use_rule 0.1}",
+  "input": "Bi\nPo\nAt"
 }

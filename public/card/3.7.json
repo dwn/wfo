@@ -1,18 +1,17 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#FFFFFF",
+    "size": 36,
+    "backgroundColor": "#36FF00",
     "italics": false,
     "animate": false,
-    "svgColor": true,
-    "svgBackground": " ",
+    "svgColor": false,
     "position": {
       "row": 2,
-      "col": 3
+      "col": 1
     },
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "Mg⌇12"
+  "input": "13"
 }

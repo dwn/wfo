@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 30,
+    "size": 18,
     "backgroundColor": "#008EFF",
     "italics": false,
     "animate": false,
@@ -14,5 +14,5 @@
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "Zn\nCd\nHg"
+  "input": "πO⌇.14"
 }

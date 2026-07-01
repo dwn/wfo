@@ -11,9 +11,8 @@
       "col": 2
     },
     "center": true,
-    "centerVertical": true,
-    "calligraphy": false
+    "centerVertical": true
   },
-  "rule": "{use_rule 0.2}",
-  "input": "C_e_z_r"
+  "rule": "{use_rule 0.1}",
+  "input": "Fe\nRu\nOs"
 }
