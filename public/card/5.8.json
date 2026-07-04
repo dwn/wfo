@@ -1,18 +1,19 @@
 {
   "options": {
-    "size": 18,
+    "size": 32,
     "backgroundColor": "#000000",
     "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 4,
-      "col": 1
+      "row": 5,
+      "col": 3
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "G⌇0"
+  "rule": "{use_rule 0.2}",
+  "input": "w"
 }

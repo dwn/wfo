@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 30,
+    "size": 32,
     "backgroundColor": "#B00000",
     "italics": false,
     "animate": false,
@@ -8,12 +8,12 @@
     "svgBackground": " ",
     "position": {
       "row": 1,
-      "col": 2
+      "col": 3
     },
+    "calligraphy": false,
     "center": true,
-    "centerVertical": true,
-    "calligraphy": false
+    "centerVertical": true
   },
   "rule": "{use_rule 0.2}",
-  "input": "C_e_z_r"
+  "input": "$"
 }

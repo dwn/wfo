@@ -1,13 +1,13 @@
 {
   "options": {
     "size": 32,
-    "backgroundColor": "#6600CC",
+    "backgroundColor": "#A6FF00",
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg bottle.svg}",
+    "svgBackground": " ",
     "position": {
-      "row": 5,
+      "row": 1,
       "col": 3
     },
     "calligraphy": false,

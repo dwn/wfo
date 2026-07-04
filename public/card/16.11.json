@@ -1,0 +1,18 @@
+{
+  "options": {
+    "size": 30,
+    "backgroundColor": "#DC0000",
+    "italics": false,
+    "animate": false,
+    "svgColor": true,
+    "svgBackground": " ",
+    "position": {
+      "row": 1,
+      "col": 1
+    },
+    "center": true,
+    "centerVertical": true
+  },
+  "rule": "{use_rule 0.1}",
+  "input": "Se⌇34"
+}

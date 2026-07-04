@@ -1,17 +1,19 @@
 {
   "options": {
-    "size": 36,
-    "backgroundColor": "#36FF00",
+    "size": 32,
+    "backgroundColor": "#008EFF",
     "italics": false,
     "animate": false,
     "svgColor": true,
+    "svgBackground": " ",
     "position": {
-      "row": 1,
+      "row": 2,
       "col": 1
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "2⌇Ea"
+  "rule": "{use_rule 0.2}",
+  "input": ""
 }

@@ -1,0 +1,19 @@
+{
+  "options": {
+    "size": 32,
+    "backgroundColor": "#36FF00",
+    "italics": false,
+    "animate": false,
+    "svgColor": true,
+    "svgBackground": " ",
+    "position": {
+      "row": 5,
+      "col": 2
+    },
+    "calligraphy": false,
+    "center": true,
+    "centerVertical": true
+  },
+  "rule": "{use_rule 0.2}",
+  "input": "k\n@\nc"
+}

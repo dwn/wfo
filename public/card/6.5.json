@@ -1,18 +1,19 @@
 {
   "options": {
-    "size": 30,
+    "size": 32,
     "backgroundColor": "#808080",
     "italics": false,
     "animate": false,
-    "svgColor": true,
-    "svgBackground": " ",
+    "svgColor": false,
+    "svgBackground": "  {use_svg cerebrum.svg}",
     "position": {
-      "row": 4,
-      "col": 3
+      "row": 1,
+      "col": 1
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "Ti\nZr\nHf"
+  "rule": "{use_rule 0.2}",
+  "input": "e"
 }

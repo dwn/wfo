@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 30,
+    "size": 16,
     "backgroundColor": "#000000",
     "italics": false,
     "animate": false,
@@ -8,11 +8,12 @@
     "svgBackground": " ",
     "position": {
       "row": 4,
-      "col": 1
+      "col": 2
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "C⌇6"
+  "input": "synth"
 }

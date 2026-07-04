@@ -7,13 +7,13 @@
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 2,
-      "col": 2
+      "row": 3,
+      "col": 1
     },
     "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.2}",
-  "input": "l\n&\nv"
+  "input": ""
 }

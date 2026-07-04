@@ -1,18 +1,19 @@
 {
   "options": {
-    "size": 30,
+    "size": 32,
     "backgroundColor": "#FF7B00",
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
+    "svgBackground": "  {use_svg mouth.svg}",
     "position": {
-      "row": 3,
-      "col": 1
+      "row": 5,
+      "col": 3
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "Si\nGe\nSn"
+  "rule": "{use_rule 0.2}",
+  "input": "u"
 }

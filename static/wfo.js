@@ -2,6 +2,84 @@ let cardData = new Map();
 let setInfo = new Map();
 let currentSetNumber = 1;
 let availableSets = [];
+
+const SPEED_OF_LIGHT_THZ_NM = 299792.458;
+
+const SPECTRUM_COLORS = [
+  { value: '#700000', name: 'Crimson', nm: 736 },
+  { value: '#B00000', name: 'Red', nm: 695 },
+  { value: '#DC0000', name: 'Scarlet', nm: 656 },
+  { value: '#FF7B00', name: 'Orange', nm: 619 },
+  { value: '#FFF200', name: 'Yellow', nm: 585 },
+  { value: '#A6FF00', name: 'Lime', nm: 552 },
+  { value: '#36FF00', name: 'Green', nm: 520 },
+  { value: '#00FFF5', name: 'Cyan', nm: 491 },
+  { value: '#008EFF', name: 'Sky', nm: 463 },
+  { value: '#0060FF', name: 'Blue', nm: 437 },
+  { value: '#6600CC', name: 'Purple', nm: 413 },
+  { value: '#4B0080', name: 'Violet', nm: 389 },
+  { value: '#000000', name: 'Black', nm: 368 },
+];
+
+const SPECTRUM_BASE_NM = 736;
+
+function frequencyTHz(nm) {
+  return SPEED_OF_LIGHT_THZ_NM / nm;
+}
+
+function formatFrequencyTHz(nm) {
+  return frequencyTHz(nm).toFixed(1);
+}
+
+function pitchCentsFromBase(nm) {
+  const ratio = frequencyTHz(nm) / frequencyTHz(SPECTRUM_BASE_NM);
+  return Math.round(1200 * Math.log2(ratio));
+}
+
+function formatPitchCents(nm) {
+  const cents = pitchCentsFromBase(nm);
+  if (cents === 0) return '0¢';
+  return cents > 0 ? `+${cents}¢` : `${cents}¢`;
+}
+
+function spectrumOptionLabel(entry) {
+  return `${entry.name} (${entry.value}) - ${entry.nm}nm, ${formatFrequencyTHz(entry.nm)} THz, ${formatPitchCents(entry.nm)}`;
+}
+
+function populateBackgroundSelect(selectEl, includeNone) {
+  selectEl.innerHTML = '';
+  if (includeNone) {
+    const none = document.createElement('option');
+    none.value = '';
+    none.textContent = 'None';
+    selectEl.appendChild(none);
+  }
+  const transparent = document.createElement('option');
+  transparent.value = 'transparent';
+  transparent.textContent = 'Transparent';
+  selectEl.appendChild(transparent);
+  for (const entry of SPECTRUM_COLORS) {
+    const opt = document.createElement('option');
+    opt.value = entry.value;
+    opt.textContent = spectrumOptionLabel(entry);
+    selectEl.appendChild(opt);
+  }
+  for (const entry of [
+    { value: '#808080', label: 'Gray (#808080)' },
+    { value: '#FFFFFF', label: 'White (#FFFFFF)' },
+  ]) {
+    const opt = document.createElement('option');
+    opt.value = entry.value;
+    opt.textContent = entry.label;
+    selectEl.appendChild(opt);
+  }
+}
+
+function initBackgroundColorSelects() {
+  populateBackgroundSelect(document.getElementById('editorBackground'), false);
+  populateBackgroundSelect(document.getElementById('editorBackground2'), true);
+}
+
 function formatCardFilename(set, order) {
   return `${set}.${order}.json`;
 }
@@ -1195,4 +1273,5 @@ window.addEventListener('hashchange', () => {
 if (typeof unicodeKeymap !== 'undefined' && unicodeKeymap.initUnicodeKeymap) {
   unicodeKeymap.initUnicodeKeymap();
 }
+initBackgroundColorSelects();
 initialize();

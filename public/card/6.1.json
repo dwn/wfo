@@ -1,18 +1,19 @@
 {
   "options": {
-    "size": 30,
+    "size": 32,
     "backgroundColor": "#FFF200",
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
+    "svgBackground": "  {use_svg skin.svg}",
     "position": {
-      "row": 3,
+      "row": 4,
       "col": 3
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "Cu\nAg\nAu"
+  "rule": "{use_rule 0.2}",
+  "input": "i"
 }

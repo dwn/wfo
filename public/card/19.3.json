@@ -1,0 +1,19 @@
+{
+  "options": {
+    "size": 30,
+    "backgroundColor": "#0060FF",
+    "italics": false,
+    "animate": false,
+    "svgColor": true,
+    "svgBackground": " ",
+    "position": {
+      "row": 2,
+      "col": 2
+    },
+    "calligraphy": false,
+    "center": true,
+    "centerVertical": true
+  },
+  "rule": "{use_rule 0.2}",
+  "input": "l_e_z_r"
+}

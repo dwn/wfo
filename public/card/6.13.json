@@ -1,18 +1,19 @@
 {
   "options": {
-    "size": 30,
+    "size": 32,
     "backgroundColor": "#4B0080",
     "italics": false,
     "animate": false,
-    "svgColor": true,
-    "svgBackground": " ",
+    "svgColor": false,
+    "svgBackground": "  {use_svg ganglia.svg}",
     "position": {
-      "row": 4,
+      "row": 1,
       "col": 2
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "V\nNb\nTa"
+  "rule": "{use_rule 0.2}",
+  "input": "^"
 }

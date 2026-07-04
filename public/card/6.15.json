@@ -1,18 +1,19 @@
 {
   "options": {
-    "size": 30,
+    "size": 32,
     "backgroundColor": "#B00000",
     "italics": false,
     "animate": false,
-    "svgColor": true,
-    "svgBackground": " ",
+    "svgColor": false,
+    "svgBackground": "  {use_svg jaw.svg}",
     "position": {
-      "row": 1,
+      "row": 5,
       "col": 2
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "Fe\nRu\nOs"
+  "rule": "{use_rule 0.2}",
+  "input": "$"
 }

@@ -1,7 +1,7 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#36FF00",
+    "size": 16,
+    "backgroundColor": "#700000",
     "italics": false,
     "animate": false,
     "svgColor": true,
@@ -10,10 +10,10 @@
       "row": 5,
       "col": 2
     },
+    "calligraphy": false,
     "center": true,
-    "centerVertical": true,
-    "calligraphy": false
+    "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "F⌇9"
+  "input": "synth"
 }

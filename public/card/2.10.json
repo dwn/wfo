@@ -1,18 +1,19 @@
 {
   "options": {
-    "size": 30,
+    "size": 16,
     "backgroundColor": "#36FF00",
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg earth.svg}",
+    "svgBackground": " ",
     "position": {
-      "row": 5,
+      "row": 1,
       "col": 2
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}\n          ",
-  "input": "Ea"
+  "rule": "{use_rule 0.1}",
+  "input": "DORIAN"
 }

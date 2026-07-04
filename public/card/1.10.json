@@ -7,13 +7,13 @@
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 5,
+      "row": 1,
       "col": 2
     },
     "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.2}",
-  "input": "k\n@\nc"
+  "rule": "{use_rule 0.1}",
+  "input": "C5"
 }

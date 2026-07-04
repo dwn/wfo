@@ -1,14 +1,14 @@
 {
   "options": {
     "size": 32,
-    "backgroundColor": "#A6FF00",
+    "backgroundColor": "#DC0000",
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " {use_svg soil.svg}",
+    "svgBackground": " ",
     "position": {
-      "row": 5,
-      "col": 1
+      "row": 4,
+      "col": 3
     },
     "calligraphy": false,
     "center": true,
