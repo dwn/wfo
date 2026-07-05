@@ -4,24 +4,34 @@ let currentSetNumber = 1;
 let availableSets = [];
 
 const SPEED_OF_LIGHT_THZ_NM = 299792.458;
+const GREEN_CENTER_NM = 521;
+
+function wavelengthNm(halfStepsFromGreen) {
+  const nm = GREEN_CENTER_NM * Math.pow(2, halfStepsFromGreen / 12);
+  return Math.round(nm * 10) / 10;
+}
+
+function formatWavelengthNm(nm) {
+  return nm.toFixed(1);
+}
 
 const SPECTRUM_COLORS = [
-  { value: '#700000', name: 'Crimson', nm: 736 },
-  { value: '#B00000', name: 'Red', nm: 695 },
-  { value: '#DC0000', name: 'Scarlet', nm: 656 },
-  { value: '#FF7B00', name: 'Orange', nm: 619 },
-  { value: '#FFF200', name: 'Yellow', nm: 585 },
-  { value: '#A6FF00', name: 'Lime', nm: 552 },
-  { value: '#36FF00', name: 'Green', nm: 520 },
-  { value: '#00FFF5', name: 'Cyan', nm: 491 },
-  { value: '#008EFF', name: 'Sky', nm: 463 },
-  { value: '#0060FF', name: 'Blue', nm: 437 },
-  { value: '#6600CC', name: 'Purple', nm: 413 },
-  { value: '#4B0080', name: 'Violet', nm: 389 },
-  { value: '#000000', name: 'Black', nm: 368 },
+  { value: '#700000', name: 'Crimson', nm: wavelengthNm(6) },
+  { value: '#B00000', name: 'Red', nm: wavelengthNm(5) },
+  { value: '#DC0000', name: 'Scarlet', nm: wavelengthNm(4) },
+  { value: '#FF7B00', name: 'Orange', nm: wavelengthNm(3) },
+  { value: '#FFF200', name: 'Yellow', nm: wavelengthNm(2) },
+  { value: '#A6FF00', name: 'Lime', nm: wavelengthNm(1) },
+  { value: '#36FF00', name: 'Green', nm: wavelengthNm(0) },
+  { value: '#00FFF5', name: 'Cyan', nm: wavelengthNm(-1) },
+  { value: '#00A0FF', name: 'Sky', nm: wavelengthNm(-2) },
+  { value: '#0040FF', name: 'Blue', nm: wavelengthNm(-3) },
+  { value: '#6600CC', name: 'Purple', nm: wavelengthNm(-4) },
+  { value: '#4B0080', name: 'Violet', nm: wavelengthNm(-5) },
+  { value: '#000000', name: 'Black', nm: wavelengthNm(-6) },
 ];
 
-const SPECTRUM_BASE_NM = 736;
+const SPECTRUM_BASE_NM = wavelengthNm(6);
 
 function frequencyTHz(nm) {
   return SPEED_OF_LIGHT_THZ_NM / nm;
@@ -43,7 +53,7 @@ function formatPitchCents(nm) {
 }
 
 function spectrumOptionLabel(entry) {
-  return `${entry.name} (${entry.value}) - ${entry.nm}nm, ${formatFrequencyTHz(entry.nm)} THz, ${formatPitchCents(entry.nm)}`;
+  return `${entry.name} (${entry.value}) - ${formatWavelengthNm(entry.nm)} nm, ${formatFrequencyTHz(entry.nm)} THz, ${formatPitchCents(entry.nm)}`;
 }
 
 function populateBackgroundSelect(selectEl, includeNone) {

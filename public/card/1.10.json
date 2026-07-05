@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 32,
+    "size": 16,
     "backgroundColor": "#36FF00",
     "italics": false,
     "animate": false,
@@ -15,5 +15,5 @@
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "C5"
+  "input": "C\n\n523.3\nHz"
 }

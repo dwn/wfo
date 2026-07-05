@@ -1,7 +1,7 @@
 {
   "options": {
     "size": 32,
-    "backgroundColor": "#008EFF",
+    "backgroundColor": "#00A0FF",
     "italics": false,
     "animate": false,
     "svgColor": true,
@@ -14,6 +14,6 @@
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.2}",
-  "input": "m\na\nn"
+  "rule": "{use_rule 0.1}",
+  "input": "4"
 }

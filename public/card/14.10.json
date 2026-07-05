@@ -1,18 +1,19 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#36FF00",
+    "size": 32,
+    "backgroundColor": "#FFFFFF",
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg earth.svg}",
+    "svgBackground": " ",
     "position": {
-      "row": 5,
-      "col": 2
+      "row": 1,
+      "col": 1
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}\n          ",
-  "input": "Ea"
+  "rule": "{use_rule 0.2}",
+  "input": "l\nr"
 }

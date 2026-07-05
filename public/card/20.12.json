@@ -1,18 +1,18 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#DC0000",
+    "backgroundColor": "#808080",
     "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 1,
-      "col": 1
+      "row": 4,
+      "col": 3
     },
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "Li"
+  "input": "Ca⌇20"
 }

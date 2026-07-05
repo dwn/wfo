@@ -10,9 +10,10 @@
       "row": 2,
       "col": 1
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "Sr"
+  "input": "H⌇1"
 }

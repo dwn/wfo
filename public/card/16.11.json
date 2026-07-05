@@ -1,18 +1,19 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#DC0000",
+    "size": 32,
+    "backgroundColor": "#00FFF5",
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
+    "svgBackground": " {use_svg censer.svg}",
     "position": {
       "row": 1,
-      "col": 1
+      "col": 3
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "Se⌇34"
+  "rule": "{use_rule 0.2}",
+  "input": "auf"
 }

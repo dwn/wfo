@@ -1,7 +1,7 @@
 {
   "options": {
     "size": 30,
-    "backgroundColor": "#0060FF",
+    "backgroundColor": "#0040FF",
     "italics": false,
     "animate": false,
     "svgColor": true,
@@ -14,5 +14,5 @@
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": ""
+  "input": "N⌇7"
 }

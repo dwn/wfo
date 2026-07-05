@@ -1,18 +1,17 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#36FF00",
+    "size": 36,
+    "backgroundColor": "#4B0080",
     "italics": false,
     "animate": false,
-    "svgColor": true,
-    "svgBackground": " ",
+    "svgColor": false,
     "position": {
-      "row": 5,
-      "col": 2
+      "row": 1,
+      "col": 3
     },
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "Sc\nY\nLu"
+  "input": "2⌇Ve"
 }

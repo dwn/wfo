@@ -11,8 +11,9 @@
       "col": 3
     },
     "center": true,
-    "centerVertical": true
+    "centerVertical": true,
+    "calligraphy": false
   },
   "rule": "{use_rule 0.1}",
-  "input": "Ba"
+  "input": "Cl⌇17"
 }

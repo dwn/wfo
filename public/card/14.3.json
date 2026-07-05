@@ -1,18 +1,19 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#0060FF",
+    "size": 32,
+    "backgroundColor": "#FFFFFF",
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": "{use_svg neptune.svg}",
+    "svgBackground": " ",
     "position": {
       "row": 2,
-      "col": 2
+      "col": 1
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "Ne"
+  "rule": "{use_rule 0.2}",
+  "input": "c\nj"
 }

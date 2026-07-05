@@ -1,18 +1,17 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#A6FF00",
+    "size": 36,
+    "backgroundColor": "#B00000",
     "italics": false,
     "animate": false,
-    "svgColor": true,
-    "svgBackground": " ",
+    "svgColor": false,
     "position": {
-      "row": 5,
-      "col": 3
+      "row": 4,
+      "col": 1
     },
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.1}",
-  "input": "As\nSb\nBi"
+  "input": "7"
 }

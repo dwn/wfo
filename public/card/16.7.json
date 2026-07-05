@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 30,
+    "size": 32,
     "backgroundColor": "#FFFFFF",
     "italics": false,
     "animate": false,
@@ -10,9 +10,10 @@
       "row": 2,
       "col": 3
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "Mg⌇12"
+  "rule": "{use_rule 0.2}",
+  "input": "f\ny\ng"
 }

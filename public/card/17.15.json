@@ -1,11 +1,11 @@
 {
   "options": {
-    "size": 18,
+    "size": 30,
     "backgroundColor": "#B00000",
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
+    "svgBackground": "{use_svg mars.svg}",
     "position": {
       "row": 1,
       "col": 2
@@ -13,6 +13,6 @@
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "Z⌇91"
+  "rule": "{use_rule 0.1}\n          ",
+  "input": "Ma"
 }

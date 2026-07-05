@@ -1,19 +1,19 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#36FF00",
+    "size": 32,
+    "backgroundColor": "#A6FF00",
     "italics": false,
     "animate": false,
     "svgColor": true,
-    "svgBackground": " ",
+    "svgBackground": " {use_svg soil.svg}",
     "position": {
       "row": 5,
-      "col": 2
+      "col": 3
     },
+    "calligraphy": false,
     "center": true,
-    "centerVertical": true,
-    "calligraphy": false
+    "centerVertical": true
   },
-  "rule": "{use_rule 0.1}",
-  "input": "F⌇9"
+  "rule": "{use_rule 0.2}",
+  "input": "iar"
 }

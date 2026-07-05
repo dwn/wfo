@@ -1,0 +1,18 @@
+{
+  "options": {
+    "size": 18,
+    "backgroundColor": "#700000",
+    "italics": false,
+    "animate": false,
+    "svgColor": true,
+    "svgBackground": " ",
+    "position": {
+      "row": 2,
+      "col": 1
+    },
+    "center": true,
+    "centerVertical": true
+  },
+  "rule": "{use_rule 0.1}",
+  "input": "p⌇.94"
+}
