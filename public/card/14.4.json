@@ -7,7 +7,7 @@
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 1,
+      "row": 5,
       "col": 2
     },
     "calligraphy": false,
@@ -15,5 +15,5 @@
     "centerVertical": true
   },
   "rule": "{use_rule 0.2}",
-  "input": "s\nz"
+  "input": "*\n~"
 }
