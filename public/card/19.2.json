@@ -7,12 +7,12 @@
     "svgColor": false,
     "position": {
       "row": 1,
-      "col": 2
+      "col": 1
     },
     "center": true,
     "centerVertical": true,
     "calligraphy": false
   },
   "rule": "{use_rule 0.1}",
-  "input": "12x49x.5\n\n294"
+  "input": "22x13+8\n\n294"
 }
