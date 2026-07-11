@@ -15,5 +15,5 @@
     "centerVertical": true
   },
   "rule": "{use_rule 0.2}",
-  "input": "j\n$\nn"
+  "input": "j\n$\nz"
 }
