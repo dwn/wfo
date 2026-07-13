@@ -8,12 +8,12 @@
     "svgBackground": " ",
     "position": {
       "row": 2,
-      "col": 3
+      "col": 1
     },
     "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.2}",
-  "input": "x\nb"
+  "input": "p\nb"
 }
