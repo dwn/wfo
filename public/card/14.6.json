@@ -1,12 +1,12 @@
 {
   "options": {
     "size": 32,
-    "backgroundColor": "#000000",
+    "backgroundColor": "#700000",
     "italics": false,
     "animate": false,
     "svgColor": true,
     "position": {
-      "row": 4,
+      "row": 2,
       "col": 1
     },
     "calligraphy": false,
@@ -14,5 +14,5 @@
     "centerVertical": true
   },
   "rule": "{use_rule 0.2}",
-  "input": "m\nn"
+  "input": "o"
 }

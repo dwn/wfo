@@ -7,7 +7,7 @@
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 5,
+      "row": 4,
       "col": 1
     },
     "calligraphy": false,
@@ -15,5 +15,5 @@
     "centerVertical": true
   },
   "rule": "{use_rule 0.2}",
-  "input": "t\nd"
+  "input": "w"
 }

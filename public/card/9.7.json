@@ -1,19 +1,19 @@
 {
   "options": {
     "size": 32,
-    "backgroundColor": "#36FF00",
+    "backgroundColor": "#FFFFFF",
     "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 5,
-      "col": 2
+      "row": 1,
+      "col": 3
     },
     "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.2}",
-  "input": "@"
+  "input": "y"
 }

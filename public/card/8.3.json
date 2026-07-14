@@ -1,19 +1,19 @@
 {
   "options": {
     "size": 32,
-    "backgroundColor": "#0040FF",
+    "backgroundColor": "#000000",
     "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 2,
-      "col": 1
+      "row": 1,
+      "col": 3
     },
     "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.2}",
-  "input": "&"
+  "input": "c\nj"
 }

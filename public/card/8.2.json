@@ -1,19 +1,19 @@
 {
   "options": {
     "size": 32,
-    "backgroundColor": "#FF7B00",
+    "backgroundColor": "#000000",
     "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 5,
-      "col": 2
+      "row": 4,
+      "col": 3
     },
     "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.2}",
-  "input": "u"
+  "input": "k\ng"
 }

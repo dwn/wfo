@@ -1,7 +1,7 @@
 {
   "options": {
     "size": 32,
-    "backgroundColor": "#000000",
+    "backgroundColor": "#FF7B00",
     "italics": false,
     "animate": false,
     "svgColor": true,
@@ -15,5 +15,5 @@
     "centerVertical": true
   },
   "rule": "{use_rule 0.2}",
-  "input": "k\ng"
+  "input": "u"
 }

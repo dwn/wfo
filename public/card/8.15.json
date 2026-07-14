@@ -1,13 +1,13 @@
 {
   "options": {
     "size": 32,
-    "backgroundColor": "#FF7B00",
+    "backgroundColor": "#000000",
     "italics": false,
     "animate": false,
     "svgColor": true,
     "svgBackground": " ",
     "position": {
-      "row": 3,
+      "row": 1,
       "col": 1
     },
     "calligraphy": false,
@@ -15,5 +15,5 @@
     "centerVertical": true
   },
   "rule": "{use_rule 0.2}",
-  "input": "u"
+  "input": "f\nv"
 }
