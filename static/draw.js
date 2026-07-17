@@ -52,6 +52,77 @@ function normalizeDrawingSize(value, fallback = 8) {
 
 const RULE_USE_TOKEN_RE = /\{use_rule\s+(\d+)\.(\d+)\}/i;
 const INPUT_USE_TOKEN_RE = /\{use_input\s+(\d+)\.(\d+)\}/i;
+const RULE_FOR_NESTED_RE = /\{for\s+\d+\}/i;
+const MAX_RULE_FOR_COUNT = 100;
+
+function findMatchingForEnd(text, fromIndex) {
+  let depth = 1;
+  let i = fromIndex;
+  while (i < text.length) {
+    const nextFor = text.indexOf('{for', i);
+    const nextEnd = text.indexOf('{end}', i);
+    if (nextEnd === -1) return -1;
+    if (nextFor !== -1 && nextFor < nextEnd) {
+      const opener = text.slice(nextFor).match(/^\{for\s+\d+\}/i);
+      if (opener) {
+        depth += 1;
+        i = nextFor + opener[0].length;
+        continue;
+      }
+    }
+    depth -= 1;
+    if (depth === 0) return nextEnd;
+    i = nextEnd + '{end}'.length;
+  }
+  return -1;
+}
+
+function findInnermostForBlock(text) {
+  const forRe = /\{for\s+(\d+)\}/gi;
+  let match;
+  while ((match = forRe.exec(text)) !== null) {
+    const bodyStart = match.index + match[0].length;
+    const endIndex = findMatchingForEnd(text, bodyStart);
+    if (endIndex < 0) {
+      console.warn('Rules: unclosed {for} block; leaving text unchanged.');
+      return null;
+    }
+    const body = text.slice(bodyStart, endIndex);
+    if (RULE_FOR_NESTED_RE.test(body)) continue;
+    return {
+      full: text.slice(match.index, endIndex + '{end}'.length),
+      count: parseInt(match[1], 10),
+      body: body.trim()
+    };
+  }
+  return null;
+}
+
+/**
+ * Expand `{for N}...{end}` blocks by repeating the inner rule text N times.
+ * Innermost blocks expand first so nesting works.
+ */
+function expandRuleForBlocks(rule) {
+  if (rule == null) return '';
+  let out = String(rule);
+  while (true) {
+    const block = findInnermostForBlock(out);
+    if (!block) break;
+    const { full, count, body } = block;
+    if (!Number.isFinite(count) || count < 0) {
+      console.warn(`Rules: invalid {for N} count "${count}"; removing block.`);
+      out = out.replace(full, '');
+      continue;
+    }
+    if (count > MAX_RULE_FOR_COUNT) {
+      console.warn(`Rules: {for ${count}} exceeds max ${MAX_RULE_FOR_COUNT}; capping.`);
+    }
+    const times = Math.min(count, MAX_RULE_FOR_COUNT);
+    const repeated = times && body ? Array(times).fill(body).join('\n') : '';
+    out = out.replace(full, repeated);
+  }
+  return out;
+}
 
 async function fetchCardJsonForCardRef(setNum, orderNum) {
   const filename = `${setNum}.${orderNum}.json`;
@@ -218,6 +289,7 @@ function applyRuleTransforms(input, rule) {
 
   if (!rule || !rule.trim()) return output;
 
+  rule = expandRuleForBlocks(rule);
   rule = normalizePathSeparators(rule);
 
   const lines = rule.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));

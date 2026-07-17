@@ -214,6 +214,7 @@
         <li><strong>Path notation.</strong> Write moves as arrows; add a sans-serif bold digit only for 2+ steps (<code>←</code> = 1 left, <code>→𝟮</code> = 2 right, <code>↓𝟰</code> = 4 down). Adjacent arrows are one compound move (<code>←↑</code> = diagonal). Separate strokes with <code>⋅</code> (<code>←⋅↑</code> = left then up). Invisible moves: <code>⮜</code> <code>⮞</code> <code>⮝</code> <code>⮟</code> (same counting rule). Arcs: <code>◖</code> horizontal bow, <code>◗</code> vertical bow. Also <code>⯭</code> snap, <code>∗</code> dot, <code>⍛</code> minicircle. Spelling out 1 (<code>→𝟭</code>) still works.</li>
         <li><strong>Layout.</strong> <code>⌇⌇</code> starts a new row; <code>⌇</code> separates glyphs on the same line. Lines wrap to the next row only at <code>⌇</code> boundaries. Preview options <strong>Center H</strong> and <strong>Center V</strong> center drawn text horizontally (per row) and vertically (whole card). In the editor, <code>⌈</code> marks glyph start (cyan) and <code>⌇</code> marks glyph end (magenta). Lines beginning with <code>//</code> are comments.</li>
         <li><strong>Replacements.</strong> Rule lines like <code>13,24</code> map a source byte to a target. Pairs on one line apply together; later lines run in order. Use <code>\,</code> for a literal comma in the source.</li>
+        <li><strong>Repeat blocks.</strong> <code>{for N}...{end}</code> repeats the enclosed rule lines <code>N</code> times (each repetition is another pass in order). Example: <code>{for 4}ab,a_b ac,a_c{end}</code> applies that line four times.</li>
         <li><strong>Includes.</strong> <code>{use_rule set.order}</code> and <code>{use_input set.order}</code> pull in another card's rule or input. Nested tokens expand; cycles and missing cards log a warning and leave the token empty.</li>
         <li><strong>SVG background.</strong> Enter <code>{use_svg name.svg}</code>, a filename, pasted SVG markup, or a URL. Files in <code>public/svg</code> load from <code>/svg/</code>.</li>
       </ul>
@@ -232,7 +233,7 @@
 </div>
 </div>
 <script src="/static/cards.js?v=6"></script>
-<script src="/static/draw.js?v=24"></script>
+<script src="/static/draw.js?v=25"></script>
 <script src="/static/unicodeKeymap.js?v=19"></script>
 <script src="/storage/cardStorage.js?v=6"></script>
 <script src="/static/wfo.js?v=20"></script>
