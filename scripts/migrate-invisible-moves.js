@@ -161,13 +161,13 @@ function updateCard(filename) {
   fs.writeFileSync(filePath, JSON.stringify(card, null, 2) + '\n');
 }
 
-const card04Path = path.join(ROOT, 'public/card/0.4.json');
-const card04 = JSON.parse(fs.readFileSync(card04Path, 'utf8'));
-card04.rule = migrateRule14(card04.rule);
-fs.writeFileSync(card04Path, JSON.stringify(card04, null, 2) + '\n');
-console.log('Updated public/card/0.4.json');
+const card01Path = path.join(ROOT, 'public/card/0.1.json');
+const card01 = JSON.parse(fs.readFileSync(card01Path, 'utf8'));
+card01.rule = migrateRule14(card01.rule);
+fs.writeFileSync(card01Path, JSON.stringify(card01, null, 2) + '\n');
+console.log('Updated public/card/0.1.json');
 
-for (const f of ['public/card/0.2.json', 'public/card/0.1.json', 'public/card/0.5.json']) {
+for (const f of ['public/card/0.2.json', 'public/card/0.13.json', 'public/card/0.14.json']) {
   updateCard(f);
   console.log('Updated', f);
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Regenerate public/card/0.4.json movement + special-token rules (legacy LRUD format).
+ * Regenerate public/card/0.1.json movement + special-token rules (legacy LRUD format).
  * Run: node scripts/generate-0.4-rule.js
  */
 const fs = require('fs');
@@ -123,7 +123,7 @@ const rule = [
   '∗,08 ^,00 o,80',
 ].join('\n');
 
-const cardPath = path.join(__dirname, '../public/card/0.4.json');
+const cardPath = path.join(__dirname, '../public/card/0.1.json');
 const card = JSON.parse(fs.readFileSync(cardPath, 'utf8'));
 card.rule = rule;
 fs.writeFileSync(cardPath, JSON.stringify(card, null, 2) + '\n');

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Regenerate public/card/0.4.json path→hex vocabulary for counts 1–9.
+ * Regenerate public/card/0.1.json path→hex vocabulary for counts 1–9.
  * Moves beyond 4 grid units decompose into multiple bytes.
  * Run: node scripts/generate-0.4-arrow-vocab.js
  */
@@ -158,7 +158,7 @@ const header =
   '// Path notation → hex. Count 1: arrow only (→ ≡ →𝟭). ⮞⮝ invisible — ←⋅↑ sequential, ←↑ diagonal — ◖→↑ arc h — ◗→↑ arc v';
 const rule = `${header}\n${pairs.join(' ')} ∗,08 ⯭,00 ⍛,80`;
 
-const cardPath = path.join(__dirname, '../public/card/0.4.json');
+const cardPath = path.join(__dirname, '../public/card/0.1.json');
 const card = JSON.parse(fs.readFileSync(cardPath, 'utf8'));
 card.rule = rule;
 fs.writeFileSync(cardPath, JSON.stringify(card, null, 2) + '\n');

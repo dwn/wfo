@@ -13,6 +13,6 @@
     "centerVertical": true,
     "calligraphy": false
   },
-  "rule": "{use_rule 0.1}",
+  "rule": "{use_rule 0.13}",
   "input": "2\n."
 }

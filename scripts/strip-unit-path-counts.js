@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Omit explicit 1-step path counts (→𝟭 → →). Skips 0.4.json — regenerate that instead.
+ * Omit explicit 1-step path counts (→𝟭 → →). Skips 0.1.json — regenerate that instead.
  */
 const fs = require('fs');
 const path = require('path');
 const { stripUnitPathCounts } = require('./path-digits');
 
 const CARD_DIR = path.join(__dirname, '../public/card');
-const SKIP = new Set(['0.4.json']);
+const SKIP = new Set(['0.1.json']);
 
 function stripLine(line) {
   if (!/[←→↑↓⮜⮞⮝⮟]/.test(line)) return line;

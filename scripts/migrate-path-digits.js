@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Normalize path move counts to sans-serif bold digits 𝟬–𝟵 after arrows.
- * Hex targets, {use_rule 0.4}, and non-path rules (e.g. 13,24) are unchanged.
+ * Hex targets, {use_rule 0.1}, and non-path rules (e.g. 13,24) are unchanged.
  */
 const fs = require('fs');
 const path = require('path');
