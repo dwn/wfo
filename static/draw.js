@@ -52,24 +52,45 @@ function normalizeDrawingSize(value, fallback = 8) {
 
 const RULE_USE_TOKEN_RE = /\{use_rule\s+(\d+)\.(\d+)\}/i;
 const INPUT_USE_TOKEN_RE = /\{use_input\s+(\d+)\.(\d+)\}/i;
-const RULE_FOR_NESTED_RE = /\{for\s+\d+\}/i;
+const RULE_LIST_DEF_RE = /\{list\s+([\w.~*]+)\s*:\s*([^}]+)\}/gi;
+const RULE_EACH_LIST_SPEC = '(?:[^{}]|\\{[\\w.]+\\})+';
+const RULE_BLOCK_OPENER_RE = /\{for\s+\d+\}|\{each\s+[\w,\s]+\s+(?:in|across)\s+(?:[^{}]|\{[\w.]+\})+\}/i;
 const MAX_RULE_FOR_COUNT = 100;
+const MAX_RULE_EACH_ITEMS = 100;
 
-function findMatchingForEnd(text, fromIndex) {
+function readBlockOpenerLength(text, index) {
+  const forMatch = text.slice(index).match(/^\{for\s+\d+\}/i);
+  if (forMatch) return forMatch[0].length;
+  const eachMatch = text.slice(index).match(/^\{each\s+[\w,\s]+\s+(?:in|across)\s+[^}]+\}/i);
+  if (eachMatch) return eachMatch[0].length;
+  return 0;
+}
+
+function findMatchingBlockEnd(text, fromIndex) {
   let depth = 1;
   let i = fromIndex;
   while (i < text.length) {
-    const nextFor = text.indexOf('{for', i);
     const nextEnd = text.indexOf('{end}', i);
     if (nextEnd === -1) return -1;
-    if (nextFor !== -1 && nextFor < nextEnd) {
-      const opener = text.slice(nextFor).match(/^\{for\s+\d+\}/i);
-      if (opener) {
-        depth += 1;
-        i = nextFor + opener[0].length;
-        continue;
+
+    let nextOpener = -1;
+    let openerLength = 0;
+    for (let scan = i; scan < nextEnd; scan += 1) {
+      if (text[scan] !== '{') continue;
+      const length = readBlockOpenerLength(text, scan);
+      if (length > 0) {
+        nextOpener = scan;
+        openerLength = length;
+        break;
       }
     }
+
+    if (nextOpener !== -1) {
+      depth += 1;
+      i = nextOpener + openerLength;
+      continue;
+    }
+
     depth -= 1;
     if (depth === 0) return nextEnd;
     i = nextEnd + '{end}'.length;
@@ -77,51 +98,271 @@ function findMatchingForEnd(text, fromIndex) {
   return -1;
 }
 
-function findInnermostForBlock(text) {
+function hasUnescapedComma(value) {
+  for (let i = 0; i < value.length; i += 1) {
+    if (value[i] === '\\') {
+      i += 1;
+    } else if (value[i] === ',') {
+      return true;
+    }
+  }
+  return false;
+}
+
+function splitCommaList(value, preserveEmpty) {
+  const parts = [];
+  let current = '';
+  for (let i = 0; i < value.length; i += 1) {
+    if (value[i] === '\\') {
+      if (i + 1 < value.length) current += value[i + 1];
+      i += 1;
+    } else if (value[i] === ',') {
+      parts.push(unescapeRulePart(current.trim()));
+      current = '';
+    } else {
+      current += value[i];
+    }
+  }
+  parts.push(unescapeRulePart(current.trim()));
+  return preserveEmpty ? parts : parts.filter(Boolean);
+}
+
+function splitEachItems(value) {
+  return splitCommaList(value, false);
+}
+
+function parseInlineListItems(itemsStr) {
+  const trimmed = String(itemsStr ?? '').trim();
+  if (!trimmed) return [];
+  if (hasUnescapedComma(trimmed)) return splitEachItems(trimmed);
+  return Array.from(trimmed);
+}
+
+function parseListDefItems(itemsStr) {
+  const trimmed = String(itemsStr ?? '').trim();
+  if (!trimmed) return [];
+  if (hasUnescapedComma(trimmed)) return splitCommaList(trimmed, true);
+  return Array.from(trimmed);
+}
+
+function parseRuleLists(rule) {
+  const lists = new Map();
+  let out = String(rule ?? '');
+  let match;
+  RULE_LIST_DEF_RE.lastIndex = 0;
+  while ((match = RULE_LIST_DEF_RE.exec(out)) !== null) {
+    lists.set(match[1], parseListDefItems(match[2]));
+  }
+  out = out.replace(RULE_LIST_DEF_RE, '');
+  return { lists, rule: out };
+}
+
+function interpolateBindingsInText(text, bindings) {
+  let out = String(text ?? '');
+  for (const [name, value] of Object.entries(bindings || {})) {
+    out = out.replace(new RegExp(`\\{${name}\\}`, 'g'), value);
+  }
+  return out;
+}
+
+function resolveListSpec(spec, lists, bindings = {}) {
+  const trimmed = interpolateBindingsInText(String(spec ?? '').trim(), bindings);
+  if (!trimmed) return [];
+  if (/^[\w.~*]+$/.test(trimmed)) {
+    if (lists.has(trimmed)) return lists.get(trimmed).slice();
+    return [];
+  }
+  return parseInlineListItems(trimmed);
+}
+
+function splitAcrossListSpecs(specsStr, count) {
+  if (count <= 0) return [];
+  const trimmed = String(specsStr ?? '').trim();
+  if (count === 1) return [trimmed];
+  const parts = [];
+  let current = '';
+  let splits = 0;
+  for (let i = 0; i < trimmed.length; i += 1) {
+    if (trimmed[i] === '\\') {
+      if (i + 1 < trimmed.length) current += trimmed[i + 1];
+      i += 1;
+    } else if (trimmed[i] === ',' && splits < count - 1) {
+      parts.push(current.trim());
+      current = '';
+      splits += 1;
+    } else {
+      current += trimmed[i];
+    }
+  }
+  parts.push(current.trim());
+  return parts;
+}
+
+function parseEachNames(namesStr) {
+  return String(namesStr ?? '')
+    .split(',')
+    .map(name => name.trim())
+    .filter(Boolean);
+}
+
+function interpolateEachBody(body, bindings) {
+  let out = body;
+  for (const [name, value] of Object.entries(bindings)) {
+    out = out.replace(new RegExp(`\\{${name}\\}`, 'g'), value);
+  }
+  return out;
+}
+
+function joinEachExpansions(body, rows) {
+  if (!rows.length || !body) return '';
+  const separator = body.includes('\n') ? '\n' : ' ';
+  return rows.join(separator);
+}
+
+function capListLength(items, label) {
+  if (items.length <= MAX_RULE_EACH_ITEMS) return items;
+  console.warn(`Rules: ${label} has ${items.length} items; capping at ${MAX_RULE_EACH_ITEMS}.`);
+  return items.slice(0, MAX_RULE_EACH_ITEMS);
+}
+
+function expandEachInBlock(name, itemsStr, body, lists, bindings = {}) {
+  let items = resolveListSpec(itemsStr, lists, bindings);
+  items = capListLength(items, `{each ${name} in …}`);
+  if (!items.length || !body) return '';
+  return joinEachExpansions(body, items.map(item => {
+    const childBindings = { ...bindings, [name]: item };
+    let expanded = expandRuleBlocksWithContext(body, lists, childBindings);
+    expanded = interpolateEachBody(expanded, childBindings);
+    return expanded;
+  }));
+}
+
+function expandEachAcrossBlock(namesStr, listSpecsStr, body, lists, bindings = {}) {
+  const names = parseEachNames(namesStr);
+  if (!names.length || !body) return '';
+  const specParts = splitAcrossListSpecs(listSpecsStr, names.length);
+  if (specParts.length !== names.length) {
+    console.warn(`Rules: {each ${names.join(', ')} across …} expects ${names.length} lists, got ${specParts.length}; skipping block.`);
+    return '';
+  }
+  const columns = specParts.map(spec => capListLength(resolveListSpec(spec, lists, bindings), `{each … across ${spec}}`));
+  const length = Math.min(...columns.map(column => column.length));
+  if (!length) return '';
+  if (columns.some(column => column.length !== length)) {
+    console.warn(`Rules: {each ${names.join(', ')} across …} list lengths differ; using first ${length} rows.`);
+  }
+  const rows = [];
+  for (let i = 0; i < length; i += 1) {
+    const rowBindings = { ...bindings };
+    for (let j = 0; j < names.length; j += 1) rowBindings[names[j]] = columns[j][i];
+    rows.push(interpolateEachBody(body, rowBindings));
+  }
+  return joinEachExpansions(body, rows);
+}
+
+function collectAllRuleBlocks(text) {
+  const blocks = [];
+
   const forRe = /\{for\s+(\d+)\}/gi;
   let match;
   while ((match = forRe.exec(text)) !== null) {
     const bodyStart = match.index + match[0].length;
-    const endIndex = findMatchingForEnd(text, bodyStart);
-    if (endIndex < 0) {
-      console.warn('Rules: unclosed {for} block; leaving text unchanged.');
-      return null;
-    }
-    const body = text.slice(bodyStart, endIndex);
-    if (RULE_FOR_NESTED_RE.test(body)) continue;
-    return {
-      full: text.slice(match.index, endIndex + '{end}'.length),
+    const endIndex = findMatchingBlockEnd(text, bodyStart);
+    if (endIndex < 0) continue;
+    const full = text.slice(match.index, endIndex + '{end}'.length);
+    blocks.push({
+      index: match.index,
+      endIndex: match.index + full.length,
+      type: 'for',
+      full,
       count: parseInt(match[1], 10),
-      body: body.trim()
-    };
+      body: text.slice(bodyStart, endIndex).trim()
+    });
   }
-  return null;
+
+  const eachInRe = new RegExp(`\\{each\\s+(\\w+)\\s+in\\s+(${RULE_EACH_LIST_SPEC})\\}`, 'gi');
+  while ((match = eachInRe.exec(text)) !== null) {
+    const bodyStart = match.index + match[0].length;
+    const endIndex = findMatchingBlockEnd(text, bodyStart);
+    if (endIndex < 0) continue;
+    const full = text.slice(match.index, endIndex + '{end}'.length);
+    blocks.push({
+      index: match.index,
+      endIndex: match.index + full.length,
+      type: 'eachIn',
+      full,
+      name: match[1],
+      itemsStr: match[2],
+      body: text.slice(bodyStart, endIndex).trim()
+    });
+  }
+
+  const eachAcrossRe = new RegExp(`\\{each\\s+([\\w,\\s]+?)\\s+across\\s+(${RULE_EACH_LIST_SPEC})\\}`, 'gi');
+  while ((match = eachAcrossRe.exec(text)) !== null) {
+    const bodyStart = match.index + match[0].length;
+    const endIndex = findMatchingBlockEnd(text, bodyStart);
+    if (endIndex < 0) continue;
+    const full = text.slice(match.index, endIndex + '{end}'.length);
+    blocks.push({
+      index: match.index,
+      endIndex: match.index + full.length,
+      type: 'eachAcross',
+      full,
+      namesStr: match[1],
+      listSpecsStr: match[2],
+      body: text.slice(bodyStart, endIndex).trim()
+    });
+  }
+
+  return blocks;
+}
+
+function findOutermostRuleBlock(text) {
+  const blocks = collectAllRuleBlocks(text);
+  if (!blocks.length) return null;
+  const outermost = blocks.filter(block => !blocks.some(other =>
+    other !== block && other.index < block.index && other.endIndex > block.endIndex
+  ));
+  return outermost.sort((a, b) => a.index - b.index)[0];
 }
 
 /**
- * Expand `{for N}...{end}` blocks by repeating the inner rule text N times.
- * Innermost blocks expand first so nesting works.
+ * Expand `{list}`, `{for}`, `{each … in …}`, and `{each … across …}` blocks.
+ * Outermost blocks expand first; nested `{each}` bodies re-expand with bindings.
  */
-function expandRuleForBlocks(rule) {
-  if (rule == null) return '';
-  let out = String(rule);
+function expandRuleBlocksWithContext(text, lists, bindings = {}) {
+  let out = String(text ?? '');
   while (true) {
-    const block = findInnermostForBlock(out);
+    const block = findOutermostRuleBlock(out);
     if (!block) break;
-    const { full, count, body } = block;
-    if (!Number.isFinite(count) || count < 0) {
-      console.warn(`Rules: invalid {for N} count "${count}"; removing block.`);
-      out = out.replace(full, '');
-      continue;
+
+    let replacement = '';
+    if (block.type === 'for') {
+      const { count, body } = block;
+      if (!Number.isFinite(count) || count < 0) {
+        console.warn(`Rules: invalid {for N} count "${count}"; removing block.`);
+      } else {
+        if (count > MAX_RULE_FOR_COUNT) {
+          console.warn(`Rules: {for ${count}} exceeds max ${MAX_RULE_FOR_COUNT}; capping.`);
+        }
+        const times = Math.min(count, MAX_RULE_FOR_COUNT);
+        replacement = times && body ? Array(times).fill(body).join('\n') : '';
+      }
+    } else if (block.type === 'eachIn') {
+      replacement = expandEachInBlock(block.name, block.itemsStr, block.body, lists, bindings);
+    } else {
+      replacement = expandEachAcrossBlock(block.namesStr, block.listSpecsStr, block.body, lists, bindings);
     }
-    if (count > MAX_RULE_FOR_COUNT) {
-      console.warn(`Rules: {for ${count}} exceeds max ${MAX_RULE_FOR_COUNT}; capping.`);
-    }
-    const times = Math.min(count, MAX_RULE_FOR_COUNT);
-    const repeated = times && body ? Array(times).fill(body).join('\n') : '';
-    out = out.replace(full, repeated);
+
+    out = out.replace(block.full, replacement);
   }
   return out;
+}
+
+function expandRuleBlocks(rule) {
+  if (rule == null) return '';
+  const { lists, rule: stripped } = parseRuleLists(rule);
+  return expandRuleBlocksWithContext(stripped, lists, {});
 }
 
 async function fetchCardJsonForCardRef(setNum, orderNum) {
@@ -289,7 +530,7 @@ function applyRuleTransforms(input, rule) {
 
   if (!rule || !rule.trim()) return output;
 
-  rule = expandRuleForBlocks(rule);
+  rule = expandRuleBlocks(rule);
   rule = normalizePathSeparators(rule);
 
   const lines = rule.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));

@@ -215,6 +215,9 @@
         <li><strong>Layout.</strong> <code>⌇⌇</code> starts a new row; <code>⌇</code> separates glyphs on the same line. Lines wrap to the next row only at <code>⌇</code> boundaries. Preview options <strong>Center H</strong> and <strong>Center V</strong> center drawn text horizontally (per row) and vertically (whole card). In the editor, <code>⌈</code> marks glyph start (cyan) and <code>⌇</code> marks glyph end (magenta). Lines beginning with <code>//</code> are comments.</li>
         <li><strong>Replacements.</strong> Rule lines like <code>13,24</code> map a source byte to a target. Pairs on one line apply together; later lines run in order. Use <code>\,</code> for a literal comma in the source.</li>
         <li><strong>Repeat blocks.</strong> <code>{for N}...{end}</code> repeats the enclosed rule lines <code>N</code> times (each repetition is another pass in order). Example: <code>{for 4}ab,a_b ac,a_c{end}</code> applies that line four times.</li>
+        <li><strong>Each blocks.</strong> <code>{each name in items}...{end}</code> generates one rule from the template per item. Use <code>{name}</code> inside the block. Nested <code>{each}</code> blocks inherit outer bindings. Items without commas expand character-by-character (<code>abc</code> → <code>a</code>, <code>b</code>, <code>c</code>); comma lists expand as tokens (<code>tt,td,tg</code>). Example: <code>{each letter in abc}x{letter},x_{letter}{end}</code> → <code>xa,x_a xb,x_b xc,x_c</code>.</li>
+        <li><strong>Lists.</strong> <code>{list name: items}</code> defines a reusable list. Dot names group related lists (<code>{list moves.t: ⮜,⮜𝟮,,}</code>). Empty slots are preserved. Reference a list by name in <code>{each}</code> or <code>{each … across …}</code>; use <code>{var}</code> in a list spec for dynamic lookup (<code>moves.{i}</code> → <code>moves.t</code> when <code>i</code> is <code>t</code>).</li>
+        <li><strong>Across blocks.</strong> <code>{each a, b across foo, bar}...{end}</code> walks aligned rows across multiple lists (same index). Nested <code>{each i}</code> scopes bindings for inner blocks. Example: <code>{list chars: abc}{list moves.t: ⮜,⮜𝟮,,}{each i in chars}{each y,m across chars, moves.{i}}{i}{y},{i}_{m}{y}{end}{end}</code>.</li>
         <li><strong>Includes.</strong> <code>{use_rule set.order}</code> and <code>{use_input set.order}</code> pull in another card's rule or input. Nested tokens expand; cycles and missing cards log a warning and leave the token empty.</li>
         <li><strong>SVG background.</strong> Enter <code>{use_svg name.svg}</code>, a filename, pasted SVG markup, or a URL. Files in <code>public/svg</code> load from <code>/svg/</code>.</li>
       </ul>
@@ -233,7 +236,7 @@
 </div>
 </div>
 <script src="/static/cards.js?v=6"></script>
-<script src="/static/draw.js?v=25"></script>
+<script src="/static/draw.js?v=29"></script>
 <script src="/static/unicodeKeymap.js?v=19"></script>
 <script src="/storage/cardStorage.js?v=6"></script>
 <script src="/static/wfo.js?v=20"></script>
