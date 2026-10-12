@@ -13,6 +13,6 @@
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.13}",
-  "input": "Li"
+  "rule": "{use_rule 0.2}",
+  "input": "d⌇d⌇d"
 }

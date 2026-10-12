@@ -11,8 +11,9 @@
       "col": 2
     },
     "center": true,
-    "centerVertical": true
+    "centerVertical": true,
+    "calligraphy": false
   },
-  "rule": "{use_rule 0.13}",
-  "input": "Ne"
+  "rule": "{use_rule 0.2}",
+  "input": "c_e_z_r"
 }

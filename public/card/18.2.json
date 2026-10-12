@@ -1,17 +1,18 @@
 {
   "options": {
-    "size": 36,
-    "backgroundColor": "#808080",
+    "size": 30,
+    "backgroundColor": "#FF7B00",
     "italics": false,
     "animate": false,
-    "svgColor": false,
+    "svgColor": true,
+    "svgBackground": "{use_svg jupiter.svg}",
     "position": {
       "row": 3,
-      "col": 2
+      "col": 1
     },
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.13}",
-  "input": "2⌇Lu"
+  "input": "Ju"
 }

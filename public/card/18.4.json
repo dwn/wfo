@@ -1,17 +1,19 @@
 {
   "options": {
-    "size": 36,
-    "backgroundColor": "#36FF00",
+    "size": 30,
+    "backgroundColor": "#700000",
     "italics": false,
     "animate": false,
     "svgColor": true,
+    "svgBackground": "{use_svg venus.svg}",
     "position": {
-      "row": 1,
+      "row": 2,
       "col": 1
     },
+    "calligraphy": false,
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.13}",
-  "input": "2⌇Ea"
+  "input": "Ve"
 }

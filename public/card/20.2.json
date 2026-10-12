@@ -1,18 +1,18 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#FF7B00",
+    "size": 13,
+    "backgroundColor": "#000000",
     "italics": false,
     "animate": false,
-    "svgColor": true,
-    "svgBackground": " ",
+    "svgColor": false,
     "position": {
-      "row": 3,
+      "row": 1,
       "col": 1
     },
     "center": true,
-    "centerVertical": true
+    "centerVertical": true,
+    "calligraphy": false
   },
   "rule": "{use_rule 0.13}",
-  "input": "Na⌇11"
+  "input": "22x13+8\n\n294"
 }
