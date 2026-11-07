@@ -1,18 +1,17 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#000000",
+    "size": 36,
+    "backgroundColor": "#700000",
     "italics": false,
     "animate": false,
-    "svgColor": true,
-    "svgBackground": " ",
+    "svgColor": false,
     "position": {
       "row": 4,
-      "col": 1
+      "col": 2
     },
     "center": true,
     "centerVertical": true
   },
   "rule": "{use_rule 0.13}",
-  "input": "C⌇6"
+  "input": "π"
 }

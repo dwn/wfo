@@ -1,19 +1,19 @@
 {
   "options": {
-    "size": 30,
-    "backgroundColor": "#A6FF00",
+    "size": 32,
+    "backgroundColor": "#6600CC",
     "italics": false,
     "animate": false,
     "svgColor": true,
+    "svgBackground": "{use_svg bottle.svg}",
     "position": {
       "row": 5,
-      "col": 3
+      "col": 1
     },
-    "svgBackground": "{use_svg callisto.svg}",
+    "calligraphy": false,
     "center": true,
-    "centerVertical": true,
-    "calligraphy": false
+    "centerVertical": true
   },
-  "rule": "{use_rule 0.13}",
-  "input": "Ca"
+  "rule": "{use_rule 0.2}",
+  "input": "uar"
 }

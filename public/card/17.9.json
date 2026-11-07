@@ -1,6 +1,6 @@
 {
   "options": {
-    "size": 32,
+    "size": 10,
     "backgroundColor": "#700000",
     "italics": false,
     "animate": false,
@@ -14,6 +14,6 @@
     "center": true,
     "centerVertical": true
   },
-  "rule": "{use_rule 0.2}",
-  "input": "s\no\nd"
+  "rule": "{use_rule 0.13}",
+  "input": "shodesa\ntamara"
 }

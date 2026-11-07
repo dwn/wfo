@@ -1,18 +1,17 @@
 {
   "options": {
-    "size": 13,
-    "backgroundColor": "#000000",
+    "size": 36,
+    "backgroundColor": "#808080",
     "italics": false,
     "animate": false,
     "svgColor": false,
     "position": {
-      "row": 1,
-      "col": 1
+      "row": 3,
+      "col": 2
     },
     "center": true,
-    "centerVertical": true,
-    "calligraphy": false
+    "centerVertical": true
   },
   "rule": "{use_rule 0.13}",
-  "input": "22x13+8\n\n294"
+  "input": "2⌇Lu"
 }
